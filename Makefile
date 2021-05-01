@@ -43,7 +43,8 @@ $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 
 ifeq ($(LATEDAYS),) # if LATEDAYS not set, assume GHC machines
 $(SEQ_ISPC) $(OMP_ISPC): ISPCFLAGS += --target=avx2-i32x8
-$(CUDA): LDFLAGS += -L/usr/local/depot/cuda-8.0/lib64/ -lcudart
+$(CUDA): LDFLAGS += -L/usr/lib
+$(CUDA): LIBS += -lcudart
 $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61
 else
 CXXFLAGS += -I/opt/boost-1.61.0/include -I$(SRC_DIR)/
@@ -63,7 +64,7 @@ $(OMP): $(OMP_OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 $(CUDA): $(CUDA_CPP_OBJECTS) $(CUDA_CU_OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
 
 $(SEQ_ISPC): $(ISPC_SEQ_OBJECTS) $(ISPC_OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
