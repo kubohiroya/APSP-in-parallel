@@ -5,7 +5,42 @@
 #include <sstream> // stringstream
 #include <chrono> // see Timer class
 
-inline bool correctness_check(int* output, int n_output, int* solution, int n_solution) {
+inline bool correctness_check_int(int* output, int n_output, int* solution, int n_solution) {
+  for (int i = 0; i < n_solution; i++) {
+    for (int j = 0; j < n_solution; j++) {
+      if (output[i*n_output + j] != solution[i*n_solution + j]) {
+	/*
+        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i*n_output+j]
+		  << " vs solution's " << solution[i*n_solution+j] << "!" << std::endl;
+        return false;
+	*/
+	std::cerr << output[i*n_output + j] << "\t";
+      }else{
+	std::cerr << "-";
+      }
+    }
+    std::cerr << std::endl;
+  }
+  std::cerr << std::endl;
+
+  return true;
+}
+
+inline bool correctness_check_float(float* output, int n_output, float* solution, int n_solution) {
+  for (int i = 0; i < n_solution; i++) {
+    for (int j = 0; j < n_solution; j++) {
+      if (output[i*n_output + j] != solution[i*n_solution + j]) {
+        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i*n_output+j]
+		  << " vs solution's " << solution[i*n_solution+j] << "!" << std::endl;
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+inline bool correctness_check_double(double* output, int n_output, double* solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
       if (output[i*n_output + j] != solution[i*n_solution + j]) {
@@ -20,7 +55,7 @@ inline bool correctness_check(int* output, int n_output, int* solution, int n_so
 }
 
 inline void print_usage() {
-  std::cout << "\nUsage: apsp [-n INT] [-p DOUBLE] [-a (f|j)] [-s LONG] [-b] [-c] [-t INT]\n";
+  std::cout << "\nUsage: apsp [-n INT] [-p DOUBLE] [-a (f|j)] [-s LONG] [-b] [-c] [-t INT] [-T (i|f|d)]\n";
 
   std::cout << "\t-h\t\tPrint this message\n";
   std::cout << "\t-n INT\t\tGraph size, default 1024\n";
@@ -32,6 +67,7 @@ inline void print_usage() {
   std::cout << "\t-b\t\tRun benchmark sequential vs parallel\n";
   std::cout << "\t-t INT\t\tNumber of threads to run\n";
   std::cout << "\t-c\t\tCheck correctness\n";
+  std::cout << "\t-T CHAR\t\tweight type of edge default i\n";
   std::cout << "\n";
 }
 

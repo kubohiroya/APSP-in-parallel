@@ -80,6 +80,7 @@ parser.add_argument('-v', '--verbose', action='store_true',
                     help='Print commands as they run')
 parser.add_argument('-g', '--cuda', action='store_true', help='Run CUDA version')
 parser.add_argument('-r', '--compare', action='store_true', help='Compare different parallel schemes. Recommended to be used with "-b serious"')
+parser.add_argument('-T', '--wtype', type=str, choices=['i', 'f', 'd'], default='i', help='weight type')
 
 args = parser.parse_args()
 
@@ -87,7 +88,6 @@ def create_cmd(params):
     cmd = []
     for attr, value in params.items():
         cmd += ['-' + attr, str(value)]
-
     return cmd
 
 def run_cmd(command, verbose):
@@ -100,11 +100,11 @@ def run_cmd(command, verbose):
 def extract_time(stdout):
     return float(re.search(r'(\d*\.?\d*)ms', stdout.decode('utf-8')).group(1))
 
-def run_bench(bench_list, algorithm, seed, block_size, verbose, cuda, caching_seq=True, seq_cache={}):
+def run_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda, caching_seq=True, seq_cache={}):
     
     print('')
     print(' {0:-^52} '.format(''))
-    print('|{0:^52}|'.format('  Benchmark for {0}\'s Algorithm  '
+    print('|{0:^52}|'.format('  Benchmark for {0}\'s Algorithm '
                              .format('Floyd-Warshall' if algorithm == 'f' else 'Johnson')))
     print('|{0:^52}|'.format('seed = {0}{1}'.format(seed, ', block size = {0}'.format(block_size) if algorithm == 'f' else '')))
     print(' {0:-^52} '.format(''))
@@ -118,6 +118,7 @@ def run_bench(bench_list, algorithm, seed, block_size, verbose, cuda, caching_se
             param_obj['a'] = algorithm
             param_obj['s'] = seed
             param_obj['d'] = block_size
+            param_obj['T'] = wtype
             params = create_cmd(param_obj)
 
             cache_key = str(param_obj['p']) + str(param_obj['n'])
@@ -148,7 +149,7 @@ def run_bench(bench_list, algorithm, seed, block_size, verbose, cuda, caching_se
     print(' {0:-^52} '.format(''))
     print('')
 
-def run_par_bench(bench_list, algorithm, seed, block_size, verbose, caching_seq=True, seq_cache={}):
+def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, caching_seq=True, seq_cache={}):
     
     print('')
     print(' {0:-^54} '.format(''))
@@ -166,8 +167,8 @@ def run_par_bench(bench_list, algorithm, seed, block_size, verbose, caching_seq=
             param_obj['a'] = algorithm
             param_obj['s'] = seed
             param_obj['d'] = block_size
+            param_obj['T'] = wtype
             params = create_cmd(param_obj)
-
             stdout, stderr = run_cmd(['./apsp-omp'] + params, verbose)
             if len(stderr):
                 print('OMP Error: ' + stderr)
@@ -197,8 +198,8 @@ def run_par_bench(bench_list, algorithm, seed, block_size, verbose, caching_seq=
 
 def choose_benchmark():
     if (args.compare):
-        run_par_bench(all_benchmarks[args.benchmark], args.algorithm, args.seed, args.block_size, args.verbose)
+        run_par_bench(all_benchmarks[args.benchmark], args.wtype, args.algorithm, args.seed, args.block_size, args.verbose)
     else:
-        run_bench(all_benchmarks[args.benchmark], args.algorithm, args.seed, args.block_size, args.verbose, args.cuda)
+        run_bench(all_benchmarks[args.benchmark], args.algorithm, args.wtype, args.seed, args.block_size, args.verbose, args.cuda)
 
 choose_benchmark()
