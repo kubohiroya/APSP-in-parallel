@@ -1,5 +1,8 @@
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <iostream>
+
+#define FLT_MAX 3.402823466e+38
 
 using namespace boost;
 

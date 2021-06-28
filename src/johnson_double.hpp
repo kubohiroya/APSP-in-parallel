@@ -1,5 +1,8 @@
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <iostream>
+
+#define DBL_MAX 1.7976931348623158e+308
 
 using namespace boost;
 

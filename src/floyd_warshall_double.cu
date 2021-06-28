@@ -25,8 +25,8 @@ __device__ void calc_double(double* graph, int n, int k, int i, int j) {
   const unsigned int kj = k*n + j;
   const unsigned int ij = i*n + j;
   const unsigned int ik = i*n + k;
-  float t1 = graph[ik] + graph[kj];
-  float t2 = graph[ij];
+  double t1 = graph[ik] + graph[kj];
+  double t2 = graph[ij];
   graph[ij] = (t1 < t2) ? t1 : t2;
 }
 
@@ -95,7 +95,7 @@ __global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double* 
 
   __syncthreads();
 
-  block_calc(C, C, B, bi, bj);
+  block_calc_double(C, C, B, bi, bj);
 
   __syncthreads();
 
@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double* 
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_double(double* input, float* output, int n) {
+__host__ void floyd_warshall_blocked_cuda_double(double* input, double* output, int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);

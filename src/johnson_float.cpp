@@ -10,7 +10,7 @@
 static float flt_max = std::numeric_limits<float>::max();
 graph_t_float *johnson_init_float(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<float> choose_weight(1, 100);
+  static std::uniform_real_distribution<float> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -68,7 +68,7 @@ void set_edge_float(edge_t_float *edge, int u, int v) {
 
 graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<float> choose_weight(1, 100);
+  static std::uniform_real_distribution<float> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -95,7 +95,7 @@ graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const u
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0.0f
           && adj_matrix[i*n + j] != flt_max) {
-        set_edge(&edge_array[ei], i, j);
+        set_edge_float(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
       }
@@ -185,7 +185,7 @@ void johnson_parallel_float(graph_t_float* gr, float* output) {
   bf_graph->edge_array = new Edge_float[bf_graph->E];
   bf_graph->weights = new float[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E  * sizeof(Edge_float));
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge_float));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(float));
   std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(float));
 

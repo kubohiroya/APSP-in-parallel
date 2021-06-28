@@ -10,7 +10,7 @@
 static double dbl_max = std::numeric_limits<double>::max();
 graph_t_double *johnson_init_double(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<double> choose_weight(1, 100);
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -68,7 +68,7 @@ void set_edge_double(edge_t_double *edge, int u, int v) {
 
 graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<double> choose_weight(1, 100);
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -95,7 +95,7 @@ graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0.0f
           && adj_matrix[i*n + j] != dbl_max) {
-        set_edge(&edge_array[ei], i, j);
+        set_edge_double(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
       }

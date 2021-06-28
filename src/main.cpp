@@ -14,12 +14,12 @@
 #endif
 
 #include "util.hpp"
-#include "johnson.hpp"
 #include "floyd_warshall.hpp"
-#include "johnson_double.hpp"
-#include "floyd_warshall_double.hpp"
-#include "johnson_float.hpp"
 #include "floyd_warshall_float.hpp"
+#include "floyd_warshall_double.hpp"
+#include "johnson.hpp"
+#include "johnson_float.hpp"
+#include "johnson_double.hpp"
 
 void bench_floyd_warshall_int(int interations, unsigned long seed, int block_size, bool check_correctness);
 void bench_floyd_warshall_float(int interations, unsigned long seed, int block_size, bool check_correctness);
@@ -132,18 +132,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
-#ifdef _OPENMP
-  omp_set_num_threads(thread_count);
-#else
-  (void)thread_count; // suppress unused warning
-#endif
-
   if (type == 0) {
     return do_main_int(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
   } else if (type == 1) {
     return do_main_float(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
   }else if (type == 2) {
     return do_main_double(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
+  }else{
+    return -1;
   }
 }
 
@@ -157,6 +153,12 @@ int do_main_int(
 		   int block_size,
 		   int thread_count
 ) {
+
+#ifdef _OPENMP
+  omp_set_num_threads(thread_count);
+#else
+  (void)thread_count; // suppress unused warning
+#endif
 
   int* solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
@@ -280,6 +282,14 @@ int do_main_float(
 		   int block_size,
 		   int thread_count
 ) {
+
+#ifdef _OPENMP
+  omp_set_num_threads(thread_count);
+#else
+  (void)thread_count; // suppress unused warning
+#endif
+
+
   float* solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
     bool write_solution_to_file = true;
@@ -388,6 +398,8 @@ int do_main_float(
   if (check_correctness) {
     delete[] solution;
   }
+
+  return 0;
 }
 
 int do_main_double(
@@ -400,6 +412,13 @@ int do_main_double(
 		   int block_size,
 		   int thread_count
 ) {
+
+#ifdef _OPENMP
+  omp_set_num_threads(thread_count);
+#else
+  (void)thread_count; // suppress unused warning
+#endif
+
   double* solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
     bool write_solution_to_file = true;
@@ -484,11 +503,11 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t* cuda_gr = johnson_cuda_init_double(n, p, seed);
+      graph_cuda_t_double* cuda_gr = johnson_cuda_init_double(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda(cuda_gr, output);
+      johnson_cuda_double(cuda_gr, output);
       auto end = std::chrono::high_resolution_clock::now();
-      free_cuda_graph(cuda_gr);
+      free_cuda_graph_double(cuda_gr);
 #else
       graph_t_double *gr = johnson_init_double(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
@@ -508,6 +527,8 @@ int do_main_double(
   if (check_correctness) {
     delete[] solution;
   }
+
+  return 0;
 }
 
 

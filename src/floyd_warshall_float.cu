@@ -95,7 +95,7 @@ __global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float* gr
 
   __syncthreads();
 
-  block_calc(C, C, B, bi, bj);
+  block_calc_float(C, C, B, bi, bj);
 
   __syncthreads();
 
