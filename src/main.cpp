@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
   // parameter defaults
   unsigned long seed = 0;
   int n = 1024;
-  double p = 0.5;
+  double p = 0.01;
   bool use_floyd_warshall = true;
   bool benchmark = false;
   bool check_correctness = false;
