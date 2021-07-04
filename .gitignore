@@ -2,6 +2,7 @@ objs/*
 libs/*
 
 .vscode/*
+.idea/*
 
 solution_cache/*
 apsp-*

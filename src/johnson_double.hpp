@@ -2,7 +2,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <iostream>
 
-#define DBL_MAX 1.7976931348623158e+308
+#include "inf.hpp"
 
 using namespace boost;
 
@@ -35,9 +35,9 @@ typedef struct graph_cuda_double {
 
 
 graph_cuda_t_double* johnson_cuda_init_double(const int n, const double p, const unsigned long seed);
-void johnson_cuda_double(graph_cuda_t_double* gr, double* output);
+void johnson_cuda_double(graph_cuda_t_double* gr, double* output, int* parents);
 void free_cuda_graph_double(graph_cuda_t_double* g);
 
 void free_graph_double(graph_t_double* g);
-void johnson_parallel_double(graph_t_double *gr, double* output);
+void johnson_parallel_double(graph_t_double *gr, double* output, int* parents);
 

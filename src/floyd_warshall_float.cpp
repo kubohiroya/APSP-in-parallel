@@ -10,7 +10,7 @@
 float* floyd_warshall_init_float(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
-  static std::uniform_real_distribution<float> choose_weight(1, 100);
+  static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -20,10 +20,10 @@ float* floyd_warshall_init_float(const int n, const double p, const unsigned lon
       if (i == j) {
         out[i*n + j] = 0.0f;
       } else if (flip(rand_engine) < p) {
-        out[i*n + j] = choose_weight(rand_engine);
+        out[i*n + j] = choose_weight(rand_engine) * 1.0f;
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n + j] = std::numeric_limits<float>::max() / 2;
+        out[i*n + j] = FLT_INF;
       }
     }
   }
@@ -55,7 +55,7 @@ float* floyd_warshall_blocked_init_float(const int n, const int block_size, cons
         out[i*n_oversized + j] = choose_weight(rand_engine);
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n_oversized + j] = std::numeric_limits<float>::max() / 2;
+        out[i*n_oversized + j] = FLT_INF;
       }
     }
   }

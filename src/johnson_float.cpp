@@ -4,28 +4,27 @@
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
-
 #include "johnson_float.hpp"
+#include "equals.hpp"
 
-static float flt_max = std::numeric_limits<float>::max();
 graph_t_float *johnson_init_float(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_real_distribution<float> choose_weight(1, 100);
+  static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
   float *adj_matrix = new float[n * n];
-  
+
   size_t E = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i*n + j] = 0;
+        adj_matrix[i*n + j] = 0.0f;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine);
+        adj_matrix[i*n + j] = choose_weight(rand_engine) * 1.0f;
         E ++;
       } else {
-        adj_matrix[i*n + j] = flt_max;
+        adj_matrix[i*n + j] = FLT_INF;
       }
     }
   }
@@ -34,8 +33,8 @@ graph_t_float *johnson_init_float(const int n, const double p, const unsigned lo
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i*n + j] != 0.0f
-          && adj_matrix[i*n + j] != flt_max) {
+      if (! equals_float(adj_matrix[i*n + j], 0.0f)
+          && ! equals_float(adj_matrix[i*n + j], FLT_INF)) {
         edge_array[ei] = Edge_float(i,j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -82,7 +81,7 @@ graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const u
         adj_matrix[i*n + j] = choose_weight(rand_engine);
         E ++;
       } else {
-        adj_matrix[i*n + j] = flt_max;
+        adj_matrix[i*n + j] = FLT_INF;
       }
     }
   }
@@ -94,7 +93,7 @@ graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const u
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0.0f
-          && adj_matrix[i*n + j] != flt_max) {
+          && adj_matrix[i*n + j] != FLT_INF) {
         set_edge_float(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -140,7 +139,7 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = flt_max;
+    dist[i] = FLT_INF;
   }
   dist[src] = 0;
 
@@ -153,7 +152,7 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
       int u = std::get<0>(edges[j]);
       int v = std::get<1>(edges[j]);
       float new_dist = weights[j] + dist[u];
-      if (dist[u] != flt_max && new_dist < dist[v])
+      if (! equals_float(dist[u], FLT_INF) && new_dist < dist[v])
         dist[v] = new_dist;
     }
   }
@@ -166,13 +165,13 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
     int u = std::get<0>(edges[i]);
     int v = std::get<1>(edges[i]);
     float weight = weights[i];
-    if (dist[u] != flt_max && dist[u] + weight < dist[v])
+    if (! equals_float(dist[u], FLT_INF) && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
   return no_neg_cycle;
 }
 
-void johnson_parallel_float(graph_t_float* gr, float* output) {
+void johnson_parallel_float(graph_t_float* gr, float* output, int *parents) {
 
   int V = gr->V;
 

@@ -2,7 +2,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <iostream>
 
-#define FLT_MAX 3.402823466e+38
+#include "inf.hpp"
 
 using namespace boost;
 
@@ -35,9 +35,9 @@ typedef struct graph_cuda_float {
 
 
 graph_cuda_t_float* johnson_cuda_init_float(const int n, const double p, const unsigned long seed);
-void johnson_cuda_float(graph_cuda_t_float* gr, float* output);
+void johnson_cuda_float(graph_cuda_t_float* gr, float* output, int* parents);
 void free_cuda_graph_float(graph_cuda_t_float* g);
 
 void free_graph_float(graph_t_float* g);
-void johnson_parallel_float(graph_t_float *gr, float* output);
+void johnson_parallel_float(graph_t_float *gr, float* output, int* parents);
 

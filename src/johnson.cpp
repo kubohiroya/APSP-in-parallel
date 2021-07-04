@@ -23,7 +23,7 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
         adj_matrix[i*n + j] = choose_weight(rand_engine);
         E ++;
       } else {
-        adj_matrix[i*n + j] = INT_MAX;
+        adj_matrix[i*n + j] = INT_INF;
       }
     }
   }
@@ -33,7 +33,7 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0
-          && adj_matrix[i*n + j] != INT_MAX) {
+          && adj_matrix[i*n + j] != INT_INF) {
         edge_array[ei] = Edge(i,j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -80,7 +80,7 @@ graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long
         adj_matrix[i*n + j] = choose_weight(rand_engine);
         E ++;
       } else {
-        adj_matrix[i*n + j] = INT_MAX;
+        adj_matrix[i*n + j] = INT_INF;
       }
     }
   }
@@ -92,7 +92,7 @@ graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0
-          && adj_matrix[i*n + j] != INT_MAX) {
+          && adj_matrix[i*n + j] != INT_INF) {
         set_edge(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -138,7 +138,7 @@ inline bool bellman_ford(graph_t* gr, int* dist, int src) {
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = INT_MAX;
+    dist[i] = INT_INF;
   }
   dist[src] = 0;
 
@@ -151,7 +151,7 @@ inline bool bellman_ford(graph_t* gr, int* dist, int src) {
       int u = std::get<0>(edges[j]);
       int v = std::get<1>(edges[j]);
       int new_dist = weights[j] + dist[u];
-      if (dist[u] != INT_MAX && new_dist < dist[v])
+      if (dist[u] != INT_INF && new_dist < dist[v])
         dist[v] = new_dist;
     }
   }
@@ -164,13 +164,13 @@ inline bool bellman_ford(graph_t* gr, int* dist, int src) {
     int u = std::get<0>(edges[i]);
     int v = std::get<1>(edges[i]);
     int weight = weights[i];
-    if (dist[u] != INT_MAX && dist[u] + weight < dist[v])
+    if (dist[u] != INT_INF && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
   return no_neg_cycle;
 }
 
-void johnson_parallel(graph_t* gr, int* output) {
+void johnson_parallel(graph_t* gr, int* output, int* parents) {
 
   int V = gr->V;
 
@@ -222,10 +222,13 @@ void johnson_parallel(graph_t* gr, int* output) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
+    std::vector<Vertex> p(num_vertices(G));
     std::vector<int> d(num_vertices(G));
-    dijkstra_shortest_paths(G, s, distance_map(&d[0]));
+    dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(INT_INF));
     for (int v = 0; v < V; v++) {
-      output[s*V + v] = d[v] + h[v] - h[s];
+      int i = s*V + v;
+      output[i] = d[v] + h[v] - h[s];
+      parents[i] = p[v];
     }
   }
 

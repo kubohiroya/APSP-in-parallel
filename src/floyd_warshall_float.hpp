@@ -1,5 +1,7 @@
 #pragma once
 
+#include "inf.hpp"
+
 // we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
 float* floyd_warshall_init_float(const int n, const double p, const unsigned long seed);
 

@@ -23,7 +23,7 @@ int* floyd_warshall_init(const int n, const double p, const unsigned long seed) 
         out[i*n + j] = choose_weight(rand_engine);
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n + j] = std::numeric_limits<int>::max() / 2;
+        out[i*n + j] = INT_INF;
       }
     }
   }
@@ -55,7 +55,7 @@ int* floyd_warshall_blocked_init(const int n, const int block_size, const double
         out[i*n_oversized + j] = choose_weight(rand_engine);
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n_oversized + j] = std::numeric_limits<int>::max() / 2;
+        out[i*n_oversized + j] = INT_INF;
       }
     }
   }

@@ -4,28 +4,27 @@
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
-
 #include "johnson_double.hpp"
+#include "equals.hpp"
 
-static double dbl_max = std::numeric_limits<double>::max();
 graph_t_double *johnson_init_double(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_real_distribution<double> choose_weight(1, 100);
+  static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
   double *adj_matrix = new double[n * n];
-  
+
   size_t E = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i*n + j] = 0;
+        adj_matrix[i*n + j] = 0.0;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine);
+        adj_matrix[i*n + j] = choose_weight(rand_engine) * 1.0;
         E ++;
       } else {
-        adj_matrix[i*n + j] = dbl_max;
+        adj_matrix[i*n + j] = DBL_INF;
       }
     }
   }
@@ -34,8 +33,8 @@ graph_t_double *johnson_init_double(const int n, const double p, const unsigned 
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i*n + j] != 0.0f
-          && adj_matrix[i*n + j] != dbl_max) {
+      if (! equals_double(adj_matrix[i*n + j], 0.0)
+          && ! equals_double(adj_matrix[i*n + j], DBL_INF)) {
         edge_array[ei] = Edge_double(i,j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -82,7 +81,7 @@ graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const
         adj_matrix[i*n + j] = choose_weight(rand_engine);
         E ++;
       } else {
-        adj_matrix[i*n + j] = dbl_max;
+        adj_matrix[i*n + j] = DBL_INF;
       }
     }
   }
@@ -94,7 +93,7 @@ graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0.0f
-          && adj_matrix[i*n + j] != dbl_max) {
+          && adj_matrix[i*n + j] != DBL_INF) {
         set_edge_double(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
@@ -140,7 +139,7 @@ inline bool bellman_ford_double(graph_t_double* gr, double* dist, int src) {
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = dbl_max;
+    dist[i] = DBL_INF;
   }
   dist[src] = 0;
 
@@ -153,7 +152,7 @@ inline bool bellman_ford_double(graph_t_double* gr, double* dist, int src) {
       int u = std::get<0>(edges[j]);
       int v = std::get<1>(edges[j]);
       double new_dist = weights[j] + dist[u];
-      if (dist[u] != dbl_max && new_dist < dist[v])
+      if (! equals_double(dist[u], DBL_INF) && new_dist < dist[v])
         dist[v] = new_dist;
     }
   }
@@ -166,13 +165,13 @@ inline bool bellman_ford_double(graph_t_double* gr, double* dist, int src) {
     int u = std::get<0>(edges[i]);
     int v = std::get<1>(edges[i]);
     double weight = weights[i];
-    if (dist[u] != dbl_max && dist[u] + weight < dist[v])
+    if (! equals_double(dist[u], DBL_INF) && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
   return no_neg_cycle;
 }
 
-void johnson_parallel_double(graph_t_double* gr, double* output) {
+void johnson_parallel_double(graph_t_double* gr, double* output, int* parents) {
 
   int V = gr->V;
 

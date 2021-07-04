@@ -6,7 +6,7 @@ __constant__ graph_cuda_t_float graph_const;
 
 __forceinline__
 __device__ int min_distance_float(float* dist, char* visited, int n) {
-  float min = FLT_MAX;
+  float min = FLT_INF;
   int min_index = 0;
   for (int v = 0; v < n; v++) {
     if (!visited[v] && dist[v] <= min) {
@@ -30,7 +30,7 @@ __global__ void dijkstra_kernel_float(float* output, char* visited_global) {
   float* dist = &output[s * V];
   char* visited = &visited_global[s * V];
   for (int i = 0; i < V; i++) {
-    dist[i] = FLT_MAX;
+    dist[i] = FLT_INF;
     visited[i] = 0;
   }
   dist[s] = 0;
@@ -42,7 +42,7 @@ __global__ void dijkstra_kernel_float(float* output, char* visited_global) {
     visited[u] = 1;
     for (int v_i = u_start; v_i < u_end; v_i++) {
       int v = edge_array[v_i].v;
-      if (!visited[v] && dist_u != FLT_MAX && dist_u + weights[v_i] < dist[v])
+      if (!visited[v] && dist_u != FLT_INF && dist_u + weights[v_i] < dist[v])
           dist[v] = dist_u + weights[v_i];
     }
   }
@@ -59,7 +59,7 @@ __global__ void bellman_ford_kernel_float(float* dist) {
   int v = edges[e].v;
   float new_dist = weights[e] + dist[u];
   // Make ATOMIC
-  if (dist[u] != FLT_MAX && new_dist < dist[v])
+  if (! equals_float(dist[u], FLT_INF) && new_dist < dist[v])
     atomicExch(&dist[v], new_dist); // Needs to have conditional be atomic too
 }
 
@@ -73,7 +73,7 @@ __host__ bool bellman_ford_cuda_float(graph_cuda_t_float* gr, float* dist, int s
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = FLT_MAX;
+    dist[i] = FLT_INF;
   }
   dist[s] = 0;
 
@@ -98,7 +98,7 @@ __host__ bool bellman_ford_cuda_float(graph_cuda_t_float* gr, float* dist, int s
     int u = edges[i].u;
     int v = edges[i].v;
     float weight = weights[i];
-    if (dist[u] != FLT_MAX && dist[u] + weight < dist[v])
+    if (! equals_float(dist[u], FLT_INF) && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
 
@@ -111,7 +111,7 @@ __host__ bool bellman_ford_cuda_float(graph_cuda_t_float* gr, float* dist, int s
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda_float(graph_cuda_t_float* gr, float* output) {
+__host__ void johnson_cuda_float(graph_cuda_t_float* gr, float* output, int* parents) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 

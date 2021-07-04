@@ -10,7 +10,7 @@
 double* floyd_warshall_init_double(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
-  static std::uniform_real_distribution<double> choose_weight(1, 100);
+  static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -18,12 +18,12 @@ double* floyd_warshall_init_double(const int n, const double p, const unsigned l
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        out[i*n + j] = 0.0f;
+        out[i*n + j] = 0.0;
       } else if (flip(rand_engine) < p) {
-        out[i*n + j] = choose_weight(rand_engine);
+        out[i*n + j] = choose_weight(rand_engine) * 1.0;
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n + j] = std::numeric_limits<double>::max() / 2;
+        out[i*n + j] = DBL_INF;
       }
     }
   }
@@ -50,12 +50,12 @@ double* floyd_warshall_blocked_init_double(const int n, const int block_size, co
   for (int i = 0; i < n_oversized; i++) {
     for (int j = 0; j < n_oversized; j++) {
       if (i == j) {
-        out[i*n_oversized + j] = 0.0f;
+        out[i*n_oversized + j] = 0.0;
       } else if (i < n && j < n && flip(rand_engine) < p) {
-        out[i*n_oversized + j] = choose_weight(rand_engine);
+        out[i*n_oversized + j] = choose_weight(rand_engine) * 1.0;
       } else {
         // "infinity" - the highest value we can still safely add two infinities
-        out[i*n_oversized + j] = std::numeric_limits<double>::max() / 2;
+        out[i*n_oversized + j] = DBL_INF;
       }
     }
   }

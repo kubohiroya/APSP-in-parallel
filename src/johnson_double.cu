@@ -42,7 +42,7 @@ __global__ void dijkstra_kernel_double(double* output, char* visited_global) {
     visited[u] = 1;
     for (int v_i = u_start; v_i < u_end; v_i++) {
       int v = edge_array[v_i].v;
-      if (!visited[v] && dist_u != DBL_MAX && dist_u + weights[v_i] < dist[v])
+      if (!visited[v] && ! equals_double(dist_u, DBL_INF) && dist_u + weights[v_i] < dist[v])
           dist[v] = dist_u + weights[v_i];
     }
   }
@@ -59,7 +59,7 @@ __global__ void bellman_ford_kernel_double(double* dist) {
   int v = edges[e].v;
   double new_dist = weights[e] + dist[u];
   // Make ATOMIC
-  if (dist[u] != DBL_MAX && new_dist < dist[v])
+  if (! equals_double(dist[u], DBL_INF) && new_dist < dist[v])
     // atomicExch(&dist[v], new_dist); // Needs to have conditional be atomic too
     atomicExch( (unsigned long long int*)&dist[v], new_dist);
 }
@@ -74,7 +74,7 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double* gr, double* dist, in
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = DBL_MAX;
+    dist[i] = DBL_INF;
   }
   dist[s] = 0;
 
@@ -99,7 +99,7 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double* gr, double* dist, in
     int u = edges[i].u;
     int v = edges[i].v;
     double weight = weights[i];
-    if (dist[u] != DBL_MAX && dist[u] + weight < dist[v])
+    if (! equals_double(dist[u], DBL_MAX) && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
 
@@ -112,7 +112,7 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double* gr, double* dist, in
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda_double(graph_cuda_t_double* gr, double* output) {
+__host__ void johnson_cuda_double(graph_cuda_t_double* gr, double* output, int* parents) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
