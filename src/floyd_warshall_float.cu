@@ -15,23 +15,23 @@ __host__ void check_cuda_error() {
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {
     std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
-                cudaGetErrorString(errCode) << "\n";
+              cudaGetErrorString(errCode) << "\n";
   }
 }
 
 __forceinline__
-__device__ void calc_float(float* graph, int n, int k, int i, int j) {
+__device__ void calc_float(float *graph, int n, int k, int i, int j) {
   if ((i >= n) || (j >= n) || (k >= n)) return;
-  const unsigned int kj = k*n + j;
-  const unsigned int ij = i*n + j;
-  const unsigned int ik = i*n + k;
+  const unsigned int kj = k * n + j;
+  const unsigned int ij = i * n + j;
+  const unsigned int ik = i * n + k;
   float t1 = graph[ik] + graph[kj];
   float t2 = graph[ij];
   graph[ij] = (t1 < t2) ? t1 : t2;
 }
 
 
-__global__ void floyd_warshall_kernel_float(int n, int k, float* graph) {
+__global__ void floyd_warshall_kernel_float(int n, int k, float *graph) {
   const unsigned int i = blockIdx.y * blockDim.y + threadIdx.y;
   const unsigned int j = blockIdx.x * blockDim.x + threadIdx.x;
   calc_float(graph, n, k, i, j);
@@ -42,17 +42,17 @@ __global__ void floyd_warshall_kernel_float(int n, int k, float* graph) {
   ***************************************************************************/
 
 __forceinline__
-__device__ void block_calc_float(float* C, float* A, float* B, int bj, int bi) {
+__device__ void block_calc_float(float *C, float *A, float *B, int bj, int bi) {
   for (int k = 0; k < BLOCK_DIM; k++) {
-    float sum = A[bi*BLOCK_DIM + k] + B[k*BLOCK_DIM + bj];
-    if (C[bi*BLOCK_DIM + bj] > sum) {
-      C[bi*BLOCK_DIM + bj] = sum;
+    float sum = A[bi * BLOCK_DIM + k] + B[k * BLOCK_DIM + bj];
+    if (C[bi * BLOCK_DIM + bj] > sum) {
+      C[bi * BLOCK_DIM + bj] = sum;
     }
     __syncthreads();
   }
 }
 
-__global__ void floyd_warshall_block_kernel_phase1_float(int n, int k, float* graph) {
+__global__ void floyd_warshall_block_kernel_phase1_float(int n, int k, float *graph) {
   const unsigned int bi = threadIdx.y;
   const unsigned int bj = threadIdx.x;
 
@@ -61,21 +61,21 @@ __global__ void floyd_warshall_block_kernel_phase1_float(int n, int k, float* gr
   __syncthreads();
 
   // Transfer to temp shared arrays
-  C[bi*BLOCK_DIM + bj] = graph[k*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj];
+  C[bi * BLOCK_DIM + bj] = graph[k * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj];
 
   __syncthreads();
-  
+
   block_calc_float(C, C, C, bi, bj);
 
   __syncthreads();
 
   // Transfer back to graph
-  graph[k*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj] = C[bi*BLOCK_DIM + bj];
+  graph[k * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj] = C[bi * BLOCK_DIM + bj];
 
 }
 
 
-__global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float* graph) {
+__global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float *graph) {
   // BlockDim is one dimensional (Straight along diagonal)
   // Blocks themselves are two dimensional
   const unsigned int i = blockIdx.x;
@@ -90,8 +90,8 @@ __global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float* gr
 
   __syncthreads();
 
-  C[bi*BLOCK_DIM + bj] = graph[i*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj];
-  B[bi*BLOCK_DIM + bj] = graph[k*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj];
+  C[bi * BLOCK_DIM + bj] = graph[i * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj];
+  B[bi * BLOCK_DIM + bj] = graph[k * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj];
 
   __syncthreads();
 
@@ -99,12 +99,12 @@ __global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float* gr
 
   __syncthreads();
 
-  graph[i*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj] = C[bi*BLOCK_DIM + bj];
+  graph[i * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj] = C[bi * BLOCK_DIM + bj];
 
   // Phase 2 1/2
 
-  C[bi*BLOCK_DIM + bj] = graph[k*BLOCK_DIM*n + i*BLOCK_DIM + bi*n + bj];
-  A[bi*BLOCK_DIM + bj] = graph[k*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj];
+  C[bi * BLOCK_DIM + bj] = graph[k * BLOCK_DIM * n + i * BLOCK_DIM + bi * n + bj];
+  A[bi * BLOCK_DIM + bj] = graph[k * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj];
 
   __syncthreads();
 
@@ -113,11 +113,11 @@ __global__ void floyd_warshall_block_kernel_phase2_float(int n, int k, float* gr
   __syncthreads();
 
   // Block C is the only one that could be changed
-  graph[k*BLOCK_DIM*n + i*BLOCK_DIM + bi*n + bj] = C[bi*BLOCK_DIM + bj];
+  graph[k * BLOCK_DIM * n + i * BLOCK_DIM + bi * n + bj] = C[bi * BLOCK_DIM + bj];
 }
 
 
-__global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float* graph) {
+__global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float *graph) {
   // BlockDim is one dimensional (Straight along diagonal)
   // Blocks themselves are two dimensional
   const unsigned int j = blockIdx.x;
@@ -132,9 +132,9 @@ __global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float* gr
 
   __syncthreads();
 
-  C[bi*BLOCK_DIM + bj] = graph[i*BLOCK_DIM*n + j*BLOCK_DIM + bi*n + bj];
-  A[bi*BLOCK_DIM + bj] = graph[i*BLOCK_DIM*n + k*BLOCK_DIM + bi*n + bj];
-  B[bi*BLOCK_DIM + bj] = graph[k*BLOCK_DIM*n + j*BLOCK_DIM + bi*n + bj];
+  C[bi * BLOCK_DIM + bj] = graph[i * BLOCK_DIM * n + j * BLOCK_DIM + bi * n + bj];
+  A[bi * BLOCK_DIM + bj] = graph[i * BLOCK_DIM * n + k * BLOCK_DIM + bi * n + bj];
+  B[bi * BLOCK_DIM + bj] = graph[k * BLOCK_DIM * n + j * BLOCK_DIM + bi * n + bj];
 
   __syncthreads();
 
@@ -142,7 +142,7 @@ __global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float* gr
 
   __syncthreads();
 
-  graph[i*BLOCK_DIM*n + j*BLOCK_DIM + bi*n + bj] = C[bi*BLOCK_DIM + bj];
+  graph[i * BLOCK_DIM * n + j * BLOCK_DIM + bi * n + bj] = C[bi * BLOCK_DIM + bj];
 }
 
 /************************************************************************
@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float* gr
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_float(float* input, float* output, int n) {
+__host__ void floyd_warshall_blocked_cuda_float(float *input, float *output, int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -160,12 +160,13 @@ __host__ void floyd_warshall_blocked_cuda_float(float* input, float* output, int
     cudaGetDeviceProperties(&deviceProps, i);
 
     std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-	      << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-	      << "\tGlobal mem: " << static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-	      << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
+              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
+              << "\tGlobal mem: " << static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024)
+              << "GB \n"
+              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
   }
 
-  float* device_graph;
+  float *device_graph;
   const size_t size = sizeof(float) * n * n;
   cudaMalloc(&device_graph, size);
   cudaMemcpy(device_graph, input, size, cudaMemcpyHostToDevice);
@@ -182,14 +183,14 @@ __host__ void floyd_warshall_blocked_cuda_float(float* input, float* output, int
 
     floyd_warshall_block_kernel_phase3_float<<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
-  
+
   cudaMemcpy(output, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
 
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_float(float* input, float* output, int n) {
+__host__ void floyd_warshall_cuda_float(float *input, float *output, int n) {
 
   // from assignment 1
   int deviceCount;
@@ -200,14 +201,15 @@ __host__ void floyd_warshall_cuda_float(float* input, float* output, int n) {
     cudaGetDeviceProperties(&deviceProps, i);
 
     std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-	      << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-	      << "\tGlobal mem: " << static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-	      << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
+              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
+              << "\tGlobal mem: " << static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024)
+              << "GB \n"
+              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
   }
 
   std::cout << "Size " << n << "\n";
 
-  float* device_graph;
+  float *device_graph;
 
   const size_t size = sizeof(float) * n * n;
 
@@ -218,7 +220,7 @@ __host__ void floyd_warshall_cuda_float(float* input, float* output, int n) {
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
   dim3 grid_dim((n + block_dim.x - 1) / block_dim.x,
                 (n + block_dim.y - 1) / block_dim.y);
-  
+
   for (int k = 0; k < n; k++) {
     floyd_warshall_kernel_float<<<grid_dim, block_dim>>>(n, k, device_graph);
     cudaThreadSynchronize();
@@ -228,8 +230,8 @@ __host__ void floyd_warshall_cuda_float(float* input, float* output, int n) {
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {
-      std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
-                cudaGetErrorString(errCode) << "\n";
+    std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
+              cudaGetErrorString(errCode) << "\n";
   }
 
   cudaFree(device_graph);

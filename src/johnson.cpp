@@ -18,12 +18,12 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i*n + j] = 0;
+        adj_matrix[i * n + j] = 0;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine);
-        E ++;
+        adj_matrix[i * n + j] = choose_weight(rand_engine);
+        E++;
       } else {
-        adj_matrix[i*n + j] = INT_INF;
+        adj_matrix[i * n + j] = INT_INF;
       }
     }
   }
@@ -32,10 +32,10 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i*n + j] != 0
-          && adj_matrix[i*n + j] != INT_INF) {
-        edge_array[ei] = Edge(i,j);
-        weights[ei] = adj_matrix[i*n + j];
+      if (adj_matrix[i * n + j] != 0
+          && adj_matrix[i * n + j] != INT_INF) {
+        edge_array[ei] = Edge(i, j);
+        weights[ei] = adj_matrix[i * n + j];
         ei++;
       }
     }
@@ -122,17 +122,17 @@ void free_cuda_graph(graph_cuda_t* g) {
 
 #endif
 
-void free_graph(graph_t* g) {
+void free_graph(graph_t *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-inline bool bellman_ford(graph_t* gr, int* dist, int src) {
+inline bool bellman_ford(graph_t *gr, int *dist, int src) {
   int V = gr->V;
   int E = gr->E;
-  Edge* edges = gr->edge_array;
-  int* weights = gr->weights;
+  Edge *edges = gr->edge_array;
+  int *weights = gr->weights;
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -143,7 +143,7 @@ inline bool bellman_ford(graph_t* gr, int* dist, int src) {
   dist[src] = 0;
 
 
-  for (int i = 1; i <= V-1; i++) {
+  for (int i = 1; i <= V - 1; i++) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -170,20 +170,20 @@ inline bool bellman_ford(graph_t* gr, int* dist, int src) {
   return no_neg_cycle;
 }
 
-void johnson_parallel(graph_t* gr, int* output, int* parents) {
+void johnson_parallel(graph_t *gr, int *output, int *parents) {
 
   int V = gr->V;
 
   // Make new graph for Bellman-Ford
   // First, a new node q is added to the graph, connected by zero-weight edges
   // to each of the other nodes.
-  graph_t* bf_graph = new graph_t;
+  graph_t *bf_graph = new graph_t;
   bf_graph->V = V + 1;
   bf_graph->E = gr->E + V;
   bf_graph->edge_array = new Edge[bf_graph->E];
   bf_graph->weights = new int[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E  * sizeof(Edge));
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(int));
   std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(int));
 
@@ -198,7 +198,7 @@ void johnson_parallel(graph_t* gr, int* output, int* parents) {
   // to find for each vertex v the minimum weight h(v) of a path from q to v. If
   // this step detects a negative cycle, the algorithm is terminated.
   // TODO Can run parallel version?
-  int* h = new int[bf_graph->V];
+  int *h = new int[bf_graph->V];
   bool r = bellman_ford(bf_graph, h, V);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
@@ -222,13 +222,13 @@ void johnson_parallel(graph_t* gr, int* output, int* parents) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
-    std::vector<Vertex> p(num_vertices(G));
+    std::vector <Vertex> p(num_vertices(G));
     std::vector<int> d(num_vertices(G));
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(INT_INF));
     for (int v = 0; v < V; v++) {
-      int i = s*V + v;
+      int i = s * V + v;
       output[i] = d[v] + h[v] - h[s];
-      parents[i] = p[v];
+      parents[i] = p[i];
     }
   }
 

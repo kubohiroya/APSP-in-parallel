@@ -19,12 +19,12 @@ graph_t_float *johnson_init_float(const int n, const double p, const unsigned lo
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i*n + j] = 0.0f;
+        adj_matrix[i * n + j] = 0.0f;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine) * 1.0f;
-        E ++;
+        adj_matrix[i * n + j] = choose_weight(rand_engine) * 1.0f;
+        E++;
       } else {
-        adj_matrix[i*n + j] = FLT_INF;
+        adj_matrix[i * n + j] = FLT_INF;
       }
     }
   }
@@ -33,10 +33,10 @@ graph_t_float *johnson_init_float(const int n, const double p, const unsigned lo
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (! equals_float(adj_matrix[i*n + j], 0.0f)
-          && ! equals_float(adj_matrix[i*n + j], FLT_INF)) {
-        edge_array[ei] = Edge_float(i,j);
-        weights[ei] = adj_matrix[i*n + j];
+      if (!equals_float(adj_matrix[i * n + j], 0.0f)
+          && !equals_float(adj_matrix[i * n + j], FLT_INF)) {
+        edge_array[ei] = Edge_float(i, j);
+        weights[ei] = adj_matrix[i * n + j];
         ei++;
       }
     }
@@ -123,17 +123,17 @@ void free_cuda_graph_float(graph_cuda_t_float* g) {
 
 #endif
 
-void free_graph_float(graph_t_float* g) {
+void free_graph_float(graph_t_float *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
+inline bool bellman_ford_float(graph_t_float *gr, float *dist, int src) {
   int V = gr->V;
   int E = gr->E;
-  Edge_float* edges = gr->edge_array;
-  float* weights = gr->weights;
+  Edge_float *edges = gr->edge_array;
+  float *weights = gr->weights;
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -144,7 +144,7 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
   dist[src] = 0;
 
 
-  for (int i = 1; i <= V-1; i++) {
+  for (int i = 1; i <= V - 1; i++) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -152,7 +152,7 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
       int u = std::get<0>(edges[j]);
       int v = std::get<1>(edges[j]);
       float new_dist = weights[j] + dist[u];
-      if (! equals_float(dist[u], FLT_INF) && new_dist < dist[v])
+      if (!equals_float(dist[u], FLT_INF) && new_dist < dist[v])
         dist[v] = new_dist;
     }
   }
@@ -165,20 +165,20 @@ inline bool bellman_ford_float(graph_t_float* gr, float* dist, int src) {
     int u = std::get<0>(edges[i]);
     int v = std::get<1>(edges[i]);
     float weight = weights[i];
-    if (! equals_float(dist[u], FLT_INF) && dist[u] + weight < dist[v])
+    if (!equals_float(dist[u], FLT_INF) && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
   return no_neg_cycle;
 }
 
-void johnson_parallel_float(graph_t_float* gr, float* output, int *parents) {
+void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
 
   int V = gr->V;
 
   // Make new graph for Bellman-Ford
   // First, a new node q is added to the graph, connected by zero-weight edges
   // to each of the other nodes.
-  graph_t_float* bf_graph = new graph_t_float;
+  graph_t_float *bf_graph = new graph_t_float;
   bf_graph->V = V + 1;
   bf_graph->E = gr->E + V;
   bf_graph->edge_array = new Edge_float[bf_graph->E];
@@ -199,7 +199,7 @@ void johnson_parallel_float(graph_t_float* gr, float* output, int *parents) {
   // to find for each vertex v the minimum weight h(v) of a path from q to v. If
   // this step detects a negative cycle, the algorithm is terminated.
   // TODO Can run parallel version?
-  float* h = new float[bf_graph->V];
+  float *h = new float[bf_graph->V];
   bool r = bellman_ford_float(bf_graph, h, V);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
@@ -226,7 +226,7 @@ void johnson_parallel_float(graph_t_float* gr, float* output, int *parents) {
     std::vector<float> d(num_vertices(G));
     dijkstra_shortest_paths(G, s, distance_map(&d[0]));
     for (int v = 0; v < V; v++) {
-      output[s*V + v] = d[v] + h[v] - h[s];
+      output[s * V + v] = d[v] + h[v] - h[s];
     }
   }
 

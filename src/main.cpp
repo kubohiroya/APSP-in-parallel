@@ -22,44 +22,51 @@
 #include "johnson_double.hpp"
 
 void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size, bool check_correctness);
+
 void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_size, bool check_correctness);
+
 void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_size, bool check_correctness);
+
 void bench_johnson_int(int iterations, unsigned long seed, bool check_correctness);
+
 void bench_johnson_float(int iterations, unsigned long seed, bool check_correctness);
+
 void bench_johnson_double(int iterations, unsigned long seed, bool check_correctness);
 
 int do_main_int(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
-		  );
-int do_main_float(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
-		  );
-int do_main_double(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
-		  );
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
+);
 
-int main(int argc, char* argv[]) {
+int do_main_float(
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
+);
+
+int do_main_double(
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
+);
+
+int main(int argc, char *argv[]) {
   // parameter defaults
   unsigned long seed = 0;
   int n = 1024;
@@ -70,7 +77,7 @@ int main(int argc, char* argv[]) {
   int block_size = 32;
   int thread_count = 1;
   int type = 0;
-  extern char* optarg;
+  extern char *optarg;
   int opt;
   while ((opt = getopt(argc, argv, "ha:n:p:s:bd:ct:T:")) != -1) {
     switch (opt) {
@@ -114,7 +121,7 @@ int main(int argc, char* argv[]) {
         break;
 
       case 't':
-	thread_count = std::stoi(optarg);
+        thread_count = std::stoi(optarg);
         break;
 
       case 'T':
@@ -125,9 +132,9 @@ int main(int argc, char* argv[]) {
         } else if (optarg[0] == 'd') {
           type = 2; // double
         } else {
-	  std::cerr << "Illegal type argument (neigher i, f nor d)\n";
+          std::cerr << "Illegal type argument (neigher i, f nor d)\n";
           return -1;
-	}
+        }
         break;
     }
   }
@@ -136,31 +143,31 @@ int main(int argc, char* argv[]) {
     return do_main_int(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
   } else if (type == 1) {
     return do_main_float(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
-  }else if (type == 2) {
+  } else if (type == 2) {
     return do_main_double(seed, n, p, use_floyd_warshall, benchmark, check_correctness, block_size, thread_count);
-  }else{
+  } else {
     return -1;
   }
 }
 
 int do_main_int(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
 ) {
 
 #ifdef _OPENMP
   omp_set_num_threads(thread_count);
 #else
-  (void)thread_count; // suppress unused warning
+  (void) thread_count; // suppress unused warning
 #endif
 
-  int* solution = nullptr; // both algorithms share the same solution
+  int *solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
     bool write_solution_to_file = true;
 
@@ -174,13 +181,14 @@ int do_main_int(
       std::cout << "Reading reference solution from file: " << solution_filename << "\n";
 
       std::ifstream in(solution_filename, std::ios::in | std::ios::binary);
-      in.read(reinterpret_cast<char*>(solution), n * n * sizeof(int));
+      in.read(reinterpret_cast<char *>(solution), n * n * sizeof(int));
       in.close();
     } else {
-      int* matrix = floyd_warshall_init(n, p, seed);
+      int *matrix = floyd_warshall_init(n, p, seed);
+      int *parents = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
 
-      floyd_warshall(matrix, solution, n);
+      floyd_warshall(matrix, solution, parents, n);
 
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -195,7 +203,7 @@ int do_main_int(
         }
 
         std::ofstream out(solution_filename, std::ios::out | std::ios::binary);
-        out.write(reinterpret_cast<const char*>(solution), n * n * sizeof(int));
+        out.write(reinterpret_cast<const char *>(solution), n * n * sizeof(int));
         out.close();
 
       }
@@ -203,8 +211,9 @@ int do_main_int(
   }
 
   if (use_floyd_warshall) {
-    int* matrix = nullptr;
-    int* output = nullptr;
+    int *matrix = nullptr;
+    int *output = nullptr;
+    int *parents = nullptr;
     if (benchmark) {
       bench_floyd_warshall_int(1, seed, block_size, check_correctness);
     } else {
@@ -212,29 +221,38 @@ int do_main_int(
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
- 	    n_blocked = n + block_size - block_remainder;
+        n_blocked = n + block_size - block_remainder;
       }
 
       output = new int[n_blocked * n_blocked];
+      parents = new int[n_blocked * n_blocked];
 
       std::cout << "Using Floyd-Warshall's on " << n_blocked << "x" << n_blocked
-		<< " with p=" << p << " and seed=" << seed << "\n";
+                << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda(matrix, output, n_blocked);
+      floyd_warshall_blocked_cuda(matrix, output, parents, n_blocked);
 #else
-      floyd_warshall_blocked(matrix, output, n_blocked, block_size);
+      floyd_warshall_blocked(matrix, output, parents, n_blocked, block_size);
 #endif
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
+        std::cout << "\n";
+
         correctness_check_int(output, n_blocked, solution, n);
+        print_matrix_int(matrix, n, n_blocked);
+        std::cout << "\n";
+        print_matrix_int(output, n, n_blocked);
+        std::cout << "\n";
+        print_matrix_int(parents, n, n_blocked);
       }
 
       delete[] matrix;
       delete[] output;
+      delete[] parents;
     }
   } else {  // Using Johnson's Algorithm
     if (benchmark) {
@@ -254,13 +272,20 @@ int do_main_int(
 #else
       graph_t *gr = johnson_init(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
+
       johnson_parallel(gr, output, parents);
+
       auto end = std::chrono::high_resolution_clock::now();
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
-      if (check_correctness) correctness_check_int(output, n, solution, n);
+      if (check_correctness) {
+        correctness_check_int(output, n, solution, n);
+        print_matrix_int(output, n, n);
+        std::cout << "\n";
+        print_matrix_int(parents, n, n);
+      }
 
       //free_graph(gr);
       delete[] output;
@@ -276,24 +301,24 @@ int do_main_int(
 }
 
 int do_main_float(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
 ) {
 
 #ifdef _OPENMP
   omp_set_num_threads(thread_count);
 #else
-  (void)thread_count; // suppress unused warning
+  (void) thread_count; // suppress unused warning
 #endif
 
 
-  float* solution = nullptr; // both algorithms share the same solution
+  float *solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
     bool write_solution_to_file = true;
 
@@ -307,10 +332,10 @@ int do_main_float(
       std::cout << "Reading reference solution from file: " << solution_filename << "\n";
 
       std::ifstream in(solution_filename, std::ios::in | std::ios::binary);
-      in.read(reinterpret_cast<char*>(solution), n * n * sizeof(float));
+      in.read(reinterpret_cast<char *>(solution), n * n * sizeof(float));
       in.close();
     } else {
-      float* matrix = floyd_warshall_init_float(n, p, seed);
+      float *matrix = floyd_warshall_init_float(n, p, seed);
 
       auto start = std::chrono::high_resolution_clock::now();
 
@@ -329,15 +354,15 @@ int do_main_float(
         }
 
         std::ofstream out(solution_filename, std::ios::out | std::ios::binary);
-        out.write(reinterpret_cast<const char*>(solution), n * n * sizeof(float));
+        out.write(reinterpret_cast<const char *>(solution), n * n * sizeof(float));
         out.close();
       }
     }
   }
 
   if (use_floyd_warshall) {
-    float* matrix = nullptr;
-    float* output = nullptr;
+    float *matrix = nullptr;
+    float *output = nullptr;
     if (benchmark) {
       bench_floyd_warshall_float(1, seed, block_size, check_correctness);
     } else {
@@ -345,12 +370,12 @@ int do_main_float(
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
-	n_blocked = n + block_size - block_remainder;
+        n_blocked = n + block_size - block_remainder;
       }
       output = new float[n_blocked * n_blocked];
 
       std::cout << "Using Floyd-Warshall's on " << n_blocked << "x" << n_blocked
-		<< " with p=" << p << " and seed=" << seed << "\n";
+                << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
       floyd_warshall_blocked_cuda_float(matrix, output, n_blocked);
@@ -408,23 +433,23 @@ int do_main_float(
 }
 
 int do_main_double(
-		   unsigned long seed,
-		   int n,
-		   double p,
-		   bool use_floyd_warshall,
-		   bool benchmark,
-		   bool check_correctness,
-		   int block_size,
-		   int thread_count
+    unsigned long seed,
+    int n,
+    double p,
+    bool use_floyd_warshall,
+    bool benchmark,
+    bool check_correctness,
+    int block_size,
+    int thread_count
 ) {
 
 #ifdef _OPENMP
   omp_set_num_threads(thread_count);
 #else
-  (void)thread_count; // suppress unused warning
+  (void) thread_count; // suppress unused warning
 #endif
 
-  double* solution = nullptr; // both algorithms share the same solution
+  double *solution = nullptr; // both algorithms share the same solution
   if (!benchmark && check_correctness) {
     bool write_solution_to_file = true;
 
@@ -438,10 +463,10 @@ int do_main_double(
       std::cout << "Reading reference solution from file: " << solution_filename << "\n";
 
       std::ifstream in(solution_filename, std::ios::in | std::ios::binary);
-      in.read(reinterpret_cast<char*>(solution), n * n * sizeof(double));
+      in.read(reinterpret_cast<char *>(solution), n * n * sizeof(double));
       in.close();
     } else {
-      double* matrix = floyd_warshall_init_double(n, p, seed);
+      double *matrix = floyd_warshall_init_double(n, p, seed);
 
       auto start = std::chrono::high_resolution_clock::now();
 
@@ -460,15 +485,15 @@ int do_main_double(
         }
 
         std::ofstream out(solution_filename, std::ios::out | std::ios::binary);
-        out.write(reinterpret_cast<const char*>(solution), n * n * sizeof(float));
+        out.write(reinterpret_cast<const char *>(solution), n * n * sizeof(float));
         out.close();
       }
     }
   }
 
   if (use_floyd_warshall) {
-    double* matrix = nullptr;
-    double* output = nullptr;
+    double *matrix = nullptr;
+    double *output = nullptr;
     if (benchmark) {
       bench_floyd_warshall_double(1, seed, block_size, check_correctness);
     } else {
@@ -476,12 +501,12 @@ int do_main_double(
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
-	n_blocked = n + block_size - block_remainder;
+        n_blocked = n + block_size - block_remainder;
       }
       output = new double[n_blocked * n_blocked];
 
       std::cout << "Using Floyd-Warshall's on " << n_blocked << "x" << n_blocked
-		<< " with p=" << p << " and seed=" << seed << "\n";
+                << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
       floyd_warshall_blocked_cuda_double(matrix, output, n_blocked);
@@ -540,23 +565,25 @@ int do_main_double(
 
 
 void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size, bool check_correctness) {
-  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size=" << block_size << "\n";
+  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size="
+            << block_size << "\n";
 
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      int* matrix = floyd_warshall_init(v, p, seed);
-      int* solution = new int[v * v];
+      int *matrix = floyd_warshall_init(v, p, seed);
+      int *solution = new int[v * v];
+      int *parents = new int[v * v];
 
-      int* matrix_blocked = matrix; // try to reuse inputs
+      int *matrix_blocked = matrix; // try to reuse inputs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
-	// we may have to add some verts to fit to a multiple of block_size
+        // we may have to add some verts to fit to a multiple of block_size
         matrix_blocked = floyd_warshall_blocked_init(v, block_size, p, seed);
-	    v_blocked = v + block_size - block_remainder;
+        v_blocked = v + block_size - block_remainder;
       }
-      int* output = new int[v_blocked * v_blocked];
+      int *output = new int[v_blocked * v_blocked];
 
       bool correct = false;
 
@@ -564,19 +591,19 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(int));
+        std::memset(solution, 0, v * v * sizeof(int));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall(matrix, solution, v);
+        floyd_warshall(matrix, solution, parents, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v_blocked*v_blocked*sizeof(int));
+        std::memset(output, 0, v_blocked * v_blocked * sizeof(int));
         auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked(matrix_blocked, output, v_blocked, block_size);
+        floyd_warshall_blocked(matrix_blocked, output, parents, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
@@ -597,23 +624,24 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
 
 
 void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_size, bool check_correctness) {
-  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size=" << block_size << "\n";
+  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size="
+            << block_size << "\n";
 
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      float* matrix = floyd_warshall_init_float(v, p, seed);
-      float* solution = new float[v * v];
+      float *matrix = floyd_warshall_init_float(v, p, seed);
+      float *solution = new float[v * v];
 
-      float* matrix_blocked = matrix; // try to reuse inputs
+      float *matrix_blocked = matrix; // try to reuse inputs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
-	// we may have to add some verts to fit to a multiple of block_size
+        // we may have to add some verts to fit to a multiple of block_size
         matrix_blocked = floyd_warshall_blocked_init_float(v, block_size, p, seed);
-	    v_blocked = v + block_size - block_remainder;
+        v_blocked = v + block_size - block_remainder;
       }
-      float* output = new float[v_blocked * v_blocked];
+      float *output = new float[v_blocked * v_blocked];
 
       bool correct = false;
 
@@ -621,7 +649,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(float));
+        std::memset(solution, 0, v * v * sizeof(float));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
         floyd_warshall_float(matrix, solution, v);
@@ -631,7 +659,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v_blocked*v_blocked*sizeof(float));
+        std::memset(output, 0, v_blocked * v_blocked * sizeof(float));
         auto start = std::chrono::high_resolution_clock::now();
         floyd_warshall_blocked_float(matrix_blocked, output, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
@@ -653,23 +681,24 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
 }
 
 void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_size, bool check_correctness) {
-  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size=" << block_size << "\n";
+  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size="
+            << block_size << "\n";
 
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      double* matrix = floyd_warshall_init_double(v, p, seed);
-      double* solution = new double[v * v];
+      double *matrix = floyd_warshall_init_double(v, p, seed);
+      double *solution = new double[v * v];
 
-      double* matrix_blocked = matrix; // try to reuse inputs
+      double *matrix_blocked = matrix; // try to reuse inputs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
-	// we may have to add some verts to fit to a multiple of block_size
+        // we may have to add some verts to fit to a multiple of block_size
         matrix_blocked = floyd_warshall_blocked_init_double(v, block_size, p, seed);
-	    v_blocked = v + block_size - block_remainder;
+        v_blocked = v + block_size - block_remainder;
       }
-      double* output = new double[v_blocked * v_blocked];
+      double *output = new double[v_blocked * v_blocked];
 
       bool correct = false;
 
@@ -677,7 +706,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(double));
+        std::memset(solution, 0, v * v * sizeof(double));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
         floyd_warshall_double(matrix, solution, v);
@@ -687,7 +716,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v_blocked*v_blocked*sizeof(double));
+        std::memset(output, 0, v_blocked * v_blocked * sizeof(double));
         auto start = std::chrono::high_resolution_clock::now();
         floyd_warshall_blocked_double(matrix_blocked, output, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
@@ -715,14 +744,14 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t* gr = johnson_init(v, pp, seed);
-      int* matrix = floyd_warshall_init(v, pp, seed);
-      int* output = new int[v* v];
-      int* parents = new int[v* v];
+      graph_t *gr = johnson_init(v, pp, seed);
+      int *matrix = floyd_warshall_init(v, pp, seed);
+      int *output = new int[v * v];
+      int *parents = new int[v * v];
 
-      int* solution = new int[v*v];
-      int** out_sol = new int*[v];
-      for (int i = 0; i < v; i++) out_sol[i] = &solution[i*v];
+      int *solution = new int[v * v];
+      int **out_sol = new int *[v];
+      for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
       Graph G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<int> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
@@ -733,7 +762,7 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(int));
+        std::memset(solution, 0, v * v * sizeof(int));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
         johnson_all_pairs_shortest_paths(G, out_sol, distance_map(&d[0]).predecessor_map(&p[0]));
@@ -743,8 +772,8 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v*v*sizeof(int));
-        std::memset(parents, 0, v*v*sizeof(int));
+        std::memset(output, 0, v * v * sizeof(int));
+        std::memset(parents, 0, v * v * sizeof(int));
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, output, v, block_size);
@@ -778,14 +807,14 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_float* gr = johnson_init_float(v, pp, seed);
-      float* matrix = floyd_warshall_init_float(v, pp, seed);
-      float* output = new float[v* v];
-      int* parents = new int[v* v];
+      graph_t_float *gr = johnson_init_float(v, pp, seed);
+      float *matrix = floyd_warshall_init_float(v, pp, seed);
+      float *output = new float[v * v];
+      int *parents = new int[v * v];
 
-      float* solution = new float[v*v];
-      float** out_sol = new float*[v];
-      for (int i = 0; i < v; i++) out_sol[i] = &solution[i*v];
+      float *solution = new float[v * v];
+      float **out_sol = new float *[v];
+      for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
       Graph_float G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<float> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
@@ -796,7 +825,7 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(float));
+        std::memset(solution, 0, v * v * sizeof(float));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
         johnson_all_pairs_shortest_paths(G, out_sol, distance_map(&d[0]).predecessor_map(&p[0]));
@@ -806,8 +835,8 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v*v*sizeof(float));
-        std::memset(parents, 0, v*v*sizeof(int));
+        std::memset(output, 0, v * v * sizeof(float));
+        std::memset(parents, 0, v * v * sizeof(int));
 
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
@@ -842,14 +871,14 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_double* gr = johnson_init_double(v, pp, seed);
-      double* matrix = floyd_warshall_init_double(v, pp, seed);
-      double* output = new double[v* v];
-      int* parents = new int[v * v];
+      graph_t_double *gr = johnson_init_double(v, pp, seed);
+      double *matrix = floyd_warshall_init_double(v, pp, seed);
+      double *output = new double[v * v];
+      int *parents = new int[v * v];
 
-      double* solution = new double[v*v];
-      double** out_sol = new double*[v];
-      for (int i = 0; i < v; i++) out_sol[i] = &solution[i*v];
+      double *solution = new double[v * v];
+      double **out_sol = new double *[v];
+      for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
       Graph_double G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<double> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
@@ -860,7 +889,7 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v*v*sizeof(double));
+        std::memset(solution, 0, v * v * sizeof(double));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
         johnson_all_pairs_shortest_paths(G, out_sol, distance_map(&d[0]).predecessor_map(&p[0]));
@@ -870,8 +899,8 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
         seq_total_time += seq_start_to_end.count();
 
         // clear output
-        std::memset(output, 0, v*v*sizeof(double));
-        std::memset(parents, 0, v*v*sizeof(int));
+        std::memset(output, 0, v * v * sizeof(double));
+        std::memset(parents, 0, v * v * sizeof(int));
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, output, v, block_size);

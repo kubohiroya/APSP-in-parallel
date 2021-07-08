@@ -8,65 +8,69 @@
 #include "inf.hpp"
 #include "equals.hpp"
 
-inline void print_int(int value){
-  if(value == INT_INF){
-    std::cout <<  "Inf";
-  }else{
-    std::cout << value;
-  }
-}
-inline void print_float(float value){
-  if(value == FLT_INF){
-    std::cout <<  "Inf";
-  }else{
-    std::cout << value;
-  }
-}
-inline void print_double(double value){
-  if(value == DBL_INF){
-    std::cout <<  "Inf";
-  }else{
+inline void print_int(int value) {
+  if (value == INT_INF) {
+    std::cout << "Inf";
+  } else {
     std::cout << value;
   }
 }
 
-inline void print_matrix_int(int* output, int n_output, int n_blocked) {
-  for (int i = 0; i < n_output; i++) {
-    print_int(output[i*n_blocked]);
-    for (int j = 1; j < n_output; j++) {
-      std::cout << ", ";
-      print_int(output[i*n_blocked+j]);
-    }
-    std::cout << std::endl;
+inline void print_float(float value) {
+  if (value == FLT_INF) {
+    std::cout << "Inf";
+  } else {
+    std::cout << value;
   }
 }
-inline void print_matrix_float(float* output, int n_output, int n_blocked) {
-  for (int i = 0; i < n_output; i++) {
-    print_float(output[i*n_blocked]);
-    for (int j = 1; j < n_output; j++) {
-      std::cout << ", ";
-      print_float(output[i*n_blocked+j]);
-    }
-    std::cout << std::endl;
+
+inline void print_double(double value) {
+  if (value == DBL_INF) {
+    std::cout << "Inf";
+  } else {
+    std::cout << value;
   }
 }
-inline void print_matrix_double(double* output, int n_output, int n_blocked) {
+
+inline void print_matrix_int(int *output, int n_output, int n_blocked) {
   for (int i = 0; i < n_output; i++) {
-    print_double(output[i*n_blocked]);
+    print_int(output[i * n_blocked]);
     for (int j = 1; j < n_output; j++) {
       std::cout << ", ";
-      print_double(output[i*n_blocked+j]);
+      print_int(output[i * n_blocked + j]);
     }
     std::cout << std::endl;
   }
 }
 
-inline bool correctness_check_int(int* output, int n_output, int* solution, int n_solution) {
+inline void print_matrix_float(float *output, int n_output, int n_blocked) {
+  for (int i = 0; i < n_output; i++) {
+    print_float(output[i * n_blocked]);
+    for (int j = 1; j < n_output; j++) {
+      std::cout << ", ";
+      print_float(output[i * n_blocked + j]);
+    }
+    std::cout << std::endl;
+  }
+}
+
+inline void print_matrix_double(double *output, int n_output, int n_blocked) {
+  for (int i = 0; i < n_output; i++) {
+    print_double(output[i * n_blocked]);
+    for (int j = 1; j < n_output; j++) {
+      std::cout << ", ";
+      print_double(output[i * n_blocked + j]);
+    }
+    std::cout << std::endl;
+  }
+}
+
+inline bool correctness_check_int(int *output, int n_output, int *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (output[i*n_output + j] != solution[i*n_solution + j]) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i*n_output+j]
-		  << " vs solution's " << solution[i*n_solution+j] << "!" << std::endl;
+      if (output[i * n_output + j] != solution[i * n_solution + j]) {
+        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+                  << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }
     }
@@ -74,12 +78,12 @@ inline bool correctness_check_int(int* output, int n_output, int* solution, int 
   return true;
 }
 
-inline bool correctness_check_float(float* output, int n_output, float* solution, int n_solution) {
+inline bool correctness_check_float(float *output, int n_output, float *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (! equals_float(output[i*n_output + j], solution[i*n_solution + j])) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i*n_output+j]
-		  << " vs solution's " << solution[i*n_solution+j] << "!" << std::endl;
+      if (!equals_float(output[i * n_output + j], solution[i * n_solution + j])) {
+        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+                  << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }
     }
@@ -88,12 +92,12 @@ inline bool correctness_check_float(float* output, int n_output, float* solution
   return true;
 }
 
-inline bool correctness_check_double(double* output, int n_output, double* solution, int n_solution) {
+inline bool correctness_check_double(double *output, int n_output, double *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (! equals_double(output[i*n_output + j], solution[i*n_solution + j])) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i*n_output+j]
-		  << " vs solution's " << solution[i*n_solution+j] << "!" << std::endl;
+      if (!equals_double(output[i * n_output + j], solution[i * n_solution + j])) {
+        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+                  << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }
     }
@@ -120,7 +124,7 @@ inline void print_usage() {
 }
 
 inline void print_table_row(double p, int v, double seq, double par, bool check_correctness, bool correct) {
-  std::printf("\n| %-3.2f | %-7d | %-12.3f | %-12.3f | %-10.3f |", p, v, seq, par, seq /par);
+  std::printf("\n| %-3.2f | %-7d | %-12.3f | %-12.3f | %-10.3f |", p, v, seq, par, seq / par);
   if (check_correctness) {
     std::printf(" %-8s |", (correct ? "x" : "!"));
   }
@@ -137,7 +141,7 @@ inline void print_table_break(bool check_correctness) {
 inline void print_table_header(bool check_correctness) {
   print_table_break(check_correctness);
   std::printf("\n| %-4s | %-7s | %-12s | %-12s | %-10s |",
-      "p", "verts", "seq (ms)", "par (ms)", "speedup");
+              "p", "verts", "seq (ms)", "par (ms)", "speedup");
   if (check_correctness) {
     std::printf(" %-8s |", "correct");
   }
@@ -146,7 +150,8 @@ inline void print_table_header(bool check_correctness) {
 
 inline std::string get_solution_filename(std::string prefix, int n, double p, unsigned long seed, char typeChar) {
   std::stringstream solution_filename;
-  solution_filename << "solution_cache/" << prefix << "-sol-n"<< n << "-p" << p << "-s" << seed << "-T" << typeChar << ".bin";
+  solution_filename << "solution_cache/" << prefix << "-sol-n" << n << "-p" << p << "-s" << seed << "-T" << typeChar
+                    << ".bin";
   return solution_filename.str();
 }
 
@@ -156,13 +161,14 @@ public:
   Timer() {
     start = std::chrono::high_resolution_clock::now();
   };
+
   ~Timer() {
-    std::chrono::time_point<std::chrono::high_resolution_clock> end = std::chrono::high_resolution_clock::now();
+    std::chrono::time_point <std::chrono::high_resolution_clock> end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> start_to_end = end - start;
     std::cout << "Timer runtime: " << start_to_end.count() << "\n\n";
   };
 
 private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> start;
+  std::chrono::time_point <std::chrono::high_resolution_clock> start;
 
 };
