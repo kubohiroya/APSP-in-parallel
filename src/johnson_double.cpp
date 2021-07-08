@@ -223,10 +223,13 @@ void johnson_parallel_double(graph_t_double *gr, double *output, int *parents) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
+    std::vector<Vertex_double> p(num_vertices(G));
     std::vector<double> d(num_vertices(G));
-    dijkstra_shortest_paths(G, s, distance_map(&d[0]));
+    dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(DBL_INF));
     for (int v = 0; v < V; v++) {
-      output[s * V + v] = d[v] + h[v] - h[s];
+      int i = s * V + v;
+      output[i] = d[v] + h[v] - h[s];
+      parents[i] = p[i];
     }
   }
 

@@ -21,7 +21,7 @@ graph_t_float *johnson_init_float(const int n, const double p, const unsigned lo
       if (i == j) {
         adj_matrix[i * n + j] = 0.0f;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i * n + j] = choose_weight(rand_engine) * 1.0f;
+        adj_matrix[i * n + j] = choose_weight(rand_engine);
         E++;
       } else {
         adj_matrix[i * n + j] = FLT_INF;
@@ -186,7 +186,7 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
 
   std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge_float));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(float));
-  std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(float));
+  std::memset(&bf_graph->weights[gr->E], 0.0f, V * sizeof(float));
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -223,10 +223,13 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
+    std::vector<Vertex_float> p(num_vertices(G));
     std::vector<float> d(num_vertices(G));
-    dijkstra_shortest_paths(G, s, distance_map(&d[0]));
+    dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(FLT_INF));
     for (int v = 0; v < V; v++) {
-      output[s * V + v] = d[v] + h[v] - h[s];
+      int i = s * V + v;
+      output[i] = d[v] + h[v] - h[s];
+      parents[i] = p[i];
     }
   }
 

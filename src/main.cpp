@@ -240,13 +240,12 @@ int do_main_int(
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        std::cout << "\n";
-
         correctness_check_int(output, n_blocked, solution, n);
+        std::cout << "[matrix]\n";
         print_matrix_int(matrix, n, n_blocked);
-        std::cout << "\n";
+        std::cout << "[output]\n";
         print_matrix_int(output, n, n_blocked);
-        std::cout << "\n";
+        std::cout << "[parents]\n";
         print_matrix_int(parents, n, n_blocked);
       }
 
@@ -282,8 +281,9 @@ int do_main_int(
 
       if (check_correctness) {
         correctness_check_int(output, n, solution, n);
+        std::cout << "[output]\n";
         print_matrix_int(output, n, n);
-        std::cout << "\n";
+        std::cout << "[parents]\n";
         print_matrix_int(parents, n, n);
       }
 
@@ -363,6 +363,8 @@ int do_main_float(
   if (use_floyd_warshall) {
     float *matrix = nullptr;
     float *output = nullptr;
+    int *parents = nullptr;
+
     if (benchmark) {
       bench_floyd_warshall_float(1, seed, block_size, check_correctness);
     } else {
@@ -373,6 +375,7 @@ int do_main_float(
         n_blocked = n + block_size - block_remainder;
       }
       output = new float[n_blocked * n_blocked];
+      parents = new int[n_blocked * n_blocked];
 
       std::cout << "Using Floyd-Warshall's on " << n_blocked << "x" << n_blocked
                 << " with p=" << p << " and seed=" << seed << "\n";
@@ -388,10 +391,18 @@ int do_main_float(
 
       if (check_correctness) {
         correctness_check_float(output, n_blocked, solution, n);
+
+        std::cout << "[matrix]\n";
+        print_matrix_float(matrix, n, n_blocked);
+        std::cout << "[output]\n";
+        print_matrix_float(output, n, n_blocked);
+        std::cout << "[parents]\n";
+        print_matrix_int(parents, n, n_blocked);
       }
 
       delete[] matrix;
       delete[] output;
+      delete[] parents;
     }
   } else {  // Using Johnson's Algorithm
     if (benchmark) {
@@ -417,7 +428,13 @@ int do_main_float(
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
-      if (check_correctness) correctness_check_float(output, n, solution, n);
+      if (check_correctness) {
+        correctness_check_float(output, n, solution, n);
+        std::cout << "[output]\n";
+        print_matrix_float(output, n, n);
+        std::cout << "[parents]\n";
+        print_matrix_int(parents, n, n);
+      }
 
       //free_graph(gr);
       delete[] output;
@@ -494,6 +511,8 @@ int do_main_double(
   if (use_floyd_warshall) {
     double *matrix = nullptr;
     double *output = nullptr;
+    double *parents = nullptr;
+
     if (benchmark) {
       bench_floyd_warshall_double(1, seed, block_size, check_correctness);
     } else {
@@ -504,6 +523,7 @@ int do_main_double(
         n_blocked = n + block_size - block_remainder;
       }
       output = new double[n_blocked * n_blocked];
+      parents = new double[n_blocked * n_blocked];
 
       std::cout << "Using Floyd-Warshall's on " << n_blocked << "x" << n_blocked
                 << " with p=" << p << " and seed=" << seed << "\n";
@@ -519,10 +539,16 @@ int do_main_double(
 
       if (check_correctness) {
         correctness_check_double(output, n_blocked, solution, n);
+        std::cout << "[matrix]\n";
+        print_matrix_double(matrix, n, n_blocked);
+        std::cout << "[output]\n";
+        print_matrix_double(output, n, n_blocked);
+        std::cout << "[parents]\n";
+        print_matrix_double(parents, n, n_blocked);
       }
-
       delete[] matrix;
       delete[] output;
+      delete[] parents;
     }
   } else {  // Using Johnson's Algorithm
     if (benchmark) {
@@ -530,6 +556,7 @@ int do_main_double(
     } else {
       double *output = new double[n * n];
       int *parents = new int[n * n];
+
       std::cout << "Using Johnson's on " << n << "x" << n
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
@@ -548,7 +575,13 @@ int do_main_double(
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
-      if (check_correctness) correctness_check_double(output, n, solution, n);
+      if (check_correctness) {
+        correctness_check_double(output, n, solution, n);
+        std::cout << "[output]\n";
+        print_matrix_double(output, n, n);
+        std::cout << "[parents]\n";
+        print_matrix_int(parents, n, n);
+      }
 
       //free_graph(gr);
       delete[] output;

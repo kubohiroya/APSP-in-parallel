@@ -17,7 +17,7 @@ inline void print_int(int value) {
 }
 
 inline void print_float(float value) {
-  if (value == FLT_INF) {
+  if (equals_float(value, FLT_INF)) {
     std::cout << "Inf";
   } else {
     std::cout << value;
@@ -25,7 +25,7 @@ inline void print_float(float value) {
 }
 
 inline void print_double(double value) {
-  if (value == DBL_INF) {
+  if (equals_double(value, DBL_INF)) {
     std::cout << "Inf";
   } else {
     std::cout << value;

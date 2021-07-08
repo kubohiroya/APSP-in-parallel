@@ -19,13 +19,13 @@ extern "C" void floyd_warshall_in_place(int* C, const int* A, const int* B, int*
 
 inline void floyd_warshall_in_place(int *C, const int *A, const int *B, int *parents, const int b, const int n) {
   for (int k = 0; k < b; k++) {
-    int kth = k * n;
+    int ktn = k * n;
     for (int i = 0; i < b; i++) {
       for (int j = 0; j < b; j++) {
-        int sum = A[i * n + k] + B[kth + j];
+        int sum = A[i * n + k] + B[ktn + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          parents[i * n + j] = parents[k * n + j];
+          parents[i * n + j] = parents[ktn + j];
         }
       }
     }

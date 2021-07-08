@@ -81,7 +81,6 @@ void floyd_warshall(const int *input, int *output, int *parents, const int n) {
       }
     }
   }
-
 }
 
 void floyd_warshall_blocked(const int *input, int *output, int *parents, const int n, const int b) {
