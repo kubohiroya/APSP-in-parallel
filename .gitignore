@@ -7,3 +7,5 @@ libs/*
 solution_cache/*
 apsp-*
 *~
+*.class
+*.jar
