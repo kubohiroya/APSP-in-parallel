@@ -35,7 +35,7 @@ inline void floyd_warshall_in_place_double(double *C, const double *A, const dou
 #endif
 
 // expects len(input) == len(output) == n*n
-void floyd_warshall_blocked_double(const double *input, double *output, int *parents, const int n, const int b);
+extern "C" void floyd_warshall_blocked_double(const double *input, double *output, int *parents, const int n, const int b);
 
 #ifdef CUDA
 void floyd_warshall_cuda_double(double* input, double* output, int n);

@@ -18,8 +18,6 @@ typedef struct graph_float {
   float *weights;
 } graph_t_float;
 
-graph_t_float *johnson_init_float(const int n, const double p, const unsigned long seed);
-
 typedef struct edge_float {
   int u;
   int v;
@@ -33,6 +31,13 @@ typedef struct graph_cuda_float {
   edge_t_float *edge_array;
 } graph_cuda_t_float;
 
+int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p, const unsigned long seed);
+
+int count_edges_float(const float *adj_matrix, const int n);
+
+graph_t_float *init_random_graph_float(const int n, const double p, const unsigned long seed);
+
+graph_t_float *init_graph_float(const int *adj_matrix, const int n, const int e);
 
 graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const unsigned long seed);
 
@@ -44,3 +49,4 @@ void free_graph_float(graph_t_float *g);
 
 void johnson_parallel_float(graph_t_float *gr, float *output, int *parents);
 
+extern "C" void johnson_parallel_matrix_float(const float *adj_matrix, float *output, int *parents, const int n);

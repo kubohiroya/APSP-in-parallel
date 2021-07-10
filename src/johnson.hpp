@@ -17,8 +17,6 @@ typedef struct graph {
   int *weights;
 } graph_t;
 
-graph_t *johnson_init(const int n, const double p, const unsigned long seed);
-
 typedef struct edge {
   int u;
   int v;
@@ -32,6 +30,13 @@ typedef struct graph_cuda {
   edge_t *edge_array;
 } graph_cuda_t;
 
+int init_random_adj_matrix(int *adj_matrix, const int n, const double p, const unsigned long seed);
+
+int count_edges(const int *adj_matrix, const int n);
+
+graph_t *init_random_graph(const int n, const double p, const unsigned long seed);
+
+graph_t *init_graph(const int *adj_matrix, const int n, const int e);
 
 graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long seed);
 
@@ -42,4 +47,6 @@ void free_cuda_graph(graph_cuda_t *g);
 void free_graph(graph_t *g);
 
 void johnson_parallel(graph_t *gr, int *output, int *parents);
+
+extern "C" void johnson_parallel_matrix(const int *adj_matrix, int *output, int *parents, const int n);
 

@@ -7,14 +7,13 @@
 
 #include "johnson.hpp"
 
-graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
+int init_random_adj_matrix(int *adj_matrix, const int n, const double p, const unsigned long seed){
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
-  int *adj_matrix = new int[n * n];
-  size_t E = 0;
+  int E = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
@@ -27,6 +26,23 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
       }
     }
   }
+  return E;
+}
+
+int count_edges(const int *adj_matrix, const int n){
+  size_t E = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      int weight = adj_matrix[i * n + j];
+      if (weight != 0 && weight != INT_INF) {
+         E++;
+      }
+    }
+  }
+  return E;
+}
+
+graph_t *init_graph(const int *adj_matrix, const int n, const int E) {
   Edge *edge_array = new Edge[E];
   int *weights = new int[E];
   int ei = 0;
@@ -40,15 +56,19 @@ graph_t *johnson_init(const int n, const double p, const unsigned long seed) {
       }
     }
   }
-
-  delete[] adj_matrix;
-
   graph_t *gr = new graph_t;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
   gr->weights = weights;
+  return gr;
+}
 
+graph_t *init_random_graph(const int n, const double p, const unsigned long seed) {
+  int *adj_matrix = new int[n * n];
+  size_t E = init_random_adj_matrix(adj_matrix, n, p, seed);
+  graph_t *gr = init_graph(adj_matrix, n, E);
+  delete[] adj_matrix;
   return gr;
 }
 
@@ -65,25 +85,10 @@ void set_edge(edge_t *edge, int u, int v) {
 }
 
 graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long seed) {
-  static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<int> choose_weight(1, 100);
-
-  std::mt19937_64 rand_engine(seed);
 
   int *adj_matrix = new int[n * n];
-  size_t E = 0;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      if (i == j) {
-        adj_matrix[i*n + j] = 0;
-      } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine);
-        E ++;
-      } else {
-        adj_matrix[i*n + j] = INT_INF;
-      }
-    }
-  }
+  int E = init_random_adj_matrix(adj_matrix, n, p, seed);
+
   edge_t *edge_array = new edge_t[E];
   int* starts = new int[n + 1];  // Starting point for each edge
   int* weights = new int[E];
@@ -234,4 +239,11 @@ void johnson_parallel(graph_t *gr, int *output, int *parents) {
 
   delete[] h;
   free_graph(bf_graph);
+}
+
+void johnson_parallel_matrix(const int *adj_matrix, const int n, int *output, int *parents){
+  johnson_parallel(init_graph(adj_matrix, n, count_edges(adj_matrix, n)), output, parents);
+}
+
+extern "C" void nop(){
 }

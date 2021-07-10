@@ -274,7 +274,8 @@ int do_main_int(
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph(cuda_gr);
 #else
-      graph_t *gr = johnson_init(n, p, seed);
+      int *matrix = new int[n * n];
+      graph_t *gr = init_random_graph(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
 
       johnson_parallel(gr, output, parents);
@@ -430,7 +431,7 @@ int do_main_float(
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph_float(cuda_gr);
 #else
-      graph_t_float *gr = johnson_init_float(n, p, seed);
+      graph_t_float *gr = init_random_graph_float(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_parallel_float(gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
@@ -581,7 +582,7 @@ int do_main_double(
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph_double(cuda_gr);
 #else
-      graph_t_double *gr = johnson_init_double(n, p, seed);
+      graph_t_double *gr = init_random_graph_double(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_parallel_double(gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
@@ -797,7 +798,7 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t *gr = johnson_init(v, pp, seed);
+      graph_t *gr = init_random_graph(v, pp, seed);
       int *matrix = floyd_warshall_init(v, pp, seed);
       int *output = new int[v * v];
       int *parents = new int[v * v];
@@ -860,7 +861,7 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_float *gr = johnson_init_float(v, pp, seed);
+      graph_t_float *gr = init_random_graph_float(v, pp, seed);
       float *matrix = floyd_warshall_init_float(v, pp, seed);
       float *output = new float[v * v];
       int *parents = new int[v * v];
@@ -924,7 +925,7 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_double *gr = johnson_init_double(v, pp, seed);
+      graph_t_double *gr = init_random_graph_double(v, pp, seed);
       double *matrix = floyd_warshall_init_double(v, pp, seed);
       double *output = new double[v * v];
       int *parents = new int[v * v];

@@ -7,49 +7,68 @@
 #include "johnson_double.hpp"
 #include "equals.hpp"
 
-graph_t_double *johnson_init_double(const int n, const double p, const unsigned long seed) {
+int init_random_adj_matrix_double(double *adj_matrix, const int n, const double p, const unsigned long seed){
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
-  double *adj_matrix = new double[n * n];
-
-  size_t E = 0;
+  int E = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
         adj_matrix[i * n + j] = 0.0;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i * n + j] = choose_weight(rand_engine) * 1.0;
+        adj_matrix[i * n + j] = choose_weight(rand_engine);
         E++;
       } else {
         adj_matrix[i * n + j] = DBL_INF;
       }
     }
   }
+  return E;
+}
+
+int count_edges_double(const double *adj_matrix, const int n){
+  size_t E = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      int weight = adj_matrix[i * n + j];
+      if (weight != 0 && weight != DBL_INF) {
+        E++;
+      }
+    }
+  }
+  return E;
+}
+
+graph_t_double *init_graph_double(const double *adj_matrix, const int n, const int E) {
   Edge_double *edge_array = new Edge_double[E];
   double *weights = new double[E];
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (!equals_double(adj_matrix[i * n + j], 0.0)
-          && !equals_double(adj_matrix[i * n + j], DBL_INF)) {
+      if (adj_matrix[i * n + j] != 0
+          && adj_matrix[i * n + j] != DBL_INF) {
         edge_array[ei] = Edge_double(i, j);
         weights[ei] = adj_matrix[i * n + j];
         ei++;
       }
     }
   }
-
-  delete[] adj_matrix;
-
   graph_t_double *gr = new graph_t_double;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
   gr->weights = weights;
+  return gr;
+}
 
+graph_t_double *init_random_graph_double(const int n, const double p, const unsigned long seed) {
+  double *adj_matrix = new double[n * n];
+  size_t E = init_random_adj_matrix_double(adj_matrix, n, p, seed);
+  graph_t_double *gr = init_graph_double(adj_matrix, n, E);
+  delete[] adj_matrix;
   return gr;
 }
 
@@ -66,25 +85,10 @@ void set_edge_double(edge_t_double *edge, int u, int v) {
 }
 
 graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const unsigned long seed) {
-  static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_real_distribution<double> choose_weight(1, 100);
-
-  std::mt19937_64 rand_engine(seed);
 
   double *adj_matrix = new double[n * n];
-  size_t E = 0;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      if (i == j) {
-        adj_matrix[i*n + j] = 0.0f;
-      } else if (flip(rand_engine) < p) {
-        adj_matrix[i*n + j] = choose_weight(rand_engine);
-        E ++;
-      } else {
-        adj_matrix[i*n + j] = DBL_INF;
-      }
-    }
-  }
+  int E = init_random_adj_matrix_double(adj_matrix, n, p, seed);
+
   edge_t_double *edge_array = new edge_t_double[E];
   int* starts = new int[n + 1];  // Starting point for each edge
   double* weights = new double[E];
@@ -235,4 +239,8 @@ void johnson_parallel_double(graph_t_double *gr, double *output, int *parents) {
 
   delete[] h;
   free_graph_double(bf_graph);
+}
+
+void johnson_parallel_matrix_double(const double *adj_matrix, double *output, int *parents, const int n){
+  johnson_parallel_double(init_graph_double(adj_matrix, n, count_edges_double(adj_matrix, n)), output, parents);
 }
