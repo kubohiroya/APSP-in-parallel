@@ -85,6 +85,7 @@ void floyd_warshall(const int *input, int *output, int *parents, const int n) {
 
 void floyd_warshall_blocked(const int *input, int *output, int *parents, const int n, const int b) {
   std::memcpy(output, input, n * n * sizeof(int));
+  std::memset(parents, -1, n * n * sizeof(int));
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       parents[i * n + j] = i;
@@ -95,27 +96,27 @@ void floyd_warshall_blocked(const int *input, int *output, int *parents, const i
 
   // note that [i][j] == [i * input_width * block_width + j * block_width]
   for (int k = 0; k < blocks; k++) {
-    floyd_warshall_in_place(&output[k * b * n + k * b], &output[k * b * n + k * b], &output[k * b * n + k * b],
-                            &parents[k * b * n + k * b], b, n);
+    int kbnkb = k * b * n + k * b;
+    floyd_warshall_in_place(&output[kbnkb], &output[kbnkb], &output[kbnkb], &parents[kbnkb], b, n);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int j = 0; j < blocks; j++) {
       if (j == k) continue;
-      floyd_warshall_in_place(&output[k * b * n + j * b], &output[k * b * n + k * b], &output[k * b * n + j * b],
-                              &parents[k * b * n + j * b], b, n);
+      int kbnjb = k * b * n + j * b;
+      floyd_warshall_in_place(&output[kbnjb], &output[kbnkb], &output[kbnjb], &parents[kbnjb], b, n);
     }
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int i = 0; i < blocks; i++) {
       if (i == k) continue;
-      floyd_warshall_in_place(&output[i * b * n + k * b], &output[i * b * n + k * b], &output[k * b * n + k * b],
-                              &parents[i * b * n + k * b], b, n);
+      int ibnkb = i * b * n + k * b;
+      floyd_warshall_in_place(&output[ibnkb], &output[ibnkb], &output[kbnkb], &parents[ibnkb], b, n);
       for (int j = 0; j < blocks; j++) {
         if (j == k) continue;
-        floyd_warshall_in_place(&output[i * b * n + j * b], &output[i * b * n + k * b],
-                                &output[k * b * n + j * b], &parents[i * b * n + j * b], b, n);
+        int ibnjb = i * b * n + j * b;
+        floyd_warshall_in_place(&output[ibnjb], &output[ibnkb], &output[k * b * n + j * b], &parents[ibnjb], b, n);
       }
     }
   }
