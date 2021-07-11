@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, int n) {
+__host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, int *parents, int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -189,7 +189,7 @@ __host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, 
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_double(double *input, double *output, int n) {
+__host__ void floyd_warshall_cuda_double(double *input, double *output, int *parents, int n) {
 
   // from assignment 1
   int deviceCount;

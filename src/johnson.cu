@@ -43,9 +43,10 @@ __global__ void dijkstra_kernel(int *output, int *parents, char *visited_global)
     visited[u] = 1;
     for (int v_i = u_start; v_i < u_end; v_i++) {
       int v = edge_array[v_i].v;
-      if (!visited[v] && dist_u != INT_INF && dist_u + weights[v_i] < dist[v])
+      if (!visited[v] && dist_u != INT_INF && dist_u + weights[v_i] < dist[v]) {
         dist[v] = dist_u + weights[v_i];
-      parents[count] = 0 // FIXME
+        parents[count] = 0; // FIXME
+      }
     }
   }
 }

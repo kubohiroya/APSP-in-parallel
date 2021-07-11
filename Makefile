@@ -32,12 +32,6 @@ CPP_SOURCES := $(shell find $(SRC_DIR) -name '*cpp')
 CU_SOURCES := $(shell find $(SRC_DIR) -name '*cu')
 ISPC_SOURCES := $(shell find $(SRC_DIR) -name '*ispc')
 
-SEQ_LIB := $(LIBS_DIR)/libapsp-seq.dylib
-OMP_LIB := $(LIBS_DIR)/libapsp-omp.dylib
-CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.dylib
-SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.dylib
-OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.dylib
-
 SEQ_OBJECTS := $(CPP_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/seq-%.o)
 OMP_OBJECTS := $(CPP_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/omp-%.o)
 
@@ -62,6 +56,11 @@ JAVA_SRCS := ApspTest.java
 JAVA_CLASS := ApspTest.class
 
 ifeq ($(UNAME), Linux)
+SEQ_LIB := $(LIBS_DIR)/libapsp-seq.so
+OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
+CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.so
+SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
+OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
 $(SEQ_ISPC) $(OMP_ISPC): ISPCFLAGS += --target=avx2-i32x8
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -Xpreprocessor -fopenmp -lomp 
 $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" 
@@ -72,6 +71,11 @@ all: $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(LIBS) $(JAVA_CLASS)
 else
 # CXXFLAGS += -I/opt/boost-1.61.0/include -I$(SRC_DIR)/
 #$(OMP) $(OMP_ISPC) $(CUDA): CXXFLAGS += -Xpreprocessor -fopenmp
+SEQ_LIB := $(LIBS_DIR)/libapsp-seq.dylib
+OMP_LIB := $(LIBS_DIR)/libapsp-omp.dylib
+SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.dylib
+OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.dylib
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -Xpreprocessor -fopenmp -lomp 
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
 all: $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC) $(LIBS) $(JAVA_CLASS)
 endif

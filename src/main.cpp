@@ -274,7 +274,7 @@ int do_main_int(
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph(cuda_gr);
 #else
-      int *matrix = new int[n * n];
+
       graph_t *gr = init_random_graph(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
 

@@ -39,5 +39,5 @@ extern "C" void floyd_warshall_blocked_double(const double *input, double *outpu
 
 #ifdef CUDA
 void floyd_warshall_cuda_double(double* input, double* output, int *parents,int n);
-void floyd_warshall_blocked_cuda_double(double* input, double* output, int *parents,int n);
+void floyd_warshall_blocked_cuda_double(double* input, double* output, int *parents, int n);
 #endif

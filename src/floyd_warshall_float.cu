@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float *gr
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_float(float *input, float *output, int n) {
+__host__ void floyd_warshall_blocked_cuda_float(float *input, float *output, int *parents, int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);

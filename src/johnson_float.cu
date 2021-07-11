@@ -59,7 +59,7 @@ __global__ void bellman_ford_kernel_float(float *dist) {
   int v = edges[e].v;
   float new_dist = weights[e] + dist[u];
   // Make ATOMIC
-  if (!equals_float(dist[u], FLT_INF) && new_dist < dist[v])
+  if (dist[u] != FLT_INF && new_dist < dist[v])
     atomicExch(&dist[v], new_dist); // Needs to have conditional be atomic too
 }
 
@@ -98,7 +98,7 @@ __host__ bool bellman_ford_cuda_float(graph_cuda_t_float *gr, float *dist, int s
     int u = edges[i].u;
     int v = edges[i].v;
     float weight = weights[i];
-    if (!equals_float(dist[u], FLT_INF) && dist[u] + weight < dist[v])
+    if (dist[u] != FLT_INF && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
 
