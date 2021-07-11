@@ -219,7 +219,7 @@ public class ApspTest {
 
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("java JNATest [seq-f|seq-ispc-f|omp-f|omp-ispc-f|seq-j|seq-ispc-j|omp-j|omp-ispc-j] [i|f|d]");
+            System.err.println("java ApspTest [seq-f|seq-ispc-f|omp-f|omp-ispc-f|seq-j|seq-ispc-j|omp-j|omp-ispc-j] [i|f|d]");
             System.exit(0);
         }
         String algorithm = args[0];
