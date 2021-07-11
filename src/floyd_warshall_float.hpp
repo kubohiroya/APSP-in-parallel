@@ -38,7 +38,7 @@ inline void floyd_warshall_in_place_float(float *C, const float *A, const float 
 extern "C" void floyd_warshall_blocked_float(const float *input, float *output, int *parents, const int n, const int b);
 
 #ifdef CUDA
-void floyd_warshall_cuda_float(float* input, float* output, int n);
-void floyd_warshall_blocked_cuda_float(float* input, float* output, int n);
+void floyd_warshall_cuda_float(float* input, float* output, int *parents, int n);
+void floyd_warshall_blocked_cuda_float(float* input, float* output, int *parents, int n);
 #endif
 

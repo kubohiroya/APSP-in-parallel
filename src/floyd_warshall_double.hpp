@@ -38,6 +38,6 @@ inline void floyd_warshall_in_place_double(double *C, const double *A, const dou
 extern "C" void floyd_warshall_blocked_double(const double *input, double *output, int *parents, const int n, const int b);
 
 #ifdef CUDA
-void floyd_warshall_cuda_double(double* input, double* output, int n);
-void floyd_warshall_blocked_cuda_double(double* input, double* output, int n);
+void floyd_warshall_cuda_double(double* input, double* output, int *parents,int n);
+void floyd_warshall_blocked_cuda_double(double* input, double* output, int *parents,int n);
 #endif

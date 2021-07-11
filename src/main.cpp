@@ -390,7 +390,7 @@ int do_main_float(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda_float(matrix, output, n_blocked);
+      floyd_warshall_blocked_cuda_float(matrix, output, parents, n_blocked);
 #else
       floyd_warshall_blocked_float(matrix, output, parents, n_blocked, block_size);
 #endif
