@@ -61,25 +61,23 @@ OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
 CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.so
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
-$(SEQ_ISPC) $(OMP_ISPC): ISPCFLAGS += --target=avx2-i32x8
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -Xpreprocessor -fopenmp -lomp 
 $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" 
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
 $(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/llvm-12/lib -L/usr/local/cuda/lib64 -lcudart -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
-all: $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(LIBS) $(JAVA_CLASS)
+BINARIES := $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC)
 else
-# CXXFLAGS += -I/opt/boost-1.61.0/include -I$(SRC_DIR)/
-#$(OMP) $(OMP_ISPC) $(CUDA): CXXFLAGS += -Xpreprocessor -fopenmp
 SEQ_LIB := $(LIBS_DIR)/libapsp-seq.dylib
 OMP_LIB := $(LIBS_DIR)/libapsp-omp.dylib
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.dylib
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.dylib
-$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -Xpreprocessor -fopenmp -lomp 
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -Xpreprocessor -fopenmp -lomp 
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
-all: $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC) $(LIBS) $(JAVA_CLASS)
+BINARIES := $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC)
 endif
 
+$(SEQ_ISPC) $(OMP_ISPC): ISPCFLAGS += --target=avx2-i32x8
 $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 
 $(OBJ_DIR):
@@ -144,14 +142,33 @@ $(OBJ_DIR)/ispc-%.o: $(SRC_DIR)/%.ispc | $(OBJ_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@
 # we do not output a header here on purpose
 
+$(JAVA_CLASS): $(LIBS) $(JAVA_SRCS)
+	javac -cp $(CLASSPATH) $(JAVA_SRCS)
+
 clean:
 	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
 	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
 
-$(JAVA_CLASS): $(LIBS) $(JAVA_SRCS)
-	javac -cp $(CLASSPATH) $(JAVA_SRCS)
+bin: $(BINARIES)
+
+benchmark-f:
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious -r
+
+benchmark-j:
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious -r
+
+benchmark: benchmark-f benchmark-j
+
+pgo: 
+	make bin -Bj CXXEXTRA=-fprofile-generate > /dev/null 2>&1
+	make benchmark
+	make bin -j -Bj CXXEXTRA=-fprofile-use > /dev/null 2>&1
+	make benchmark
+
+all: pgo $(JAVA_CLASS)
 
 ApspTest: $(JAVA_CLASS)
 	java -cp $(CLASSPATH) $(JAVA_OPT) ApspTest
 
 run: ApspTest
+
