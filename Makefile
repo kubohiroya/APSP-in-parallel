@@ -61,7 +61,7 @@ OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
 CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.so
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
-$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -Xpreprocessor -fopenmp -lomp 
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -lomp
 $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" 
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
 $(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/llvm-12/lib -L/usr/local/cuda/lib64 -lcudart -lomp
@@ -72,13 +72,14 @@ SEQ_LIB := $(LIBS_DIR)/libapsp-seq.dylib
 OMP_LIB := $(LIBS_DIR)/libapsp-omp.dylib
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.dylib
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.dylib
-$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -Xpreprocessor -fopenmp -lomp 
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
 BINARIES := $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC)
 endif
 
-$(SEQ_ISPC) $(OMP_ISPC): ISPCFLAGS += --target=avx2-i32x8
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
 $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
+ISPCFLAGS += --target=avx2-i32x8
 
 $(OBJ_DIR):
 	mkdir -p $@

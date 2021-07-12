@@ -31,12 +31,14 @@ int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p,
 
 int count_edges_float(const float *adj_matrix, const int n){
   size_t E = 0;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      float weight = adj_matrix[i * n + j];
-      if (weight != 0 && weight != DBL_INF) {
-        E++;
-      }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < n * n; i++) {
+    float weight = adj_matrix[i];
+    if (weight != 0 && weight != FLT_INF) {
+#pragma omp atomic
+      E++;
     }
   }
   return E;
@@ -46,12 +48,16 @@ graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int 
   Edge_float *edge_array = new Edge_float[E];
   float *weights = new float[E];
   int ei = 0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (!equals_float(adj_matrix[i * n + j], 0.0f)
           && !equals_float(adj_matrix[i * n + j], FLT_INF)) {
         edge_array[ei] = Edge_float(i, j);
         weights[ei] = adj_matrix[i * n + j];
+#pragma omp atomic
         ei++;
       }
     }

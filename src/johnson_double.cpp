@@ -31,12 +31,14 @@ int init_random_adj_matrix_double(double *adj_matrix, const int n, const double 
 
 int count_edges_double(const double *adj_matrix, const int n){
   size_t E = 0;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      int weight = adj_matrix[i * n + j];
-      if (weight != 0 && weight != DBL_INF) {
-        E++;
-      }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < n * n; i++) {
+    double weight = adj_matrix[i];
+    if (weight != 0 && weight != DBL_INF) {
+#pragma omp atomic
+      E++;
     }
   }
   return E;
@@ -46,12 +48,16 @@ graph_t_double *init_graph_double(const double *adj_matrix, const int n, const i
   Edge_double *edge_array = new Edge_double[E];
   double *weights = new double[E];
   int ei = 0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i * n + j] != 0
           && adj_matrix[i * n + j] != DBL_INF) {
         edge_array[ei] = Edge_double(i, j);
         weights[ei] = adj_matrix[i * n + j];
+#pragma omp atomic
         ei++;
       }
     }
