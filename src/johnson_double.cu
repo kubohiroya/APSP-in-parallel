@@ -6,7 +6,7 @@ __constant__ graph_cuda_t_double graph_const;
 
 __forceinline__
 __device__ int min_distance_double(double *dist, char *visited, int n) {
-  double min = DBL_MAX;
+  double min = DBL_INF;
   int min_index = 0;
   for (int v = 0; v < n; v++) {
     if (!visited[v] && dist[v] <= min) {
@@ -30,7 +30,7 @@ __global__ void dijkstra_kernel_double(double *output, char *visited_global) {
   double *dist = &output[s * V];
   char *visited = &visited_global[s * V];
   for (int i = 0; i < V; i++) {
-    dist[i] = DBL_MAX;
+    dist[i] = DBL_INF;
     visited[i] = 0;
   }
   dist[s] = 0;
@@ -99,7 +99,7 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, in
     int u = edges[i].u;
     int v = edges[i].v;
     double weight = weights[i];
-    if (dist[u] != DBL_MAX && dist[u] + weight < dist[v])
+    if (dist[u] != DBL_INF && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
 
