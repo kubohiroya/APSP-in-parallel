@@ -41,15 +41,15 @@ def run_cmd(command, verbose):
     return p.communicate()
 
 def extract_time(stdout):
-    return float(re.search(r'(\d*\.?\d*)ms', stdout).group(1))
+    return float(re.search(r'(\d*\.?\d*)ms', stdout.decode('utf-8')).group(1))
 
 run_cmd(['make', 'clean', '-j'], True)
 
 print('Compiling to generate profile files...')
-stdout, stderr = run_cmd(['make', args.executable, '-Bj', 'CXXEXTRA=-fprofile-generate'], True)
-print(stdout)
-if stderr:
-    print(stderr)
+stdout, stderr = run_cmd(['make', args.executable, '-Bj', 'CXXEXTRA=-fprofile-generate -w'], True)
+print(stdout.decode('utf-8'))
+if stderr.decode('utf-8'):
+    print(stderr.decode('utf-8'))
     exit(1)
 
 print('Benchmarking to inform profiler...')
@@ -61,7 +61,7 @@ for param_obj in profile_benchmarks[args.benchmark]:
 
 print('\nCompiling with use of profiler...')
 stdout, stderr = run_cmd(['make', args.executable, '-Bj', 'CXXEXTRA=-fprofile-use -fprofile-correction'], True)
-print(stdout)
+print(stdout.decode('utf-8'))
 
 stdout, stderr = run_cmd(['./' + args.executable] + create_cmd(profile_benchmarks[args.benchmark][-1]), True)
 new_time = extract_time(stdout)
