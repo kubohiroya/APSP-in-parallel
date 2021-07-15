@@ -2,7 +2,9 @@ UNAME = $(shell uname)
 
 # Override using CXX=clang++ make ...
 CXX ?= g++
-CXXFLAGS ?= -std=c++11 -Wall -Wextra -g -fPIC -O3
+#CXXFLAGS ?= -std=c++11 -Wall -Wextra -g -fPIC -O3
+CXXFLAGS ?= -std=c++11 -fPIC -O3
+ #-Wunused-parameter -W\#pragma-messages
 CXXFLAGS += $(CXXEXTRA)
 LDFLAGS ?= -L./libs
 
@@ -55,6 +57,8 @@ ISPC_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-main.o, $(ISPC_OBJECTS))
 JAVA_SRCS := ApspTest.java
 JAVA_CLASS := ApspTest.class
 
+PROFRAW := *.profraw
+
 ifeq ($(UNAME), Linux)
 SEQ_LIB := $(LIBS_DIR)/libapsp-seq.so
 OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
@@ -81,8 +85,11 @@ $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopen
 $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 ISPCFLAGS += --target=avx2-i32x8
 
+all: bin $(JAVA_CLASS)
+
 $(OBJ_DIR):
 	mkdir -p $@
+
 $(LIBS_DIR):
 	mkdir -p $@
 
@@ -116,7 +123,6 @@ $(SEQ_ISPC_LIB): $(ISPC_SEQ_LIB_OBJECTS) $(ISPC_LIB_OBJECTS) | $(LIBS_DIR)
 $(OMP_ISPC_LIB): $(ISPC_OMP_LIB_OBJECTS) $(ISPC_LIB_OBJECTS) | $(LIBS_DIR)
 	$(CXX) $(SHAREDFLAGS) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-
 -include $(SEQ_OBJECTS:%.o=%.d)
 -include $(OMP_OBJECTS:%.o=%.d)
 -include $(CUDA_CPP_OBJECTS:%.o=%.d)
@@ -148,25 +154,23 @@ $(JAVA_CLASS): $(LIBS) $(JAVA_SRCS)
 
 clean:
 	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
-	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
+	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB) $(PROFRAW)
 
 bin: $(BINARIES)
 
 benchmark-f:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious -r
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b profile -r
 
 benchmark-j:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious -r
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b profile -r
 
 benchmark: benchmark-f benchmark-j
 
-pgo: 
-	make bin -Bj CXXEXTRA=-fprofile-generate > /dev/null 2>&1
-	make benchmark
-	make bin -j -Bj CXXEXTRA=-fprofile-use > /dev/null 2>&1
-	make benchmark
-
-all: pgo $(JAVA_CLASS)
+pgo:
+	make clean
+	make bin -j -Bj CXXEXTRA=-fprofile-generate > /dev/null 2>&1
+	make benchmark-j
+	make bin -j -Bj CXXEXTRA=-fprofile-use
 
 ApspTest: $(JAVA_CLASS)
 	java -cp $(CLASSPATH) $(JAVA_OPT) ApspTest

@@ -38,10 +38,9 @@ all_benchmarks = {
             { 'n': 1024+512, 't': 8, 'p': 1.0 },
         ]
     ],
-    'brief': [
+    'profile': [
         [
-            { 'n': 1024, 't': 12, 'p': 0.5 },
-            { 'n': 2048, 't': 12, 'p': 0.5 },
+            { 'n': 11129, 't': 16, 'p': 0.00016 },
         ]
     ],
     'thread_scale': [
@@ -70,11 +69,9 @@ all_benchmarks = {
     ],
     'serious2': [
         [
-            { 'n': 512, 't': 8, 'p': 0.0001 },
-            { 'n': 1024, 't': 8, 'p': 0.0001 },
-            { 'n': 2048, 't': 8, 'p': 0.0001 },
-            { 'n': 4096, 't': 8, 'p': 0.0001 },
-            { 'n': 8192, 't': 8, 'p': 0.0001 },
+            { 'n': 512, 't': 16, 'p': 0.00016 },
+            { 'n': 4096, 't': 16, 'p': 0.00016 },
+            { 'n': 11129, 't': 16, 'p': 0.00016 },
         ]
     ]
 }
@@ -115,7 +112,7 @@ def run_cmd(command, verbose):
 def extract_time(stdout):
     if len(stdout):
       return float(re.search(r'(\d*\.?\d*)ms', stdout.decode('utf-8')).group(1))
-    return float('inf')
+    return float(0.0)
 
 def run_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda, caching_seq=True, seq_cache={}):
     
@@ -166,7 +163,7 @@ def run_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda, cac
     print(' {0:-^54} '.format(''))
     print('')
 
-def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, caching_seq=True, seq_cache={}):
+def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda=False, caching_seq=True, seq_cache={}):
     
     print('')
     print(' {0:-^68} '.format(''))
@@ -204,14 +201,15 @@ def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cachi
                 print('OMP ISPC Error: ', stderr)
                 return
             omp_ispc_time = extract_time(stdout)
-            
-            stdout, stderr = run_cmd(['./apsp-cuda'] + params,verbose)
-            if len(stderr):
-                print('CUDA Error: ', stderr)
-                return
 
-            cuda_time = extract_time(stdout)
-
+            if(cuda):
+                stdout, stderr = run_cmd(['./apsp-cuda'] + params,verbose)
+                if len(stderr):
+                    print('CUDA Error: ', stderr)
+                    return
+                cuda_time = extract_time(stdout)
+            else:
+                cuda_time = 0
             print('| {p:>1.4f} | {n:>5} | {t:>2} | {0:>10.1f} | {1:>8.1f} | {2:>8.1f} | {3:>9.1f} |'.format(seq_time,
                                                                                                omp_time, omp_ispc_time, 
                                                                                                cuda_time,
@@ -223,7 +221,7 @@ def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cachi
 
 def choose_benchmark():
     if (args.compare):
-        run_par_bench(all_benchmarks[args.benchmark], args.algorithm, args.wtype, args.seed, args.block_size, args.verbose)
+        run_par_bench(all_benchmarks[args.benchmark], args.algorithm, args.wtype, args.seed, args.block_size, args.verbose, args.cuda)
     else:
         run_bench(all_benchmarks[args.benchmark], args.algorithm, args.wtype, args.seed, args.block_size, args.verbose, args.cuda)
 
