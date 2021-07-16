@@ -10,7 +10,8 @@ LDFLAGS ?= -L./libs
 
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 
-CLASSPATH := jna-5.8.0.jar:jna-platform-5.8.0.jar:.
+CLASSPATH := ./classes/jna-5.8.0.jar:./classes/jna-platform-5.8.0.jar:./classes
+JAVA_SRC_PATH := ./src
 JAVA_OPT := -Djna.library.path=./libs
 
 ISPC ?= ispc
@@ -21,6 +22,7 @@ NVCCFLAGS ?= -std=c++11 -O3
 
 OBJ_DIR := objs
 LIBS_DIR := libs
+CLASSES_DIR := classes
 SRC_DIR := src
 
 # executable names
@@ -55,7 +57,7 @@ ISPC_OMP_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-omp-main.o, $(ISPC_OMP_OBJE
 ISPC_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-main.o, $(ISPC_OBJECTS))
 
 JAVA_SRCS := ApspTest.java
-JAVA_CLASS := ApspTest.class
+JAVA_CLASS := $(CLASSES_DIR)/ApspTest.class
 
 PROFRAW := *.profraw
 
@@ -91,6 +93,9 @@ $(OBJ_DIR):
 	mkdir -p $@
 
 $(LIBS_DIR):
+	mkdir -p $@
+
+$(CLASSES_DIR):
 	mkdir -p $@
 
 $(SEQ): $(SEQ_OBJECTS) $(SEQ_LIB) $(OBJ_DIR)/seq-main.o
@@ -149,8 +154,8 @@ $(OBJ_DIR)/ispc-%.o: $(SRC_DIR)/%.ispc | $(OBJ_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@
 # we do not output a header here on purpose
 
-$(JAVA_CLASS): $(LIBS) $(JAVA_SRCS)
-	javac -cp $(CLASSPATH) $(JAVA_SRCS)
+$(JAVA_CLASS): $(LIBS) $(JAVA_SRC_PATH)/$(JAVA_SRCS)
+	javac -cp $(CLASSPATH) -sourcepath $(JAVA_SRC_PATH) $(JAVA_SRC_PATH)/$(JAVA_SRCS) -d $(CLASSES_DIR)
 
 clean:
 	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
@@ -173,7 +178,7 @@ pgo:
 	make bin -j -Bj CXXEXTRA=-fprofile-use
 
 ApspTest: $(JAVA_CLASS)
-	java -cp $(CLASSPATH) $(JAVA_OPT) ApspTest
+	java -cp $(CLASSPATH) $(JAVA_OPT) ApspTest seq-d f
 
 run: ApspTest
 
