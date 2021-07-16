@@ -4,6 +4,8 @@ Implementation of Floyd-Warshall's Algorithm and Johnson's Algorithm using diffe
 
 Our full project description and results can be found here: https://moorejs.github.io/APSP-in-parallel/
 
+Original project implementation supports int-typed widght edges. The folked project implementation supports also float and double-typed weights and output the predecessor map.
+
 Floyd-Warshall has its sequential version, OpenMP, CUDA and ISPC while Johnson's Algorithm has its sequential version, OpenMP and CUDA.
 
 For Johnson's Algorithm we require the Boost Graph Library as we use it to create our baseline sequential implementation.
