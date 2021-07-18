@@ -7,6 +7,7 @@ CXXFLAGS ?= -std=c++11 -fPIC -O3
  #-Wunused-parameter -W\#pragma-messages
 CXXFLAGS += $(CXXEXTRA)
 LDFLAGS ?= -L./libs
+LLVM=llvm12
 
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 
@@ -67,10 +68,10 @@ OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
 CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.so
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
-$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/llvm-12/lib -lomp
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -lomp
 $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" 
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
-$(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/llvm-12/lib -L/usr/local/cuda/lib64 -lcudart -lomp
+$(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/$(LLVM)/lib -L/usr/local/cuda/lib64 -lcudart -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
 BINARIES := $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC)
 else
@@ -163,19 +164,24 @@ clean:
 
 bin: $(BINARIES)
 
+bin-ispc: $(OMP) $(OMP_LIB)
+
 benchmark-f:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b profile -r
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious -r --cuda
 
 benchmark-j:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b profile -r
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious2 -r
+
+benchmark-j-half:
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b half -r 
 
 benchmark: benchmark-f benchmark-j
 
 pgo:
 	make clean
-	make bin -j -Bj CXXEXTRA=-fprofile-generate > /dev/null 2>&1
+	make bin-ispc -Bj CXXEXTRA=-fprofile-generate
 	make benchmark-j
-	make bin -j -Bj CXXEXTRA=-fprofile-use
+	make bin-ispc -Bj CXXEXTRA=-fprofile-use
 
 ApspTest: $(JAVA_CLASS)
 	java -cp $(CLASSPATH) $(JAVA_OPT) ApspTest seq-d f
