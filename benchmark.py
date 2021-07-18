@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import subprocess
+import os
 import re # regex
 import argparse
 
@@ -61,17 +62,27 @@ all_benchmarks = {
     ],
     'serious': [
         [
-            { 'n': 512, 't': 8, 'p': 0.0001 },
-            { 'n': 1024, 't': 8, 'p': 0.0001 },
-            { 'n': 2048, 't': 8, 'p': 0.0001 },
-            { 'n': 4096, 't': 8, 'p': 0.0001 },
+            { 'n': 512, 't': 8, 'p': 0.00016 },
+            { 'n': 1024, 't': 8, 'p': 0.00016 },
+            { 'n': 2048, 't': 8, 'p': 0.00016 },
+            { 'n': 4096, 't': 8, 'p': 0.00016 },
         ]
     ],
     'serious2': [
         [
-            { 'n': 512, 't': 16, 'p': 0.00016 },
-            { 'n': 4096, 't': 16, 'p': 0.00016 },
-            { 'n': 11129, 't': 16, 'p': 0.00016 },
+            { 'n': 512, 't': 8, 'p': 0.00016 },
+            { 'n': 1024, 't': 8, 'p': 0.00016 },
+            { 'n': 2048, 't': 8, 'p': 0.00016 },
+            { 'n': 4096, 't': 8, 'p': 0.00016 },
+            { 'n': 11129, 't': 8, 'p': 0.00016 },
+        ]
+    ],
+    'half': [
+        [
+            { 'n': 512, 't': 4, 'p': 0.00016 },
+            { 'n': 1024, 't': 4, 'p': 0.00016 },
+            { 'n': 2048, 't': 4, 'p': 0.00016 },
+            { 'n': 4096, 't': 4, 'p': 0.00016 },
         ]
     ]
 }
@@ -111,22 +122,22 @@ def run_cmd(command, verbose):
 
 def extract_time(stdout):
     if len(stdout):
-      return float(re.search(r'(\d*\.?\d*)ms', stdout.decode('utf-8')).group(1))
+        return float(re.search(r'(\d*\.?\d*)ms', stdout.decode('utf-8')).group(1))
     return float(0.0)
 
 def run_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda, caching_seq=True, seq_cache={}):
     
     print('')
-    print(' {0:-^54} '.format(''))
-    print('|{0:^54}|'.format('  Benchmark for {0}\'s Algorithm '
+    print(' {0:-^55} '.format(''))
+    print('|{0:^55}|'.format('  Benchmark for {0}\'s Algorithm '
                              .format('Floyd-Warshall' if algorithm == 'f' else 'Johnson')))
-    print('|{0:^54}|'.format('seed = {0}{1}'.format(seed, ', block size = {0}'.format(block_size) if algorithm == 'f' else '')))
-    print(' {0:-^54} '.format(''))
-    print('| {0:<6} | {1:<5} | {2:<2} | {3:<8} | {4:<8} | {5:<8} |'.format('p', 'n', 't', 'seq (ms)',
+    print('|{0:^55}|'.format('seed = {0}{1}'.format(seed, ', block size = {0}'.format(block_size) if algorithm == 'f' else '')))
+    print(' {0:-^55} '.format(''))
+    print('| {0:<7} | {1:<5} | {2:<2} | {3:<8} | {4:<8} | {5:<8} |'.format('p', 'n', 't', 'seq (ms)',
                                                                      'par (ms)', 'speedup'))
 
     for bench in bench_list:
-        print(' {0:-^54} '.format(''))
+        print(' {0:-^55} '.format(''))
 
         for param_obj in bench:
             param_obj['a'] = algorithm
@@ -156,26 +167,26 @@ def run_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda, cac
 
             par_time = extract_time(stdout)
 
-            print( '| {p:>1.4f} | {n:>5} | {t:>2} | {0:>8.1f} | {1:>8.1f} | {2:>7.1f}x |'.format(seq_time, par_time,
+            print( '| {p:>1.5f} | {n:>5} | {t:>2} | {0:>8.1f} | {1:>8.1f} | {2:>7.1f}x |'.format(seq_time, par_time,
                                                                                              seq_time / par_time,
                                                                                              **param_obj))
 
-    print(' {0:-^54} '.format(''))
+    print(' {0:-^55} '.format(''))
     print('')
 
 def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda=False, caching_seq=True, seq_cache={}):
     
     print('')
-    print(' {0:-^68} '.format(''))
-    print('|{0:^68}|'.format('  Benchmark for {0}\'s Algorithm  of type = {1} weights'
+    print(' {0:-^69} '.format(''))
+    print('|{0:^69}|'.format('  Benchmark for {0}\'s Algorithm  of type = {1} weights'
                              .format('Floyd-Warshall' if algorithm == 'f' else 'Johnson', wtype)))
-    print('|{0:^68}|'.format('seed = {0}{1}'.format(seed, ', block size = {0}'.format(block_size) if algorithm == 'f' else '')))
-    print(' {0:-^68} '.format(''))
-    print('| {0:<6} | {1:<5} | {2:<2} | {3:<9} | {4:<8} | {5:<8} | {6:<8} |'.format('p', 'n', 't', ' SEQ  (ms)', 
+    print('|{0:^69}|'.format('seed = {0}{1}'.format(seed, ', block size = {0}'.format(block_size) if algorithm == 'f' else '')))
+    print(' {0:-^69} '.format(''))
+    print('| {0:<7} | {1:<5} | {2:<2} | {3:<9} | {4:<8} | {5:<8} | {6:<8} |'.format('p', 'n', 't', ' SEQ  (ms)', 
                                                                      'OMP (ms)', 'ISPC(ms)', 'CUDA (ms)'))
 
     for bench in bench_list:
-        print(' {0:-^68} '.format(''))
+        print(' {0:-^69} '.format(''))
 
         for param_obj in bench:
             param_obj['a'] = algorithm
@@ -184,38 +195,51 @@ def run_par_bench(bench_list, algorithm, wtype, seed, block_size, verbose, cuda=
             param_obj['T'] = wtype
             params = create_cmd(param_obj)
 
-            stdout, stderr = run_cmd(['./apsp-seq'] + params, verbose)
-            if len(stderr):
-                print('SEQ Error: ', stderr)
-                return
-            seq_time = extract_time(stdout)
-
-            stdout, stderr = run_cmd(['./apsp-omp'] + params, verbose)
-            if len(stderr):
-                print('OMP Error: ', stderr)
-                return
-            omp_time = extract_time(stdout)
-
-            stdout, stderr = run_cmd(['./apsp-omp-ispc'] + params, verbose)
-            if len(stderr):
-                print('OMP ISPC Error: ', stderr)
-                return
-            omp_ispc_time = extract_time(stdout)
-
-            if(cuda):
-                stdout, stderr = run_cmd(['./apsp-cuda'] + params,verbose)
-                if len(stderr):
-                    print('CUDA Error: ', stderr)
-                    return
-                cuda_time = extract_time(stdout)
+            if os.path.exists('./apsp-seq'):
+              stdout, stderr = run_cmd(['./apsp-seq'] + params, verbose)
+              if len(stderr):
+                  print('SEQ Error: ', stderr)
+                  return
+              seq_time = extract_time(stdout)
             else:
+              seq_time = 0
+
+            if os.path.exists('./apsp-omp'):
+              stdout, stderr = run_cmd(['./apsp-omp'] + params, verbose)
+              if len(stderr):
+                  print('OMP Error: ', stderr)
+                  return
+              omp_time = extract_time(stdout)
+            else:
+              omp_time = 0
+
+            if os.path.exists('./apsp-omp-ispc'):
+              stdout, stderr = run_cmd(['./apsp-omp-ispc'] + params, verbose)
+              if len(stderr):
+                  print('OMP ISPC Error: ', stderr)
+                  return
+              omp_ispc_time = extract_time(stdout)
+            else:
+              omp_ispc_time = 0
+
+            if os.path.exists('./apsp-cuda'):
+              stdout, stderr = run_cmd(['./apsp-cuda'] + params,verbose)
+              if len(stderr):
+                  print('CUDA Error: ', stderr)
+                  return
+              if len(stdout):
+                  cuda_time = extract_time(stdout)
+              else:
                 cuda_time = 0
-            print('| {p:>1.4f} | {n:>5} | {t:>2} | {0:>10.1f} | {1:>8.1f} | {2:>8.1f} | {3:>9.1f} |'.format(seq_time,
+            else:
+              cuda_time = 0
+
+            print('| {p:>1.5f} | {n:>5} | {t:>2} | {0:>10.1f} | {1:>8.1f} | {2:>8.1f} | {3:>9.1f} |'.format(seq_time,
                                                                                                omp_time, omp_ispc_time, 
                                                                                                cuda_time,
                                                                                                **param_obj))
 
-    print(' {0:-^68} '.format(''))
+    print(' {0:-^69} '.format(''))
     print('')
 
 
