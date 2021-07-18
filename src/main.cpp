@@ -277,9 +277,7 @@ int do_main_int(
 
       graph_t *gr = init_random_graph(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
-
       johnson_parallel(gr, output, parents);
-
       auto end = std::chrono::high_resolution_clock::now();
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -336,7 +334,6 @@ int do_main_float(
     bool solution_available = stat(solution_filename.c_str(), &file_stat) != -1 || errno != ENOENT;
 
     solution = new float[n * n];
-    int *parents = new int[n * n];
     if (solution_available) {
       std::cout << "Reading reference solution from file: " << solution_filename << "\n";
 
@@ -345,6 +342,7 @@ int do_main_float(
       in.close();
     } else {
       float *matrix = floyd_warshall_init_float(n, p, seed);
+      int *parents = new int[n * n];
 
       auto start = std::chrono::high_resolution_clock::now();
 

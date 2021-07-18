@@ -7,7 +7,7 @@ CXXFLAGS ?= -std=c++11 -fPIC -O3
  #-Wunused-parameter -W\#pragma-messages
 CXXFLAGS += $(CXXEXTRA)
 LDFLAGS ?= -L./libs
-LLVM=llvm12
+LLVM=llvm-12
 
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 

@@ -17,7 +17,7 @@ __device__ int min_distance_double(double *dist, char *visited, int n) {
   return min_index;
 }
 
-__global__ void dijkstra_kernel_double(double *output, char *visited_global) {
+__global__ void dijkstra_kernel_double(double *output, int *parents, char *visited_global) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
   int V = graph_const.V;
 
@@ -44,6 +44,7 @@ __global__ void dijkstra_kernel_double(double *output, char *visited_global) {
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != DBL_INF && dist_u + weights[v_i] < dist[v])
         dist[v] = dist_u + weights[v_i];
+	parents[count] = 0; // FIXME
     }
   }
 }
@@ -60,8 +61,7 @@ __global__ void bellman_ford_kernel_double(double *dist) {
   double new_dist = weights[e] + dist[u];
   // Make ATOMIC
   if (dist[u] != DBL_INF && new_dist < dist[v])
-    // atomicExch(&dist[v], new_dist); // Needs to have conditional be atomic too
-    atomicExch((unsigned long long int *) &dist[v], new_dist);
+    atomicExch((unsigned long long int*)&dist[v], __double_as_longlong(new_dist)); // Needs to have conditional be atomic too
 }
 
 __host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, int s) {
@@ -137,6 +137,7 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *output, int *
   edge_t_double *device_edge_array;
   double *device_weights;
   double *device_output;
+  int *device_parents;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
@@ -144,6 +145,7 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *output, int *
   cudaMalloc(&device_edge_array, sizeof(edge_t_double) * E);
   cudaMalloc(&device_weights, sizeof(double) * E);
   cudaMalloc(&device_output, sizeof(double) * V * V);
+  cudaMalloc(&device_parents, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
@@ -192,7 +194,7 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *output, int *
 
   cudaMemcpy(device_weights, gr->weights, sizeof(double) * E, cudaMemcpyHostToDevice);
 
-  dijkstra_kernel_double<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_visited);
+  dijkstra_kernel_double<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_parents, device_visited);
 
   cudaMemcpy(output, device_output, sizeof(double) * V * V, cudaMemcpyDeviceToHost);
 
@@ -208,6 +210,7 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *output, int *
   cudaFree(device_edge_array);
   cudaFree(device_weights);
   cudaFree(device_output);
+  cudaFree(device_parents);
   cudaFree(device_starts);
   cudaFree(device_visited);
 

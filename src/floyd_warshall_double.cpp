@@ -66,7 +66,7 @@ floyd_warshall_blocked_init_double(const int n, const int block_size, const doub
 
 void floyd_warshall_double(const double *input, double *output, int *parents, const int n) {
   std::memcpy(output, input, n * n * sizeof(double));
-  std::memset(parents, -1, n * n * sizeof(double));
+  std::memset(parents, -1, n * n * sizeof(int));
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       parents[i * n + j] = i;

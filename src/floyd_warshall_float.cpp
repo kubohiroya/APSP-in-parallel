@@ -65,7 +65,7 @@ float *floyd_warshall_blocked_init_float(const int n, const int block_size, cons
 
 void floyd_warshall_float(const float *input, float *output, int *parents, const int n) {
   std::memcpy(output, input, n * n * sizeof(float));
-  std::memset(parents, -1, n * n * sizeof(float));
+  std::memset(parents, -1, n * n * sizeof(int));
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       parents[i * n + j] = i;

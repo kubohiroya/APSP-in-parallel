@@ -17,7 +17,7 @@ __device__ int min_distance_float(float *dist, char *visited, int n) {
   return min_index;
 }
 
-__global__ void dijkstra_kernel_float(float *output, char *visited_global) {
+__global__ void dijkstra_kernel_float(float *output, int *parents, char *visited_global) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
   int V = graph_const.V;
 
@@ -44,6 +44,7 @@ __global__ void dijkstra_kernel_float(float *output, char *visited_global) {
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != FLT_INF && dist_u + weights[v_i] < dist[v])
         dist[v] = dist_u + weights[v_i];
+	parents[count] = 0; // FIXME
     }
   }
 }
@@ -136,6 +137,7 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
   edge_t_float *device_edge_array;
   float *device_weights;
   float *device_output;
+  int *device_parents;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
@@ -143,6 +145,7 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
   cudaMalloc(&device_edge_array, sizeof(edge_t_float) * E);
   cudaMalloc(&device_weights, sizeof(float) * E);
   cudaMalloc(&device_output, sizeof(float) * V * V);
+  cudaMalloc(&device_parents, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
@@ -191,7 +194,7 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
 
   cudaMemcpy(device_weights, gr->weights, sizeof(float) * E, cudaMemcpyHostToDevice);
 
-  dijkstra_kernel_float<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_visited);
+  dijkstra_kernel_float<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_parents, device_visited);
 
   cudaMemcpy(output, device_output, sizeof(float) * V * V, cudaMemcpyDeviceToHost);
 
@@ -207,6 +210,7 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
   cudaFree(device_edge_array);
   cudaFree(device_weights);
   cudaFree(device_output);
+  cudaFree(device_parents);
   cudaFree(device_starts);
   cudaFree(device_visited);
 
