@@ -257,5 +257,6 @@ public class ApspTest {
                 exec_double(input_d, n, algorithm);
                 break;
         }
+	System.exit(0);
     }
 }
