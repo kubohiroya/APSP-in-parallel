@@ -44,8 +44,8 @@ int count_edges_int(const int *adj_matrix, const int n) {
   return E;
 }
 
-graph_t *init_graph_int(const int *adj_matrix, const int n, const int E) {
-  Edge *edge_array = new Edge[E];
+graph_t_int *init_graph_int(const int *adj_matrix, const int n, const int E) {
+  Edge_int *edge_array = new Edge_int[E];
   int *weights = new int[E];
   int ei = 0;
 #ifdef _OPENMP
@@ -57,14 +57,14 @@ graph_t *init_graph_int(const int *adj_matrix, const int n, const int E) {
           && adj_matrix[i * n + j] != INT_INF) {
 #pragma omp critical (init_graph_int)
         {
-          edge_array[ei] = Edge(i, j);
+          edge_array[ei] = Edge_int(i, j);
           weights[ei] = adj_matrix[i * n + j];
           ei++;
         }
       }
     }
   }
-  graph_t *gr = new graph_t;
+  graph_t_int *gr = new graph_t_int;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
@@ -72,32 +72,32 @@ graph_t *init_graph_int(const int *adj_matrix, const int n, const int E) {
   return gr;
 }
 
-graph_t *init_random_graph_int(const int n, const double p, const unsigned long seed) {
+graph_t_int *init_random_graph_int(const int n, const double p, const unsigned long seed) {
   int *adj_matrix = new int[n * n];
   size_t E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
-  graph_t *gr = init_graph_int(adj_matrix, n, E);
+  graph_t_int *gr = init_graph_int(adj_matrix, n, E);
   delete[] adj_matrix;
   return gr;
 }
 
 #ifdef CUDA
-void free_graph_cuda_int(graph_cuda_t *g) {
+void free_graph_cuda_int(graph_cuda_t_int *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-void set_edge_int(edge_t *edge, int u, int v) {
+void set_edge_int(edge_t_int *edge, int u, int v) {
   edge->u = u;
   edge->v = v;
 }
 
-graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned long seed) {
+graph_cuda_t_int *johnson_cuda_random_init_int(const int n, const double p, const unsigned long seed) {
 
   int *adj_matrix = new int[n * n];
   int E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
 
-  edge_t *edge_array = new edge_t[E];
+  edge_t_int *edge_array = new edge_t_int[E];
   int* starts = new int[n + 1];  // Starting point for each edge
   int* weights = new int[E];
   int ei = 0;
@@ -106,7 +106,7 @@ graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned 
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i*n + j] != 0
           && adj_matrix[i*n + j] != INT_INF) {
-        set_edge(&edge_array[ei], i, j);
+        set_edge_int(&edge_array[ei], i, j);
         weights[ei] = adj_matrix[i*n + j];
         ei++;
       }
@@ -116,7 +116,7 @@ graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned 
 
   delete[] adj_matrix;
 
-  graph_cuda_t *gr = new graph_cuda_t;
+  graph_cuda_t_int *gr = new graph_cuda_t_int;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
@@ -126,7 +126,7 @@ graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned 
   return gr;
 }
 
-void free_cuda_graph_int(graph_cuda_t* g) {
+void free_cuda_graph_int(graph_cuda_t_int* g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete[] g->starts;
@@ -135,16 +135,16 @@ void free_cuda_graph_int(graph_cuda_t* g) {
 
 #endif
 
-void free_graph_int(graph_t *g) {
+void free_graph_int(graph_t_int *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-inline bool bellman_ford_int(graph_t *gr, int *dist, int src) {
+inline bool bellman_ford_int(graph_t_int *gr, int *dist, int src) {
   int V = gr->V;
   int E = gr->E;
-  Edge *edges = gr->edge_array;
+  Edge_int *edges = gr->edge_array;
   int *weights = gr->weights;
 
 #ifdef _OPENMP
@@ -183,20 +183,20 @@ inline bool bellman_ford_int(graph_t *gr, int *dist, int src) {
   return no_neg_cycle;
 }
 
-void johnson_parallel_int(graph_t *gr, int *output, int *parents) {
+void johnson_parallel_int(graph_t_int *gr, int *output, int *parents) {
 
   int V = gr->V;
 
   // Make new graph for Bellman-Ford
   // First, a new node q is added to the graph, connected by zero-weight edges
   // to each of the other nodes.
-  graph_t *bf_graph = new graph_t;
+  graph_t_int *bf_graph = new graph_t_int;
   bf_graph->V = V + 1;
   bf_graph->E = gr->E + V;
-  bf_graph->edge_array = new Edge[bf_graph->E];
+  bf_graph->edge_array = new Edge_int[bf_graph->E];
   bf_graph->weights = new int[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge));
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge_int));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(int));
   std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(int));
 
@@ -204,7 +204,7 @@ void johnson_parallel_int(graph_t *gr, int *output, int *parents) {
 #pragma omp parallel for
 #endif
   for (int e = 0; e < V; e++) {
-    bf_graph->edge_array[e + gr->E] = Edge(V, e);
+    bf_graph->edge_array[e + gr->E] = Edge_int(V, e);
   }
 
   // Second, the Bellman–Ford algorithm is used, starting from the new vertex q,
@@ -229,13 +229,13 @@ void johnson_parallel_int(graph_t *gr, int *output, int *parents) {
     gr->weights[e] = gr->weights[e] + h[u] - h[v];
   }
 
-  Graph G(gr->edge_array, gr->edge_array + gr->E, gr->weights, V);
+  Graph_int G(gr->edge_array, gr->edge_array + gr->E, gr->weights, V);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
-    std::vector <Vertex> p(num_vertices(G));
+    std::vector <Vertex_int> p(num_vertices(G));
     std::vector<int> d(num_vertices(G));
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(INT_INF));
     for (int v = 0; v < V; v++) {

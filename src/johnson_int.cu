@@ -3,7 +3,7 @@
 
 #define THREADS_PER_BLOCK 32
 
-__constant__ graph_cuda_t graph_const;
+__constant__ graph_cuda_t_int graph_const;
 
 __forceinline__
 __device__ int min_distance(int *dist, char *visited, int n) {
@@ -26,7 +26,7 @@ __global__ void dijkstra_kernel(int *output, int *parents, char *visited_global)
 
   int *starts = graph_const.starts;
   int *weights = graph_const.weights;
-  edge_t *edge_array = graph_const.edge_array;
+  edge_t_int *edge_array = graph_const.edge_array;
 
   int *dist = &output[s * V];
   char *visited = &visited_global[s * V];
@@ -57,7 +57,7 @@ __global__ void bellman_ford_kernel(int *dist) {
 
   if (e >= E) return;
   int *weights = graph_const.weights;
-  edge_t *edges = graph_const.edge_array;
+  edge_t_int *edges = graph_const.edge_array;
   int u = edges[e].u;
   int v = edges[e].v;
   int new_dist = weights[e] + dist[u];
@@ -66,10 +66,10 @@ __global__ void bellman_ford_kernel(int *dist) {
     atomicExch(&dist[v], new_dist); // Needs to have conditional be atomic too
 }
 
-__host__ bool bellman_ford_cuda(graph_cuda_t *gr, int *dist, int s) {
+__host__ bool bellman_ford_cuda(graph_cuda_t_int *gr, int *dist, int s) {
   int V = gr->V;
   int E = gr->E;
-  edge_t *edges = gr->edge_array;
+  edge_t_int *edges = gr->edge_array;
   int *weights = gr->weights;
 
 #ifdef _OPENMP
@@ -114,7 +114,7 @@ __host__ bool bellman_ford_cuda(graph_cuda_t *gr, int *dist, int s) {
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda(graph_cuda_t *gr, int *output, int *parents) {
+__host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *output, int *parents) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
@@ -136,7 +136,7 @@ __host__ void johnson_cuda(graph_cuda_t *gr, int *output, int *parents) {
   int V = gr->V;
   int E = gr->E;
   // Structure of the graph
-  edge_t *device_edge_array;
+  edge_t_int *device_edge_array;
   int *device_weights;
   int *device_output;
   int *device_parents;
@@ -144,35 +144,35 @@ __host__ void johnson_cuda(graph_cuda_t *gr, int *output, int *parents) {
   // Needed to run dijkstra
   char *device_visited;
   // Allocating memory
-  cudaMalloc(&device_edge_array, sizeof(edge_t) * E);
+  cudaMalloc(&device_edge_array, sizeof(edge_t_int) * E);
   cudaMalloc(&device_weights, sizeof(int) * E);
   cudaMalloc(&device_output, sizeof(int) * V * V);
   cudaMalloc(&device_parents, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
-  cudaMemcpy(device_edge_array, gr->edge_array, sizeof(edge_t) * E,
+  cudaMemcpy(device_edge_array, gr->edge_array, sizeof(edge_t_int) * E,
              cudaMemcpyHostToDevice);
   cudaMemcpy(device_weights, gr->weights, sizeof(int) * E, cudaMemcpyHostToDevice);
   cudaMemcpy(device_starts, gr->starts, sizeof(int) * (V + 1), cudaMemcpyHostToDevice);
 
-  graph_cuda_t graph_params;
+  graph_cuda_t_int graph_params;
   graph_params.V = V;
   graph_params.E = E;
   graph_params.starts = device_starts;
   graph_params.weights = device_weights;
   graph_params.edge_array = device_edge_array;
   // Constant memory parameters
-  cudaMemcpyToSymbol(graph_const, &graph_params, sizeof(graph_cuda_t));
+  cudaMemcpyToSymbol(graph_const, &graph_params, sizeof(graph_cuda_t_int));
   // End initialization
 
-  graph_cuda_t *bf_graph = new graph_cuda_t;
+  graph_cuda_t_int *bf_graph = new graph_cuda_t_int;
   bf_graph->V = V + 1;
   bf_graph->E = gr->E + V;
-  bf_graph->edge_array = new edge_t[bf_graph->E];
+  bf_graph->edge_array = new edge_t_int[bf_graph->E];
   bf_graph->weights = new int[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(edge_t));
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(edge_t_int));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(int));
   std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(int));
 

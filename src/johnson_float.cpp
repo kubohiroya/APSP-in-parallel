@@ -92,7 +92,7 @@ void set_edge_float(edge_t_float *edge, int u, int v) {
   edge->v = v;
 }
 
-graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const unsigned long seed) {
+graph_cuda_t_float *johnson_cuda_random_init_float(const int n, const double p, const unsigned long seed) {
 
   float *adj_matrix = new float[n * n];
   int E = init_random_adj_matrix_float(adj_matrix, n, p, seed);

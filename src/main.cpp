@@ -268,14 +268,14 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t* cuda_gr = johnson_cuda_random_init_int(n, p, seed);
+      graph_cuda_t_int* cuda_gr = johnson_cuda_random_init_int(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_cuda_int(cuda_gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph_int(cuda_gr);
 #else
 
-      graph_t *gr = init_random_graph_int(n, p, seed);
+      graph_t_int *gr = init_random_graph_int(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_parallel_int(gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
@@ -796,7 +796,7 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t *gr = init_random_graph_int(v, pp, seed);
+      graph_t_int *gr = init_random_graph_int(v, pp, seed);
       int *matrix = floyd_warshall_random_init_int(v, pp, seed);
       int *output = new int[v * v];
       int *parents = new int[v * v];
@@ -804,7 +804,7 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
       int *solution = new int[v * v];
       int **out_sol = new int *[v];
       for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
-      Graph G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+      Graph_int G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<int> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
 

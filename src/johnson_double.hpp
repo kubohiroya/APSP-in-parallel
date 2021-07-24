@@ -42,7 +42,7 @@ graph_t_double *init_random_graph_double(const int n, const double p, const unsi
 graph_t_double *init_graph_double(const int *adj_matrix, const int n, const int e);
 
 #ifdef CUDA
-graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const unsigned long seed);
+graph_cuda_t_double *johnson_cuda_random_init_double(const int n, const double p, const unsigned long seed);
 void johnson_cuda_double(graph_cuda_t_double *gr, double *output, int *parents);
 void free_cuda_graph_double(graph_cuda_t_double *g);
 #endif

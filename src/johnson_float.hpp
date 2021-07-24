@@ -42,7 +42,7 @@ graph_t_float *init_random_graph_float(const int n, const double p, const unsign
 graph_t_float *init_graph_float(const int *adj_matrix, const int n, const int e);
 
 #ifdef CUDA
-graph_cuda_t_float *johnson_cuda_init_float(const int n, const double p, const unsigned long seed);
+graph_cuda_t_float *johnson_cuda_random_init_float(const int n, const double p, const unsigned long seed);
 void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *parents);
 void free_cuda_graph_float(graph_cuda_t_float *g);
 #endif

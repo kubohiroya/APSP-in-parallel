@@ -89,7 +89,7 @@ void set_edge_double(edge_t_double *edge, int u, int v) {
   edge->v = v;
 }
 
-graph_cuda_t_double *johnson_cuda_init_double(const int n, const double p, const unsigned long seed) {
+graph_cuda_t_double *johnson_cuda_random_init_double(const int n, const double p, const unsigned long seed) {
 
   double *adj_matrix = new double[n * n];
   int E = init_random_adj_matrix_double(adj_matrix, n, p, seed);
