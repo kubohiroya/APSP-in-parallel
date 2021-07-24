@@ -14,10 +14,10 @@
 #endif
 
 #include "util.hpp"
-#include "floyd_warshall.hpp"
+#include "floyd_warshall_int.hpp"
 #include "floyd_warshall_float.hpp"
 #include "floyd_warshall_double.hpp"
-#include "johnson.hpp"
+#include "johnson_int.hpp"
 #include "johnson_float.hpp"
 #include "johnson_double.hpp"
 
@@ -184,11 +184,11 @@ int do_main_int(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(int));
       in.close();
     } else {
-      int *matrix = floyd_warshall_init(n, p, seed);
+      int *matrix = floyd_warshall_random_init_int(n, p, seed);
       int *parents = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
 
-      floyd_warshall(matrix, solution, parents, n);
+      floyd_warshall_int(matrix, solution, parents, n);
 
       std::cout << "<parents>\n";
       print_matrix_int(parents, n, n);
@@ -220,7 +220,7 @@ int do_main_int(
     if (benchmark) {
       bench_floyd_warshall_int(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_init(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init_int(n, block_size, p, seed);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -234,9 +234,9 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda(matrix, output, parents, n_blocked);
+      floyd_warshall_blocked_cuda_int(matrix, output, parents, n_blocked);
 #else
-      floyd_warshall_blocked(matrix, output, parents, n_blocked, block_size);
+      floyd_warshall_blocked_int(matrix, &output, &parents, n_blocked, block_size);
 #endif
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -268,16 +268,16 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t* cuda_gr = johnson_cuda_init(n, p, seed);
+      graph_cuda_t* cuda_gr = johnson_cuda_random_init_int(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda(cuda_gr, output, parents);
+      johnson_cuda_int(cuda_gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
-      free_cuda_graph(cuda_gr);
+      free_cuda_graph_int(cuda_gr);
 #else
 
-      graph_t *gr = init_random_graph(n, p, seed);
+      graph_t *gr = init_random_graph_int(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_parallel(gr, output, parents);
+      johnson_parallel_int(gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -341,7 +341,7 @@ int do_main_float(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(float));
       in.close();
     } else {
-      float *matrix = floyd_warshall_init_float(n, p, seed);
+      float *matrix = floyd_warshall_random_init_float(n, p, seed);
       int *parents = new int[n * n];
 
       auto start = std::chrono::high_resolution_clock::now();
@@ -375,7 +375,7 @@ int do_main_float(
     if (benchmark) {
       bench_floyd_warshall_float(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_init_float(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init_float(n, block_size, p, seed);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -390,7 +390,7 @@ int do_main_float(
 #ifdef CUDA
       floyd_warshall_blocked_cuda_float(matrix, output, parents, n_blocked);
 #else
-      floyd_warshall_blocked_float(matrix, output, parents, n_blocked, block_size);
+      floyd_warshall_blocked_float(matrix, &output, &parents, n_blocked, block_size);
 #endif
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -423,7 +423,7 @@ int do_main_float(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t_float* cuda_gr = johnson_cuda_init_float(n, p, seed);
+      graph_cuda_t_float* cuda_gr = johnson_cuda_random_init_float(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_cuda_float(cuda_gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
@@ -494,7 +494,7 @@ int do_main_double(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(double));
       in.close();
     } else {
-      double *matrix = floyd_warshall_init_double(n, p, seed);
+      double *matrix = floyd_warshall_random_init_double(n, p, seed);
       int *parents = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
 
@@ -527,7 +527,7 @@ int do_main_double(
     if (benchmark) {
       bench_floyd_warshall_double(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_init_double(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init_double(n, block_size, p, seed);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -542,7 +542,7 @@ int do_main_double(
 #ifdef CUDA
       floyd_warshall_blocked_cuda_double(matrix, output, parents, n_blocked);
 #else
-      floyd_warshall_blocked_double(matrix, output, parents, n_blocked, block_size);
+      floyd_warshall_blocked_double(matrix, &output, &parents, n_blocked, block_size);
 #endif
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -574,7 +574,7 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t_double* cuda_gr = johnson_cuda_init_double(n, p, seed);
+      graph_cuda_t_double* cuda_gr = johnson_cuda_random_init_double(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
       johnson_cuda_double(cuda_gr, output, parents);
       auto end = std::chrono::high_resolution_clock::now();
@@ -621,7 +621,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      int *matrix = floyd_warshall_init(v, p, seed);
+      int *matrix = floyd_warshall_random_init_int(v, p, seed);
       int *solution = new int[v * v];
       int *parents = new int[v * v];
 
@@ -630,7 +630,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_init(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init_int(v, block_size, p, seed);
         v_blocked = v + block_size - block_remainder;
       }
       int *output = new int[v_blocked * v_blocked];
@@ -644,7 +644,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
         std::memset(solution, 0, v * v * sizeof(int));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall(matrix, solution, parents, v);
+        floyd_warshall_int(matrix, solution, parents, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -653,7 +653,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
         // clear output
         std::memset(output, 0, v_blocked * v_blocked * sizeof(int));
         auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked(matrix_blocked, output, parents, v_blocked, block_size);
+        floyd_warshall_blocked_int(matrix_blocked, &output, &parents, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
@@ -680,7 +680,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      float *matrix = floyd_warshall_init_float(v, p, seed);
+      float *matrix = floyd_warshall_random_init_float(v, p, seed);
       float *solution = new float[v * v];
 
       float *matrix_blocked = matrix; // try to reuse inputs
@@ -688,7 +688,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_init_float(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init_float(v, block_size, p, seed);
         v_blocked = v + block_size - block_remainder;
       }
       float *output = new float[v_blocked * v_blocked];
@@ -712,7 +712,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
         // clear output
         std::memset(output, 0, v_blocked * v_blocked * sizeof(float));
         auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked_float(matrix_blocked, output, parents, v_blocked, block_size);
+        floyd_warshall_blocked_float(matrix_blocked, &output, &parents, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
@@ -738,7 +738,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      double *matrix = floyd_warshall_init_double(v, p, seed);
+      double *matrix = floyd_warshall_random_init_double(v, p, seed);
       double *solution = new double[v * v];
 
       double *matrix_blocked = matrix; // try to reuse inputs
@@ -746,7 +746,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_init_double(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init_double(v, block_size, p, seed);
         v_blocked = v + block_size - block_remainder;
       }
       double *output = new double[v_blocked * v_blocked];
@@ -770,7 +770,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
         // clear output
         std::memset(output, 0, v_blocked * v_blocked * sizeof(double));
         auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked_double(matrix_blocked, output, parents, v_blocked, block_size);
+        floyd_warshall_blocked_double(matrix_blocked, &output, &parents, v_blocked, block_size);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
@@ -796,8 +796,8 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t *gr = init_random_graph(v, pp, seed);
-      int *matrix = floyd_warshall_init(v, pp, seed);
+      graph_t *gr = init_random_graph_int(v, pp, seed);
+      int *matrix = floyd_warshall_random_init_int(v, pp, seed);
       int *output = new int[v * v];
       int *parents = new int[v * v];
 
@@ -829,7 +829,7 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, output, v, block_size);
-        johnson_parallel(gr, output, parents);
+        johnson_parallel_int(gr, output, parents);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
@@ -860,7 +860,7 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
       graph_t_float *gr = init_random_graph_float(v, pp, seed);
-      float *matrix = floyd_warshall_init_float(v, pp, seed);
+      float *matrix = floyd_warshall_random_init_float(v, pp, seed);
       float *output = new float[v * v];
       int *parents = new int[v * v];
 
@@ -924,7 +924,7 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
       graph_t_double *gr = init_random_graph_double(v, pp, seed);
-      double *matrix = floyd_warshall_init_double(v, pp, seed);
+      double *matrix = floyd_warshall_random_init_double(v, pp, seed);
       double *output = new double[v * v];
       int *parents = new int[v * v];
 

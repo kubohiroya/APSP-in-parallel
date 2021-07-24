@@ -44,7 +44,7 @@ __global__ void dijkstra_kernel_double(double *output, int *parents, char *visit
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != DBL_INF && dist_u + weights[v_i] < dist[v])
         dist[v] = dist_u + weights[v_i];
-	parents[count] = 0; // FIXME
+      parents[count] = 0; // FIXME
     }
   }
 }
@@ -61,7 +61,8 @@ __global__ void bellman_ford_kernel_double(double *dist) {
   double new_dist = weights[e] + dist[u];
   // Make ATOMIC
   if (dist[u] != DBL_INF && new_dist < dist[v])
-    atomicExch((unsigned long long int*)&dist[v], __double_as_longlong(new_dist)); // Needs to have conditional be atomic too
+    atomicExch((unsigned long long int *) &dist[v],
+               __double_as_longlong(new_dist)); // Needs to have conditional be atomic too
 }
 
 __host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, int s) {

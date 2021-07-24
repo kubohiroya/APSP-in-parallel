@@ -44,7 +44,7 @@ __global__ void dijkstra_kernel_float(float *output, int *parents, char *visited
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != FLT_INF && dist_u + weights[v_i] < dist[v])
         dist[v] = dist_u + weights[v_i];
-	parents[count] = 0; // FIXME
+      parents[count] = 0; // FIXME
     }
   }
 }

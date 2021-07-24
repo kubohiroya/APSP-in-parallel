@@ -6,7 +6,7 @@
 #include <cuda_runtime.h>
 #include <driver_functions.h>
 
-#include "floyd_warshall.hpp"
+#include "floyd_warshall_int.hpp"
 
 #define BLOCK_DIM 16
 
@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3(int n, int k, int *graph) {
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda(int *input, int *output, int *parents, int n) {
+__host__ void floyd_warshall_blocked_cuda_int(int *input, int *output, int *parents, int n) {
   // FIXME: parents is dummy for now
 
   int deviceCount;
@@ -191,7 +191,7 @@ __host__ void floyd_warshall_blocked_cuda(int *input, int *output, int *parents,
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda(int *input, int *output, int *parents, int n) {
+__host__ void floyd_warshall_cuda_int(int *input, int *output, int *parents, int n) {
   // FIXME: parents is dummy for now
 
   // from assignment 1

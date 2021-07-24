@@ -1,0 +1,55 @@
+#include <boost/config.hpp>
+#include <boost/graph/adjacency_list.hpp>
+
+#include "inf.hpp"
+
+using namespace boost;
+
+typedef adjacency_list <listS, vecS, directedS,
+no_property, property<edge_weight_t, int>> Graph;
+typedef graph_traits<Graph>::vertex_descriptor Vertex;
+typedef std::pair<int, int> Edge;
+
+typedef struct graph {
+  int V;
+  int E;
+  Edge *edge_array;
+  int *weights;
+} graph_t;
+
+typedef struct edge {
+  int u;
+  int v;
+} edge_t;
+
+#ifdef CUDA
+typedef struct graph_cuda {
+  int V;
+  int E;
+  int *starts;
+  int *weights;
+  edge_t *edge_array;
+} graph_cuda_t;
+#endif
+
+int init_random_adj_matrix_int(int *adj_matrix, const int n, const double p, const unsigned long seed);
+
+int count_edges_int(const int *adj_matrix, const int n);
+
+graph_t *init_random_graph_int(const int n, const double p, const unsigned long seed);
+
+graph_t *init_graph_int(const int *adj_matrix, const int n, const int e);
+
+#ifdef CUDA
+graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned long seed);
+void johnson_cuda_int(graph_cuda_t *gr, int *output, int *parents);
+void free_cuda_graph_int(graph_cuda_t *g);
+#endif
+
+void free_graph_int(graph_t *g);
+
+void johnson_parallel_int(graph_t *gr, int *output, int *parents);
+
+extern "C" void johnson_parallel_matrix_int(const int *adj_matrix, int **output, int **parents, const int n);
+extern "C" void free_johnson_parallel_matrix_int(int *output, int *parents);
+

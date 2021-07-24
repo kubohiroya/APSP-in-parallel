@@ -1,4 +1,4 @@
-#include "johnson.hpp"
+#include "johnson_int.hpp"
 #include <iostream>
 
 #define THREADS_PER_BLOCK 32

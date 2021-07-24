@@ -7,7 +7,7 @@
 #include "johnson_float.hpp"
 #include "equals.hpp"
 
-int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p, const unsigned long seed){
+int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
@@ -29,7 +29,7 @@ int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p,
   return E;
 }
 
-int count_edges_float(const float *adj_matrix, const int n){
+int count_edges_float(const float *adj_matrix, const int n) {
   size_t E = 0;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -55,10 +55,12 @@ graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int 
     for (int j = 0; j < n; j++) {
       if (!equals_float(adj_matrix[i * n + j], 0.0f)
           && !equals_float(adj_matrix[i * n + j], FLT_INF)) {
-        edge_array[ei] = Edge_float(i, j);
-        weights[ei] = adj_matrix[i * n + j];
-#pragma omp atomic
-        ei++;
+#pragma omp critical (init_graph_float)
+        {
+          edge_array[ei] = Edge_float(i, j);
+          weights[ei] = adj_matrix[i * n + j];
+          ei++;
+        }
       }
     }
   }
@@ -233,7 +235,7 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
-    std::vector<Vertex_float> p(num_vertices(G));
+    std::vector <Vertex_float> p(num_vertices(G));
     std::vector<float> d(num_vertices(G));
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(FLT_INF));
     for (int v = 0; v < V; v++) {
@@ -247,6 +249,15 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
   free_graph_float(bf_graph);
 }
 
-void johnson_parallel_matrix_float(const float *adj_matrix, float *output, int *parents, const int n){
-  johnson_parallel_float(init_graph_float(adj_matrix, n, count_edges_float(adj_matrix, n)), output, parents);
+void johnson_parallel_matrix_float(const float *adj_matrix, float **output, int **parents, const int n) {
+  *output = (float *) malloc(sizeof(float) * n * n);
+  memset(*output, 0, sizeof(float) * n * n);
+  *parents = (int *) malloc(sizeof(int) * n * n);
+  memset(*parents, 0, sizeof(int) * n * n);
+  johnson_parallel_float(init_graph_float(adj_matrix, n, count_edges_float(adj_matrix, n)), *output, *parents);
+}
+
+void free_johnson_parallel_matrix_float(float *output, int *parents) {
+  free(output);
+  free(parents);
 }

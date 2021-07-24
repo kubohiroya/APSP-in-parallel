@@ -5,9 +5,9 @@
 #include "omp.h" // omp_get_num_threads
 #endif
 
-#include "floyd_warshall.hpp"
+#include "floyd_warshall_int.hpp"
 
-int *floyd_warshall_init(const int n, const double p, const unsigned long seed) {
+int *floyd_warshall_random_init_int(const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
   static std::uniform_int_distribution<int> choose_weight(1, 100);
@@ -31,20 +31,16 @@ int *floyd_warshall_init(const int n, const double p, const unsigned long seed) 
   return out;
 }
 
-int *floyd_warshall_blocked_init(const int n, const int block_size, const double p, const unsigned long seed) {
+int *
+floyd_warshall_blocked_random_init_int(const int n, const int block_size, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
-  int n_oversized;
   int block_remainder = n % block_size;
-  if (block_remainder == 0) {
-    n_oversized = n;
-  } else {
-    n_oversized = n + block_size - block_remainder;
-  }
+  int n_oversized = (block_remainder == 0) ? n : n + block_size - block_remainder;
 
   int *out = new int[n_oversized * n_oversized];
   for (int i = 0; i < n_oversized; i++) {
@@ -63,7 +59,7 @@ int *floyd_warshall_blocked_init(const int n, const int block_size, const double
   return out;
 }
 
-void floyd_warshall(const int *input, int *output, int *parents, const int n) {
+void floyd_warshall_int(const int *input, int *output, int *parents, const int n) {
   std::memcpy(output, input, n * n * sizeof(int));
   std::memset(parents, -1, n * n * sizeof(int));
   for (int i = 0; i < n; i++) {
@@ -83,14 +79,7 @@ void floyd_warshall(const int *input, int *output, int *parents, const int n) {
   }
 }
 
-void floyd_warshall_blocked(const int *input, int *output, int *parents, const int n, const int b) {
-  std::memcpy(output, input, n * n * sizeof(int));
-  std::memset(parents, -1, n * n * sizeof(int));
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      parents[i * n + j] = i;
-    }
-  }
+void _floyd_warshall_blocked_int(int *output, int *parents, const int n, const int b) {
   // for now, assume b divides n
   const int blocks = n / b;
 
@@ -120,4 +109,22 @@ void floyd_warshall_blocked(const int *input, int *output, int *parents, const i
       }
     }
   }
+}
+
+void floyd_warshall_blocked_int(const int *input, int **output, int **parents, const int n, const int b) {
+  *output = (int *) malloc(sizeof(int) * n * n);
+  std::memcpy(*output, input, sizeof(int) * n * n);
+  *parents = (int *) malloc(sizeof(int) * n * n);
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      (*parents)[i * n + j] = i;
+    }
+  }
+  _floyd_warshall_blocked_int(*output, *parents, n, b);
+}
+
+void free_floyd_warshall_blocked_int(int *output, int *parents) {
+  free(output);
+  free(parents);
 }

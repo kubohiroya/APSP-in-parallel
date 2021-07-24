@@ -7,7 +7,7 @@
 #include "johnson_double.hpp"
 #include "equals.hpp"
 
-int init_random_adj_matrix_double(double *adj_matrix, const int n, const double p, const unsigned long seed){
+int init_random_adj_matrix_double(double *adj_matrix, const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
@@ -29,7 +29,7 @@ int init_random_adj_matrix_double(double *adj_matrix, const int n, const double 
   return E;
 }
 
-int count_edges_double(const double *adj_matrix, const int n){
+int count_edges_double(const double *adj_matrix, const int n) {
   size_t E = 0;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -48,17 +48,16 @@ graph_t_double *init_graph_double(const double *adj_matrix, const int n, const i
   Edge_double *edge_array = new Edge_double[E];
   double *weights = new double[E];
   int ei = 0;
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i * n + j] != 0
           && adj_matrix[i * n + j] != DBL_INF) {
-        edge_array[ei] = Edge_double(i, j);
-        weights[ei] = adj_matrix[i * n + j];
-#pragma omp atomic
-        ei++;
+#pragma omp critical (init_graph_double)
+        {
+          edge_array[ei] = Edge_double(i, j);
+          weights[ei] = adj_matrix[i * n + j];
+          ei++;
+        }
       }
     }
   }
@@ -233,7 +232,7 @@ void johnson_parallel_double(graph_t_double *gr, double *output, int *parents) {
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (int s = 0; s < V; s++) {
-    std::vector<Vertex_double> p(num_vertices(G));
+    std::vector <Vertex_double> p(num_vertices(G));
     std::vector<double> d(num_vertices(G));
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(DBL_INF));
     for (int v = 0; v < V; v++) {
@@ -247,6 +246,15 @@ void johnson_parallel_double(graph_t_double *gr, double *output, int *parents) {
   free_graph_double(bf_graph);
 }
 
-void johnson_parallel_matrix_double(const double *adj_matrix, double *output, int *parents, const int n){
-  johnson_parallel_double(init_graph_double(adj_matrix, n, count_edges_double(adj_matrix, n)), output, parents);
+void johnson_parallel_matrix_double(const double *adj_matrix, double **output, int **parents, const int n) {
+  *output = (double *) malloc(sizeof(double) * n * n);
+  memset(*output, 0, sizeof(double) * n * n);
+  *parents = (int *) malloc(sizeof(int) * n * n);
+  memset(*parents, 0, sizeof(int) * n * n);
+  johnson_parallel_double(init_graph_double(adj_matrix, n, count_edges_double(adj_matrix, n)), *output, *parents);
+}
+
+void free_johnson_parallel_matrix_double(double *output, int *parents) {
+  free(output);
+  free(parents);
 }

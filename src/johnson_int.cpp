@@ -5,9 +5,9 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 
-#include "johnson.hpp"
+#include "johnson_int.hpp"
 
-int init_random_adj_matrix(int *adj_matrix, const int n, const double p, const unsigned long seed){
+int init_random_adj_matrix_int(int *adj_matrix, const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
@@ -29,10 +29,10 @@ int init_random_adj_matrix(int *adj_matrix, const int n, const double p, const u
   return E;
 }
 
-int count_edges(const int *adj_matrix, const int n){
+int count_edges_int(const int *adj_matrix, const int n) {
   size_t E = 0;
 #ifdef _OPENMP
-#pragma omp parallel for
+  // #pragma omp parallel for
 #endif
   for (int i = 0; i < n * n; i++) {
     int weight = adj_matrix[i];
@@ -44,21 +44,23 @@ int count_edges(const int *adj_matrix, const int n){
   return E;
 }
 
-graph_t *init_graph(const int *adj_matrix, const int n, const int E) {
+graph_t *init_graph_int(const int *adj_matrix, const int n, const int E) {
   Edge *edge_array = new Edge[E];
   int *weights = new int[E];
   int ei = 0;
 #ifdef _OPENMP
-#pragma omp parallel for
+  // #pragma omp parallel for
 #endif
-  for (int i = 0; i < n;  i++) {
+  for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i * n + j] != 0
           && adj_matrix[i * n + j] != INT_INF) {
-        edge_array[ei] = Edge(i, j);
-        weights[ei] = adj_matrix[i * n + j];
-#pragma omp atomic
-        ei++;
+#pragma omp critical (init_graph_int)
+        {
+          edge_array[ei] = Edge(i, j);
+          weights[ei] = adj_matrix[i * n + j];
+          ei++;
+        }
       }
     }
   }
@@ -70,30 +72,30 @@ graph_t *init_graph(const int *adj_matrix, const int n, const int E) {
   return gr;
 }
 
-graph_t *init_random_graph(const int n, const double p, const unsigned long seed) {
+graph_t *init_random_graph_int(const int n, const double p, const unsigned long seed) {
   int *adj_matrix = new int[n * n];
-  size_t E = init_random_adj_matrix(adj_matrix, n, p, seed);
-  graph_t *gr = init_graph(adj_matrix, n, E);
+  size_t E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
+  graph_t *gr = init_graph_int(adj_matrix, n, E);
   delete[] adj_matrix;
   return gr;
 }
 
 #ifdef CUDA
-void free_graph_cuda(graph_cuda_t *g) {
+void free_graph_cuda_int(graph_cuda_t *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-void set_edge(edge_t *edge, int u, int v) {
+void set_edge_int(edge_t *edge, int u, int v) {
   edge->u = u;
   edge->v = v;
 }
 
-graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long seed) {
+graph_cuda_t *johnson_cuda_init_int(const int n, const double p, const unsigned long seed) {
 
   int *adj_matrix = new int[n * n];
-  int E = init_random_adj_matrix(adj_matrix, n, p, seed);
+  int E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
 
   edge_t *edge_array = new edge_t[E];
   int* starts = new int[n + 1];  // Starting point for each edge
@@ -124,7 +126,7 @@ graph_cuda_t *johnson_cuda_init(const int n, const double p, const unsigned long
   return gr;
 }
 
-void free_cuda_graph(graph_cuda_t* g) {
+void free_cuda_graph_int(graph_cuda_t* g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete[] g->starts;
@@ -133,13 +135,13 @@ void free_cuda_graph(graph_cuda_t* g) {
 
 #endif
 
-void free_graph(graph_t *g) {
+void free_graph_int(graph_t *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-inline bool bellman_ford(graph_t *gr, int *dist, int src) {
+inline bool bellman_ford_int(graph_t *gr, int *dist, int src) {
   int V = gr->V;
   int E = gr->E;
   Edge *edges = gr->edge_array;
@@ -181,7 +183,7 @@ inline bool bellman_ford(graph_t *gr, int *dist, int src) {
   return no_neg_cycle;
 }
 
-void johnson_parallel(graph_t *gr, int *output, int *parents) {
+void johnson_parallel_int(graph_t *gr, int *output, int *parents) {
 
   int V = gr->V;
 
@@ -210,7 +212,7 @@ void johnson_parallel(graph_t *gr, int *output, int *parents) {
   // this step detects a negative cycle, the algorithm is terminated.
   // TODO Can run parallel version?
   int *h = new int[bf_graph->V];
-  bool r = bellman_ford(bf_graph, h, V);
+  bool r = bellman_ford_int(bf_graph, h, V);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
@@ -244,12 +246,18 @@ void johnson_parallel(graph_t *gr, int *output, int *parents) {
   }
 
   delete[] h;
-  free_graph(bf_graph);
+  free_graph_int(bf_graph);
 }
 
-void johnson_parallel_matrix(const int *adj_matrix, const int n, int *output, int *parents){
-  johnson_parallel(init_graph(adj_matrix, n, count_edges(adj_matrix, n)), output, parents);
+void johnson_parallel_matrix_int(const int *adj_matrix, int **output, int **parents, const int n) {
+  *output = (int *) malloc(sizeof(int) * n * n);
+  memset(*output, 0, sizeof(int) * n * n);
+  *parents = (int *) malloc(sizeof(int) * n * n);
+  memset(*parents, 0, sizeof(int) * n * n);
+  johnson_parallel_int(init_graph_int(adj_matrix, n, count_edges_int(adj_matrix, n)), *output, *parents);
 }
 
-extern "C" void nop(){
+void free_johnson_parallel_matrix_int(int *output, int *parents) {
+  free(output);
+  free(parents);
 }
