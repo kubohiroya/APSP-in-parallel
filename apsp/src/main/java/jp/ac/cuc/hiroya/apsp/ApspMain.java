@@ -1,4 +1,4 @@
-package jp.ac.cuc.hiroya;
+package jp.ac.cuc.hiroya.apsp;
 
 import java.io.IOException;
 
@@ -9,7 +9,7 @@ public class ApspMain {
                 ? new int[] { 0, 10, 20, 30, 40, 10, 0, 30, 100, 100, 20, 30, 0, 40, 50, 30, 100, 40, 0, 60, 40, 100,
                         50, 60, 0, }
                 : CSVParser.parseCSV_int(filename);
-        ApspResult<int[]> result = AppResolvers.IntResolver.resolve(execEnv, algorithm, input_i, 64);
+        ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, input_i, 64);
 
         System.out.println("Process " + result.numVertex + " x " + result.numVertex + " nodes");
         System.out.println("Finished in " + result.elapsedTime + " ms");
@@ -27,7 +27,7 @@ public class ApspMain {
                         0.0f, 40.0f, 50.0f, 30.0f, 100.0f, 40.0f, 0.0f, 60.0f, 40.0f, 100.0f, 50.0f, 60.0f, 0.0f, }
                 : CSVParser.parseCSV_float(filename);
 
-        ApspResult<float[]> result = AppResolvers.FloatResolver.resolve(execEnv, algorithm, input_f, 64);
+        ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, input_f, 64);
 
         System.out.println("Process " + result.numVertex + " x " + result.numVertex + " nodes");
         System.out.println("Finished in " + result.elapsedTime + " ms");
@@ -45,7 +45,7 @@ public class ApspMain {
                         50.0, 30.0, 100.0, 40.0, 0.0, 60.0, 40.0, 100.0, 50.0, 60.0, 0.0 }
                 : CSVParser.parseCSV_double(filename);
 
-        ApspResult<double[]> result = AppResolvers.DoubleResolver.resolve(execEnv, algorithm, input_d, 64);
+        ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, input_d, 64);
 
         System.out.println("Process " + result.numVertex + " x " + result.numVertex + " nodes");
         System.out.println("Finished in " + result.elapsedTime + " ms");

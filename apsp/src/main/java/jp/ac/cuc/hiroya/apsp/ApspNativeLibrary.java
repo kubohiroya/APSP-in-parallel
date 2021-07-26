@@ -1,4 +1,4 @@
-package jp.ac.cuc.hiroya;
+package jp.ac.cuc.hiroya.apsp;
 
 import com.sun.jna.Library;
 import com.sun.jna.ptr.PointerByReference;

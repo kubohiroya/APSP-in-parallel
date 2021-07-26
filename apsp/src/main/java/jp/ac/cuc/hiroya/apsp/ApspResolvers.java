@@ -1,8 +1,8 @@
-package jp.ac.cuc.hiroya;
+package jp.ac.cuc.hiroya.apsp;
 
 import com.sun.jna.ptr.PointerByReference;
 
-public class AppResolvers {
+public class ApspResolvers {
 
     static class ApspResolverIntImpl implements ApspResolver<int[]> {
 
@@ -131,8 +131,8 @@ public class AppResolvers {
         }
     }
 
-    public static ApspResolver<int[]> IntResolver = new AppResolvers.ApspResolverIntImpl();
-    public static ApspResolver<float[]> FloatResolver = new AppResolvers.ApspResolverFloatImpl();
-    public static ApspResolver<double[]> DoubleResolver = new AppResolvers.ApspResolverDoubleImpl();
+    public static ApspResolver<int[]> IntResolver = new ApspResolvers.ApspResolverIntImpl();
+    public static ApspResolver<float[]> FloatResolver = new ApspResolvers.ApspResolverFloatImpl();
+    public static ApspResolver<double[]> DoubleResolver = new ApspResolvers.ApspResolverDoubleImpl();
 
 }

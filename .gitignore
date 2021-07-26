@@ -12,6 +12,7 @@ apsp-*
 *.profraw
 
 apsp/target
+apsp/javadoc
 apsp/.idea
 .DS_Store
 
