@@ -176,6 +176,8 @@ pgo:
 $(JAR): $(LIBS)
 	(cd apsp; mvn clean compile assembly:single)
 
+jar: $(JAR)
+
 ApspMain: $(JAR)
 #	java -cp $(CLASSPATH) $(JAVA_OPT) ApspMain seq j d input.csv
 	java $(JAVA_OPT) -jar $(JAR) omp j d input.csv
