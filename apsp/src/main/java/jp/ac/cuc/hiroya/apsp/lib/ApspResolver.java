@@ -1,4 +1,4 @@
-package jp.ac.cuc.hiroya.apsp;
+package jp.ac.cuc.hiroya.apsp.lib;
 
 public interface ApspResolver<T> {
     ApspResult<T> resolveWithJohnson(String execEnv, T input);

@@ -1,4 +1,4 @@
-package jp.ac.cuc.hiroya.apsp;
+package jp.ac.cuc.hiroya.apsp.util;
 
 import java.io.BufferedReader;
 import java.io.File;

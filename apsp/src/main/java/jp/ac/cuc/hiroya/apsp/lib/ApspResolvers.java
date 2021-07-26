@@ -1,10 +1,12 @@
-package jp.ac.cuc.hiroya.apsp;
+package jp.ac.cuc.hiroya.apsp.lib;
 
 import com.sun.jna.ptr.PointerByReference;
 
 public class ApspResolvers {
 
-    static class ApspResolverIntImpl implements ApspResolver<int[]> {
+    private ApspResolvers(){}
+
+    private static class ApspResolverIntImpl implements ApspResolver<int[]> {
 
         public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] input){
             return resolve(execEnv, ALGORITHM.JOHNSON, input, -1);
@@ -47,7 +49,7 @@ public class ApspResolvers {
         }
     }
 
-    static class ApspResolverFloatImpl implements ApspResolver<float[]> {
+    private static class ApspResolverFloatImpl implements ApspResolver<float[]> {
 
         public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] input){
             return resolve(execEnv, ALGORITHM.JOHNSON, input, -1);
@@ -89,7 +91,7 @@ public class ApspResolvers {
         }
     }
 
-    static class ApspResolverDoubleImpl implements ApspResolver<double[]> {
+    private static class ApspResolverDoubleImpl implements ApspResolver<double[]> {
 
         public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] input){
             return resolve(execEnv, ALGORITHM.JOHNSON, input, -1);

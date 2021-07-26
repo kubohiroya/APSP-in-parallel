@@ -182,7 +182,7 @@ ApspMain: $(JAR)
 	java $(JAVA_OPT) -jar $(JAR) omp johnson double input.csv
 
 javadoc: $(JAR)
-	cd apsp; javadoc -cp target/apsp-1.0.jar src/main/java/jp/ac/cuc/hiroya/apsp/* -d javadoc
+	cd apsp; javadoc -cp target/apsp-1.0.jar src/main/java/jp/ac/cuc/hiroya/apsp/*/* -d javadoc
 
 run: ApspMain
 

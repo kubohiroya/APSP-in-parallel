@@ -1,4 +1,4 @@
-package jp.ac.cuc.hiroya.apsp;
+package jp.ac.cuc.hiroya.apsp.lib;
 
 import com.sun.jna.Native;
 

@@ -51,7 +51,7 @@
             </descriptorRefs>
             <archive>
               <manifest>
-                <mainClass>jp.ac.cuc.hiroya.apsp.ApspMain</mainClass>
+                <mainClass>jp.ac.cuc.hiroya.apsp.util.ApspMain</mainClass>
               </manifest>
             </archive>
           </configuration>
