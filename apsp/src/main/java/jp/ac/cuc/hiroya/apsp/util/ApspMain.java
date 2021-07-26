@@ -20,8 +20,8 @@ public class ApspMain {
         ApspOutput.print_matrix_int(input_i, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_int(result.getOutput(), result.getNumVertex());
-        System.out.println("[parents]");
-        ApspOutput.print_matrix_int(result.getParents(), result.getNumVertex());
+        System.out.println("[predecessors]");
+        ApspOutput.print_matrix_int(result.getPredecessors(), result.getNumVertex());
     }
 
     public static void resolveFloat(String execEnv, String algorithm, String filename) throws IOException {
@@ -38,8 +38,8 @@ public class ApspMain {
         ApspOutput.print_matrix_float(input_f, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_float(result.getOutput(), result.getNumVertex());
-        System.out.println("[parents]");
-        ApspOutput.print_matrix_int(result.getParents(), result.getNumVertex());
+        System.out.println("[predecessors]");
+        ApspOutput.print_matrix_int(result.getPredecessors(), result.getNumVertex());
     }
 
     public static void resolveDouble(String execEnv, String algorithm, String filename) throws IOException {
@@ -56,8 +56,8 @@ public class ApspMain {
         ApspOutput.print_matrix_double(input_d, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_double(result.getOutput(), result.getNumVertex());
-        System.out.println("[parents]");
-        ApspOutput.print_matrix_int(result.getParents(), result.getNumVertex());
+        System.out.println("[predecessors]");
+        ApspOutput.print_matrix_int(result.getPredecessors(), result.getNumVertex());
     }
 
     public static void main(String[] args) throws IOException {

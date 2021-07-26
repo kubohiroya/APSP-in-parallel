@@ -17,7 +17,7 @@ public class ApspResult<T> {
         return output;
     }
 
-    public int[] getParents() {
+    public int[] getPredecessors() {
         return parents;
     }
 
