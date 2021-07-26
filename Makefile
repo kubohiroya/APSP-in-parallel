@@ -180,7 +180,7 @@ jar: $(JAR)
 
 ApspMain: $(JAR)
 #	java -cp $(CLASSPATH) $(JAVA_OPT) ApspMain seq j d input.csv
-	java $(JAVA_OPT) -jar $(JAR) omp j d input.csv
+	java $(JAVA_OPT) -jar $(JAR) omp johnson double input.csv
 
 run: ApspMain
 
