@@ -11,8 +11,7 @@ LLVM=llvm-12
 
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 
-CLASSPATH := ./classes/jna-5.8.0.jar:./classes/jna-platform-5.8.0.jar:./classes
-JAVA_SRC_PATH := ./src/main/java
+JAR = apsp/target/apsp-1.0.jar
 JAVA_OPT := -Djna.library.path=./libs
 
 ISPC ?= ispc
@@ -23,7 +22,6 @@ NVCCFLAGS ?= -std=c++11 -O3
 
 OBJ_DIR := objs
 LIBS_DIR := libs
-CLASSES_DIR := classes
 SRC_DIR := src
 
 # executable names
@@ -57,9 +55,6 @@ ISPC_SEQ_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-seq-main.o, $(ISPC_SEQ_OBJE
 ISPC_OMP_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-omp-main.o, $(ISPC_OMP_OBJECTS))
 ISPC_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-main.o, $(ISPC_OBJECTS))
 
-JAVA_SRCS := ApspMain.java
-JAVA_CLASS := $(CLASSES_DIR)/ApspMain.class
-
 PROFRAW := *.profraw
 
 ifeq ($(UNAME), Linux)
@@ -88,15 +83,12 @@ $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopen
 $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 ISPCFLAGS += --target=avx2-i32x8
 
-all: bin $(JAVA_CLASS)
+all: bin $(JAR)
 
 $(OBJ_DIR):
 	mkdir -p $@
 
 $(LIBS_DIR):
-	mkdir -p $@
-
-$(CLASSES_DIR):
 	mkdir -p $@
 
 $(SEQ): $(SEQ_OBJECTS) $(SEQ_LIB) $(OBJ_DIR)/seq-main.o
@@ -155,12 +147,10 @@ $(OBJ_DIR)/ispc-%.o: $(SRC_DIR)/%.ispc | $(OBJ_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@
 # we do not output a header here on purpose
 
-$(JAVA_CLASS): $(LIBS) $(JAVA_SRC_PATH)/$(JAVA_SRCS)
-	javac -cp $(CLASSPATH) -sourcepath $(JAVA_SRC_PATH) $(JAVA_SRC_PATH)/$(JAVA_SRCS) -d $(CLASSES_DIR)
-
 clean:
 	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
 	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB) $(PROFRAW)
+	(cd apsp; mvn clean)
 
 bin: $(BINARIES)
 
@@ -183,10 +173,12 @@ pgo:
 	make benchmark-j
 	make bin-ispc -Bj CXXEXTRA=-fprofile-use
 
-ApspMain: $(JAVA_CLASS)
-#	java -cp $(CLASSPATH) $(JAVA_OPT) ApspMain seq-j d input.csv
-	java -cp $(CLASSPATH) $(JAVA_OPT) ApspMain omp-j d input.csv
+$(JAR): $(LIBS)
+	(cd apsp; mvn clean compile assembly:single)
 
+ApspMain: $(JAR)
+#	java -cp $(CLASSPATH) $(JAVA_OPT) ApspMain seq j d input.csv
+	java $(JAVA_OPT) -jar $(JAR) omp j d input.csv
 
 run: ApspMain
 

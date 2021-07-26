@@ -10,3 +10,9 @@ apsp-*
 *.class
 *.jar
 *.profraw
+
+apsp/target
+apsp/.idea
+.DS_Store
+
+
