@@ -15,8 +15,10 @@ public interface ApspResolver<T> {
     }
 
     interface ALGORITHM {
-        String JOHNSON = "Johnson";
         String FLOYD_WARSHALL = "Floyd-Warshall";
+        String F = 'f';
+        String JOHNSON = "Johnson";
+        String J = 'j';
         int FLOYD_WARSHALL_BLOCK_SIZE = 96;
     }
 

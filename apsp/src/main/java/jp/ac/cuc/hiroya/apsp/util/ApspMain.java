@@ -63,7 +63,7 @@ public class ApspMain {
     public static void main(String[] args) throws IOException {
         if (args.length <= 1) {
             System.err.println(
-                    "java ApspMain [seq|seq-ispc|omp|omp-ispc|cuda] [Floyd-Warshall|johnson] [int|float|double] input.csv");
+                    "java jp.ac.cuc.hiroya.apsp.util.ApspMain [seq|seq-ispc|omp|omp-ispc|cuda] [Floyd-Warshall|Johnson|f|j] [int|float|double|i|f|d] input.csv");
             System.exit(0);
         }
         String execEnv = args[0];
