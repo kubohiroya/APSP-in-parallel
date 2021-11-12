@@ -32,10 +32,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.floyd_warshall_blocked_int(input, output, predecessors, numVertex, numBlocks);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.johnson_parallel_matrix_int(input, output, predecessors, numVertex);
+                    break;
             }
             int[] outputResult = output.getValue().getIntArray(0, numVertex * numVertex);
             int[] predecessorsResult = predecessors.getValue().getIntArray(0, numVertex * numVertex);
@@ -43,10 +45,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.free_floyd_warshall_blocked_int(output, predecessors);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.free_johnson_parallel_matrix_int(output, predecessors);
+                    break;
             }
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<int[]>(outputResult, predecessorsResult,numVertex, timeEnd - timeStart);
@@ -78,10 +82,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.floyd_warshall_blocked_float(input, output, predecessors, numVertex, numBlocks);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.johnson_parallel_matrix_float(input, output, predecessors, numVertex);
+                    break;
             }
             float[] outputResult = output.getValue().getFloatArray(0, numVertex * numVertex);
             int[] predecessorsResult = predecessors.getValue().getIntArray(0, numVertex * numVertex);
@@ -89,10 +95,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.free_floyd_warshall_blocked_float(output, predecessors);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.free_johnson_parallel_matrix_float(output, predecessors);
+                    break;
             }
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<float[]>(outputResult, predecessorsResult,numVertex, timeEnd - timeStart);
@@ -124,10 +132,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.floyd_warshall_blocked_double(input, output, predecessors, numVertex, nuBlocks);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.johnson_parallel_matrix_double(input, output, predecessors, numVertex);
+                    break;
             }
             double[] outputResult = output.getValue().getDoubleArray(0, numVertex * numVertex);
             int[] predecessorsResult = predecessors.getValue().getIntArray(0, numVertex * numVertex);
@@ -135,10 +145,12 @@ public class ApspResolvers {
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
                     impl.free_floyd_warshall_blocked_double(output, predecessors);
+                    break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
                     impl.free_johnson_parallel_matrix_double(output, predecessors);
+                    break;
             }
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<double[]>(outputResult, predecessorsResult, numVertex,timeEnd - timeStart);
