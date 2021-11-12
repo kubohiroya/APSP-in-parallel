@@ -2,13 +2,13 @@ package jp.ac.cuc.hiroya.apsp.lib;
 
 public class ApspResult<T> {
     T output;
-    int[] parents;
+    int[] predecessors;
     int numVertex;
     long elapsedTime;
 
-    ApspResult(T output, int[] parents, int numVertex, long elapsedTime) {
+    ApspResult(T output, int[] predecessors, int numVertex, long elapsedTime) {
         this.output = output;
-        this.parents = parents;
+        this.predecessors = predecessors;
         this.numVertex = numVertex;
         this.elapsedTime = elapsedTime;
     }
@@ -18,7 +18,7 @@ public class ApspResult<T> {
     }
 
     public int[] getPredecessors() {
-        return parents;
+        return predecessors;
     }
 
     public int getNumVertex() {

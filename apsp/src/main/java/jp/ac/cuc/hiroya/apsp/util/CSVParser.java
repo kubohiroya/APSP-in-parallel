@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class CSVParser {
 
-    public static int[] parseCSV_int(String filename) throws IOException {
+    public static int[] parseIntCSV(String filename) throws IOException {
         int[] ret = null;
         int p = 0;
         File file = new File(filename);
@@ -27,7 +27,7 @@ public class CSVParser {
         return ret;
     }
 
-    public static float[] parseCSV_float(String filename) throws IOException {
+    public static float[] parseFloatCSV(String filename) throws IOException {
         float[] ret = null;
         int p = 0;
         File file = new File(filename);
@@ -47,7 +47,7 @@ public class CSVParser {
         return ret;
     }
 
-    public static double[] parseCSV_double(String filename) throws IOException {
+    public static double[] parseDoubleCSV(String filename) throws IOException {
         double[] ret = null;
         int p = 0;
         File file = new File(filename);

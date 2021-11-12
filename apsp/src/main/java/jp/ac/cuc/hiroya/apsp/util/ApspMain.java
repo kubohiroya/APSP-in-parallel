@@ -11,7 +11,7 @@ public class ApspMain {
         int[] input = (filename == null)
                 ? new int[] { 0, 10, 20, 30, 40, 10, 0, 30, 100, 100, 20, 30, 0, 40, 50, 30, 100, 40, 0, 60, 40, 100,
                         50, 60, 0, }
-                : CSVParser.parseCSV_int(filename);
+                : CSVParser.parseIntCSV(filename);
         ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, input, 64);
 
         System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
@@ -28,7 +28,7 @@ public class ApspMain {
         float[] input = (filename == null)
                 ? new float[] { 0.0f, 10.0f, 20.0f, 30.0f, 40.0f, 10.0f, 0.0f, 30.0f, 100.0f, 100.0f, 20.0f, 30.0f,
                         0.0f, 40.0f, 50.0f, 30.0f, 100.0f, 40.0f, 0.0f, 60.0f, 40.0f, 100.0f, 50.0f, 60.0f, 0.0f, }
-                : CSVParser.parseCSV_float(filename);
+                : CSVParser.parseFloatCSV(filename);
 
         ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, input, 64);
 
@@ -46,7 +46,7 @@ public class ApspMain {
         double[] input = (filename == null)
                 ? new double[] { 0.0, 10.0, 20.0, 30.0, 40.0, 10.0, 0.0, 30.0, 100.0, 100.0, 20.0, 30.0, 0.0, 40.0,
                         50.0, 30.0, 100.0, 40.0, 0.0, 60.0, 40.0, 100.0, 50.0, 60.0, 0.0 }
-                : CSVParser.parseCSV_double(filename);
+                : CSVParser.parseDoubleCSV(filename);
 
         ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, input, 64);
 
