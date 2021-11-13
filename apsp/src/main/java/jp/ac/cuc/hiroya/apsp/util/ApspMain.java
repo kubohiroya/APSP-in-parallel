@@ -21,7 +21,7 @@ public class ApspMain {
         ApspOutput.print_matrix_int(input, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_int(result.getOutput(), result.getNumVertex());
-        System.out.println("[postdcessors]");
+        System.out.println("[postdecessors]");
         ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
@@ -40,7 +40,7 @@ public class ApspMain {
         ApspOutput.print_matrix_float(input, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_float(result.getOutput(), result.getNumVertex());
-        System.out.println("[postdcessors]");
+        System.out.println("[postdecessors]");
         ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
@@ -59,7 +59,7 @@ public class ApspMain {
         ApspOutput.print_matrix_double(input, result.getNumVertex());
         System.out.println("[output]");
         ApspOutput.print_matrix_double(result.getOutput(), result.getNumVertex());
-        System.out.println("[postdcessors]");
+        System.out.println("[postdecessors]");
         ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
