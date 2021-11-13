@@ -18,18 +18,18 @@ public class ApspMain {
         System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
         System.out.println("Finished in " + result.getElapsedTime() + " ms");
         System.out.println("[input]");
-        ApspOutput.print_matrix_int(input, result.getNumVertex());
+        //ApspOutput.print_matrix_int(input, result.getNumVertex());
         System.out.println("[output]");
-        ApspOutput.print_matrix_int(result.getOutput(), result.getNumVertex());
+        //ApspOutput.print_matrix_int(result.getOutput(), result.getNumVertex());
         System.out.println("[postdecessors]");
-        ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        //ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
     public static void resolveFloat(String execEnv, String algorithm, String filename) throws IOException {
         float[] input = (filename == null)
                 ? new float[] { 0.0f, 10.0f, 20.0f, 30.0f, 40.0f, 10.0f, 0.0f, 30.0f, 100.0f, 100.0f, 20.0f, 30.0f,
                         0.0f, 40.0f, 50.0f, 30.0f, 100.0f, 40.0f, 0.0f, 60.0f, 40.0f, 100.0f, 50.0f, 60.0f, 0.0f, }
-                : InfinityConverter.convert(CSVParser.parseFloatCSV(filename), 0.0f, Float.MAX_VALUE / 10 );
+                : InfinityConverter.convert(CSVParser.parseFloatCSV(filename), 0.0f, Float.POSITIVE_INFINITY / 2 );
 
         int numVertex = (int) Math.sqrt(input.length);
         ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, input, numVertex, 64);
@@ -37,18 +37,18 @@ public class ApspMain {
         System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
         System.out.println("Finished in " + result.getElapsedTime() + " ms");
         System.out.println("[input]");
-        ApspOutput.print_matrix_float(input, result.getNumVertex());
+        //ApspOutput.print_matrix_float(input, result.getNumVertex());
         System.out.println("[output]");
-        ApspOutput.print_matrix_float(result.getOutput(), result.getNumVertex());
+        //ApspOutput.print_matrix_float(result.getOutput(), result.getNumVertex());
         System.out.println("[postdecessors]");
-        ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        //ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
     public static void resolveDouble(String execEnv, String algorithm, String filename) throws IOException {
         double[] input = (filename == null)
                 ? new double[] { 0.0, 10.0, 20.0, 30.0, 40.0, 10.0, 0.0, 30.0, 100.0, 100.0, 20.0, 30.0, 0.0, 40.0,
                         50.0, 30.0, 100.0, 40.0, 0.0, 60.0, 40.0, 100.0, 50.0, 60.0, 0.0 }
-                : InfinityConverter.convert(CSVParser.parseDoubleCSV(filename), 0.0f, Double.MAX_VALUE / 10 );
+                : InfinityConverter.convert(CSVParser.parseDoubleCSV(filename), 0.0f, Double.POSITIVE_INFINITY / 2 );
 
         int numVertex = (int) Math.sqrt(input.length);
         ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, input, numVertex, 64);
@@ -56,11 +56,11 @@ public class ApspMain {
         System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
         System.out.println("Finished in " + result.getElapsedTime() + " ms");
         System.out.println("[input]");
-        ApspOutput.print_matrix_double(input, result.getNumVertex());
+        //ApspOutput.print_matrix_double(input, result.getNumVertex());
         System.out.println("[output]");
-        ApspOutput.print_matrix_double(result.getOutput(), result.getNumVertex());
+        //ApspOutput.print_matrix_double(result.getOutput(), result.getNumVertex());
         System.out.println("[postdecessors]");
-        ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        //ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
     }
 
     public static void main(String[] args) throws IOException {

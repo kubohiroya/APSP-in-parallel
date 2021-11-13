@@ -1,10 +1,6 @@
-#define INT_INF 1073741823
-//#define INT_INF 2147483647
 
-//#define FLT_MAX 3.402823466e+38
-//#define FLT_INF 3.402823466e+37
-#define FLT_INF 3.402823466e+38f
+#define INT_INF std::numeric_limits<int>::max() / 2
 
-//#define DBL_MAX 1.7976931348623158e+308
-//#define DBL_INF 1.7976931348623158e+307
-#define DBL_INF 1.7976931348623158e+308
+#define FLT_INF std::numeric_limits<float>::infinity() / 2
+
+#define DBL_INF std::numeric_limits<double>::infinity() / 2
