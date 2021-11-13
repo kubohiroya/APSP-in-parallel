@@ -4,7 +4,7 @@ export void floyd_warshall_in_place(uniform int C[], const uniform int A[], cons
     foreach (i = 0 ... b, j = 0 ... b) {
       if (C[i*n + j] > A[i*n + k] + B[k*n + j]) {
 	    C[i*n + j] = A[i*n + k] + B[k*n + j];
-	    parents[i*n + j] = parents[k*n + j];
+	    parents[i*n + j] = parents[i*n + k];
       }
     }
   }

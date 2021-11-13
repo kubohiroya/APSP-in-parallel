@@ -119,7 +119,7 @@ void floyd_warshall_blocked_double(const double *input, double **output, int **p
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-        (*parents)[i * n + j] = i;
+        (*parents)[i * n + j] = j;
     }
   }
   if(n >= b) {
