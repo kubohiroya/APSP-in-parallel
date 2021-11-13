@@ -37,7 +37,9 @@ int count_edges_int(const int *adj_matrix, const int n) {
   for (int i = 0; i < n * n; i++) {
     int weight = adj_matrix[i];
     if (weight != 0 && weight != INT_INF) {
+#ifdef _OPENMP
 #pragma omp atomic
+#endif
       E++;
     }
   }
@@ -55,7 +57,9 @@ graph_t_int *init_graph_int(const int *adj_matrix, const int n, const int E) {
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i * n + j] != 0
           && adj_matrix[i * n + j] != INT_INF) {
+#ifdef _OPENMP
 #pragma omp critical (init_graph_int)
+#endif	
         {
           edge_array[ei] = Edge_int(i, j);
           weights[ei] = adj_matrix[i * n + j];

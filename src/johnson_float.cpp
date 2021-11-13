@@ -37,7 +37,9 @@ int count_edges_float(const float *adj_matrix, const int n) {
   for (int i = 0; i < n * n; i++) {
     float weight = adj_matrix[i];
     if (weight != 0 && weight != FLT_INF) {
+#ifdef _OPENMP      
 #pragma omp atomic
+#endif      
       E++;
     }
   }
@@ -55,7 +57,9 @@ graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int 
     for (int j = 0; j < n; j++) {
       if (!equals_float(adj_matrix[i * n + j], 0.0f)
           && !equals_float(adj_matrix[i * n + j], FLT_INF)) {
+#ifdef _OPENMP
 #pragma omp critical (init_graph_float)
+#endif	
         {
           edge_array[ei] = Edge_float(i, j);
           weights[ei] = adj_matrix[i * n + j];

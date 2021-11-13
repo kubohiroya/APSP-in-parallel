@@ -37,7 +37,9 @@ int count_edges_double(const double *adj_matrix, const int n) {
   for (int i = 0; i < n * n; i++) {
     double weight = adj_matrix[i];
     if (weight != 0 && weight != DBL_INF) {
+#ifdef _OPENMP
 #pragma omp atomic
+#endif
       E++;
     }
   }
@@ -52,7 +54,9 @@ graph_t_double *init_graph_double(const double *adj_matrix, const int n, const i
     for (int j = 0; j < n; j++) {
       if (adj_matrix[i * n + j] != 0
           && adj_matrix[i * n + j] != DBL_INF) {
+#ifdef _OPENMP
 #pragma omp critical (init_graph_double)
+#endif	
         {
           edge_array[ei] = Edge_double(i, j);
           weights[ei] = adj_matrix[i * n + j];
@@ -152,7 +156,6 @@ inline bool bellman_ford_double(graph_t_double *gr, double *dist, int src) {
   }
   dist[src] = 0;
 
-
   for (int i = 1; i <= V - 1; i++) {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -214,6 +217,7 @@ void johnson_parallel_double(graph_t_double *gr, double *output, int *parents) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
   }
+
   // Next the edges of the original graph are reweighted using the values computed
   // by the Bellman–Ford algorithm: an edge from u to v, having length
   // w(u,v), is given the new length w(u,v) + h(u) − h(v).
