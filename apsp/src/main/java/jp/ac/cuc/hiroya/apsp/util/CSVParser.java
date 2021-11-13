@@ -16,11 +16,14 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row.length;
+                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
                     ret = new int[n * n];
                 }
                 for (String s : row) {
-                    ret[p++] = (int) Float.parseFloat(s);
+                    try {
+                        ret[p++] = Integer.parseInt(s);
+                    } catch (NumberFormatException ignore) {
+                    }
                 }
             }
         }
@@ -36,11 +39,14 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row.length;
+                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
                     ret = new float[n * n];
                 }
                 for (String s : row) {
-                    ret[p++] = Float.parseFloat(s);
+                    try {
+                        ret[p++] = Float.parseFloat(s);
+                    } catch (NumberFormatException ignore) {
+                    }
                 }
             }
         }
@@ -56,11 +62,15 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row.length;
+                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
                     ret = new double[n * n];
                 }
                 for (String s : row) {
-                    ret[p++] = Double.parseDouble(s);
+                    try {
+                        ret[p++] = Double.parseDouble(s);
+                    } catch (NumberFormatException ignore) {
+                    }
+
                 }
             }
         }
