@@ -241,7 +241,7 @@ void johnson_parallel_int(graph_t_int *gr, int *output, int *parents) {
     for (int v = 0; v < V; v++) {
       int i = s * V + v;
       output[i] = d[v] + h[v] - h[s];
-      parents[i] = p[v];
+      parents[v*V+s] = p[v];
     }
   }
 

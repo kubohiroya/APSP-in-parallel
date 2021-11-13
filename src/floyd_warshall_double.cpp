@@ -59,21 +59,16 @@ floyd_warshall_blocked_random_init_double(const int n, const int block_size, con
   return out;
 }
 
-void floyd_warshall_double(const double *input, double *output, int *parents, const int n) {
-  std::memcpy(output, input, n * n * sizeof(double));
-  std::memset(parents, -1, n * n * sizeof(int));
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      parents[i * n + j] = i;
-    }
-  }
-
+void floyd_warshall_double(double *output, int *parents, const int n) {
+  #ifdef _OPENMP
+  #pragma omp parallel for
+  #endif
   for (int k = 0; k < n; k++) {
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
         if (output[i * n + j] > output[i * n + k] + output[k * n + j]) {
           output[i * n + j] = output[i * n + k] + output[k * n + j];
-          parents[i * n + j] = parents[k * n + j];
+          parents[i * n + j] = parents[i * n + k];
         }
       }
     }
@@ -118,12 +113,20 @@ void floyd_warshall_blocked_double(const double *input, double **output, int **p
   *output = (double *) malloc(sizeof(double) * n * n);
   std::memcpy(*output, input, sizeof(double) * n * n);
   *parents = (int *) malloc(sizeof(int) * n * n);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      (*parents)[i * n + j] = i;
+        (*parents)[i * n + j] = i;
     }
   }
-  _floyd_warshall_blocked_double(*output, *parents, n, b);
+  if(n >= b) {
+    _floyd_warshall_blocked_double(*output, *parents, n, b);
+  }else{
+    floyd_warshall_double(*output, *parents, n);
+  }
 }
 
 void free_floyd_warshall_blocked_double(double *output, int *parents) {

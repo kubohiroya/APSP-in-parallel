@@ -11,13 +11,12 @@ int *
 floyd_warshall_blocked_random_init_int(const int n, const int block_size, const double p, const unsigned long seed);
 
 // expects len(input) == len(output) == n*n
-void floyd_warshall_int(const int *input, int *output, int *parents, const int n);
+void floyd_warshall_int(int *output, int *parents, const int n);
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
 extern "C" void floyd_warshall_in_place(int* C, const int* A, const int* B, int* parents, const int b, const int n);
 #else
-
 inline void floyd_warshall_in_place(int *C, const int *A, const int *B, int *parents, const int b, const int n) {
   for (int k = 0; k < b; k++) {
     int ktn = k * n;
@@ -26,7 +25,7 @@ inline void floyd_warshall_in_place(int *C, const int *A, const int *B, int *par
         int sum = A[i * n + k] + B[ktn + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          parents[i * n + j] = parents[ktn + j];
+          parents[i * n + j] = parents[i * n + k];
         }
       }
     }
@@ -37,7 +36,7 @@ inline void floyd_warshall_in_place(int *C, const int *A, const int *B, int *par
 
 // expects len(input) == len(output) == n*n
 extern "C" void floyd_warshall_blocked_int(const int *input, int **output, int **parents, const int n, const int b);
-extern "C" void free_floyd_warshall_blocked_int(int **output, int **parents);
+extern "C" void free_floyd_warshall_blocked_int(int *output, int *parents);
 
 #ifdef CUDA
 void floyd_warshall_cuda_int(int* input, int* output, int n);

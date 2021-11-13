@@ -11,7 +11,7 @@ float *
 floyd_warshall_blocked_random_init_float(const int n, const int block_size, const double p, const unsigned long seed);
 
 // expects len(input) == len(output) == n*n
-void floyd_warshall_float(const float *input, float *output, int *parents, const int n);
+void floyd_warshall_float(float *output, int *parents, const int n);
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
@@ -27,7 +27,7 @@ floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *par
         float sum = A[i * n + k] + B[ktn + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          parents[i * n + j] = parents[ktn + j];
+          parents[i * n + j] = parents[i * n + k];
         }
       }
     }

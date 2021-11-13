@@ -1,4 +1,5 @@
 #include <cstring> // memcpy
+#include <iostream> // cout
 #include <random> // mt19937_64, uniform_x_distribution
 
 #ifdef _OPENMP
@@ -43,6 +44,9 @@ floyd_warshall_blocked_random_init_int(const int n, const int block_size, const 
   int n_oversized = (block_remainder == 0) ? n : n + block_size - block_remainder;
 
   int *out = new int[n_oversized * n_oversized];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n_oversized; i++) {
     for (int j = 0; j < n_oversized; j++) {
       if (i == j) {
@@ -59,20 +63,16 @@ floyd_warshall_blocked_random_init_int(const int n, const int block_size, const 
   return out;
 }
 
-void floyd_warshall_int(const int *input, int *output, int *parents, const int n) {
-  std::memcpy(output, input, n * n * sizeof(int));
-  std::memset(parents, -1, n * n * sizeof(int));
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      parents[i * n + j] = i;
-    }
-  }
+void floyd_warshall_int(int *output, int *parents, const int n) {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int k = 0; k < n; k++) {
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
         if (output[i * n + j] > output[i * n + k] + output[k * n + j]) {
           output[i * n + j] = output[i * n + k] + output[k * n + j];
-          parents[i * n + j] = parents[k * n + j];
+          parents[i * n + j] = parents[i * n + k];
         }
       }
     }
@@ -116,12 +116,19 @@ void floyd_warshall_blocked_int(const int *input, int **output, int **parents, c
   std::memcpy(*output, input, sizeof(int) * n * n);
   *parents = (int *) malloc(sizeof(int) * n * n);
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      (*parents)[i * n + j] = i;
+      (*parents)[i * n + j] = j;
     }
   }
-  _floyd_warshall_blocked_int(*output, *parents, n, b);
+  if(n >= b) {
+      _floyd_warshall_blocked_int(*output, *parents, n, b);
+  }else{
+       floyd_warshall_int(*output, *parents, n);
+  }
 }
 
 void free_floyd_warshall_blocked_int(int *output, int *parents) {

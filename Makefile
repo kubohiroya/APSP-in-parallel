@@ -14,10 +14,10 @@ SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 JAR = apsp/target/apsp-1.0.jar
 JAVA_OPT := -Djna.library.path=./libs
 
-ISPC ?= ispc
+ISPC ?= /usr/local/bin/ispc
 ISPC_FLAGS ?= --arch=x86-64 --emit-obj -g -03
 
-NVCC ?= nvcc
+NVCC ?= /usr/local/cuda/bin/nvcc
 NVCCFLAGS ?= -std=c++11 -O3
 
 OBJ_DIR := objs
@@ -64,7 +64,9 @@ CUDA_LIB := $(LIBS_DIR)/libapsp-cuda.so
 SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -lomp
-$(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" -DCUDA
+# $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" -DCUDA
+$(CUDA): NVCCFLAGS += -arch=sm_80 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86 --compiler-options "-fPIC" -DCUDA
+
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
 $(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/$(LLVM)/lib -L/usr/local/cuda/lib64 -lcudart -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
@@ -157,7 +159,7 @@ bin: $(BINARIES)
 bin-ispc: $(OMP) $(OMP_LIB)
 
 benchmark-f:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious -r --cuda
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious2 -r --cuda
 
 benchmark-j:
 	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious2 -r

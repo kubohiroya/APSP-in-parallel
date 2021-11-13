@@ -187,8 +187,8 @@ int do_main_int(
       int *matrix = floyd_warshall_random_init_int(n, p, seed);
       int *parents = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
-
-      floyd_warshall_int(matrix, solution, parents, n);
+      memcpy(solution, matrix, sizeof(int) * n * n);
+      floyd_warshall_int(solution, parents, n);
 
       std::cout << "<parents>\n";
       print_matrix_int(parents, n, n);
@@ -343,10 +343,11 @@ int do_main_float(
     } else {
       float *matrix = floyd_warshall_random_init_float(n, p, seed);
       int *parents = new int[n * n];
+      memcpy(solution, matrix, sizeof(float) * n * n);
 
       auto start = std::chrono::high_resolution_clock::now();
 
-      floyd_warshall_float(matrix, solution, parents, n);
+      floyd_warshall_float(solution, parents, n);
 
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -495,10 +496,10 @@ int do_main_double(
       in.close();
     } else {
       double *matrix = floyd_warshall_random_init_double(n, p, seed);
+      memcpy(solution, matrix, sizeof(double) * n * n);
       int *parents = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
-
-      floyd_warshall_double(matrix, solution, parents, n);
+      floyd_warshall_double(solution, parents, n);
 
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -641,10 +642,11 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v * v * sizeof(int));
+        //std::memset(solution, 0, v * v * sizeof(int));
+        std::memcpy(solution, matrix, sizeof(int) * v * v);
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_int(matrix, solution, parents, v);
+        floyd_warshall_int(solution, parents, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -700,10 +702,10 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v * v * sizeof(float));
+        std::memcpy(solution, matrix, v * v * sizeof(float));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_float(matrix, solution, parents, v);
+        floyd_warshall_float(solution, parents, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -758,10 +760,10 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
       double total_time = 0.0;
       for (int b = 0; b < iterations; b++) {
         // clear solution
-        std::memset(solution, 0, v * v * sizeof(double));
+        std::memcpy(solution, matrix, v * v * sizeof(double));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_double(matrix, solution, parents, v);
+        floyd_warshall_double(solution, parents, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;

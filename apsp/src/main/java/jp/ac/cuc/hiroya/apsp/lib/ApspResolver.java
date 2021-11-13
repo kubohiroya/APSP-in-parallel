@@ -1,10 +1,10 @@
 package jp.ac.cuc.hiroya.apsp.lib;
 
 public interface ApspResolver<T> {
-    ApspResult<T> resolveWithJohnson(String execEnv, T input);
-    ApspResult<T> resolveWithFloydWarshall(String execEnv, T input);
-    ApspResult<T> resolveWithFloydWarshall(String execEnv, T input, int numBlocks);
-    ApspResult<T> resolve(String execEnv, String algorithm, T input, int numBlocks);
+    ApspResult<T> resolveWithJohnson(String execEnv, T input, int v);
+    ApspResult<T> resolveWithFloydWarshall(String execEnv, T input, int v);
+    ApspResult<T> resolveWithFloydWarshall(String execEnv, T input, int v, int numBlocks);
+    ApspResult<T> resolve(String execEnv, String algorithm, T input, int v, int numBlocks);
 
     interface EXEC_ENV {
         String SEQ = "seq";

@@ -11,7 +11,7 @@ double *
 floyd_warshall_blocked_random_init_double(const int n, const int block_size, const double p, const unsigned long seed);
 
 // expects len(input) == len(output) == n*n
-void floyd_warshall_double(const double *input, double *output, int *parents, const int n);
+void floyd_warshall_double(double *output, int *parents, const int n);
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
@@ -27,7 +27,7 @@ floyd_warshall_in_place_double(double *C, const double *A, const double *B, int 
         double sum = A[i * n + k] + B[kth + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          parents[i * n + j] = parents[k * n + j];
+          parents[i * n + j] = parents[i * n + k];
         }
       }
     }
