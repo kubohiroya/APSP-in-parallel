@@ -16,7 +16,7 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
+                    int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new int[n * n];
                 }
                 for (String s : row) {
@@ -39,7 +39,7 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
+                    int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new float[n * n];
                 }
                 for (String s : row) {
@@ -62,15 +62,19 @@ public class CSVParser {
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
-                    int n = row[row.length - 1] != "" ? row.length : row.length - 1;
+                    int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new double[n * n];
+                }
+                if(row.length == 1){
+                    break;
                 }
                 for (String s : row) {
                     try {
-                        ret[p++] = Double.parseDouble(s);
+                        double value = Double.parseDouble(s);
+                        ret[p++] = value;
                     } catch (NumberFormatException ignore) {
+                        System.err.println(p+"\t"+row);
                     }
-
                 }
             }
         }
