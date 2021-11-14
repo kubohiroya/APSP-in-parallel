@@ -52,4 +52,4 @@ void free_graph_double(graph_t_double *g);
 void johnson_parallel_double(graph_t_double *gr, double *output, int *parents);
 
 extern "C" void johnson_parallel_matrix_double(const double *adj_matrix, double **output, int **parents, const int n);
-extern "C" void free_johnson_parallel_matrix_double(double *output, int *parents);
+extern "C" void free_johnson_parallel_matrix_double(double **output, int **parents);

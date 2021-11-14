@@ -51,5 +51,5 @@ void free_graph_int(graph_t_int *g);
 void johnson_parallel_int(graph_t_int *gr, int *output, int *parents);
 
 extern "C" void johnson_parallel_matrix_int(const int *adj_matrix, int **output, int **parents, const int n);
-extern "C" void free_johnson_parallel_matrix_int(int *output, int *parents);
+extern "C" void free_johnson_parallel_matrix_int(int **output, int **parents);
 

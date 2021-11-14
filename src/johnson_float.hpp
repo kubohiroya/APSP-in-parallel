@@ -52,4 +52,4 @@ void free_graph_float(graph_t_float *g);
 void johnson_parallel_float(graph_t_float *gr, float *output, int *parents);
 
 extern "C" void johnson_parallel_matrix_float(const float *adj_matrix, float **output, int **parents, const int n);
-extern "C" void free_johnson_parallel_matrix_float(float *output, int *parents);
+extern "C" void free_johnson_parallel_matrix_float(float **output, int **parents);

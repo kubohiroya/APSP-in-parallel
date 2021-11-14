@@ -261,7 +261,7 @@ void johnson_parallel_matrix_float(const float *adj_matrix, float **output, int 
   johnson_parallel_float(init_graph_float(adj_matrix, n, count_edges_float(adj_matrix, n)), *output, *parents);
 }
 
-void free_johnson_parallel_matrix_float(float *output, int *parents) {
-  free(output);
-  free(parents);
+void free_johnson_parallel_matrix_float(float **output, int **parents) {
+  free(*output);
+  free(*parents);
 }

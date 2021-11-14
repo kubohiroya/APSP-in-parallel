@@ -261,7 +261,7 @@ void johnson_parallel_matrix_int(const int *adj_matrix, int **output, int **pare
   johnson_parallel_int(init_graph_int(adj_matrix, n, count_edges_int(adj_matrix, n)), *output, *parents);
 }
 
-void free_johnson_parallel_matrix_int(int *output, int *parents) {
-  free(output);
-  free(parents);
+void free_johnson_parallel_matrix_int(int **output, int **parents) {
+  free(*output);
+  free(*parents);
 }

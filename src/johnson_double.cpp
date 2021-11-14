@@ -258,7 +258,7 @@ void johnson_parallel_matrix_double(const double *adj_matrix, double **output, i
   johnson_parallel_double(init_graph_double(adj_matrix, n, count_edges_double(adj_matrix, n)), *output, *parents);
 }
 
-void free_johnson_parallel_matrix_double(double *output, int *parents) {
-  free(output);
-  free(parents);
+void free_johnson_parallel_matrix_double(double **output, int **parents) {
+  free(*output);
+  free(*parents);
 }
