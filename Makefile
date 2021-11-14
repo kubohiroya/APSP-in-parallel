@@ -149,14 +149,19 @@ $(OBJ_DIR)/ispc-%.o: $(SRC_DIR)/%.ispc | $(OBJ_DIR)
 	$(ISPC) $(ISPCFLAGS) $< -o $@
 # we do not output a header here on purpose
 
-clean:
-	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
-	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB) $(PROFRAW)
-	(cd apsp; mvn clean)
 
 bin: $(BINARIES)
 
 bin-ispc: $(OMP) $(OMP_LIB)
+
+pgo:
+	make clean
+	make bin-ispc -Bj CXXEXTRA=-fprofile-generate
+	make benchmark-j
+	make bin-ispc -Bj CXXEXTRA=-fprofile-use
+
+
+run: ApspMain
 
 benchmark-f:
 	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious2 -r --cuda
@@ -169,22 +174,25 @@ benchmark-j-half:
 
 benchmark: benchmark-f benchmark-j
 
-pgo:
-	make clean
-	make bin-ispc -Bj CXXEXTRA=-fprofile-generate
-	make benchmark-j
-	make bin-ispc -Bj CXXEXTRA=-fprofile-use
 
-$(JAR): $(LIBS)
+$(JAR): 
 	(cd apsp; mvn clean compile assembly:single)
+	cp $(LIBS) apsp/target/classes
 
 jar: $(JAR)
 
-ApspMain: $(JAR)
-	java $(JAVA_OPT) -jar $(JAR) omp johnson double input.csv
+ApspMain: $(JAR) $(LIBS)
+	java $(JAVA_OPT) -jar $(JAR) omp johnson double time input.csv
 
 javadoc: $(JAR)
 	cd apsp; javadoc -cp target/apsp-1.0.jar src/main/java/jp/ac/cuc/hiroya/apsp/*/* -d javadoc
 
-run: ApspMain
 
+cleanBin:
+	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
+	$(RM) $(SEQ) $(OMP) $(CUDA) $(SEQ_ISPC) $(OMP_ISPC) $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB) $(PROFRAW)
+
+cleanJar:
+	(cd apsp; mvn clean)
+
+clean: cleanBin cleanJar
