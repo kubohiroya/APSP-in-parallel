@@ -8,7 +8,7 @@
 #include "inf.hpp"
 #include "equals.hpp"
 
-inline void print_int(int value) {
+inline void print_int(const int value) {
   if (value == INT_INF) {
     std::cout << "Inf";
   } else {
@@ -16,7 +16,7 @@ inline void print_int(int value) {
   }
 }
 
-inline void print_float(float value) {
+inline void print_float(const float value) {
   if (equals_float(value, FLT_INF)) {
     std::cout << "Inf";
   } else {
@@ -24,7 +24,7 @@ inline void print_float(float value) {
   }
 }
 
-inline void print_double(double value) {
+inline void print_double(const double value) {
   if (equals_double(value, DBL_INF)) {
     std::cout << "Inf";
   } else {
@@ -32,7 +32,7 @@ inline void print_double(double value) {
   }
 }
 
-inline void print_matrix_int(int *output, int n_output, int n_blocked) {
+inline void print_matrix_int(const int *output, const int n_output, const int n_blocked) {
   for (int i = 0; i < n_output; i++) {
     print_int(output[i * n_blocked]);
     for (int j = 1; j < n_output; j++) {
@@ -43,7 +43,7 @@ inline void print_matrix_int(int *output, int n_output, int n_blocked) {
   }
 }
 
-inline void print_matrix_float(float *output, int n_output, int n_blocked) {
+inline void print_matrix_float(const float *output, const int n_output, const int n_blocked) {
   for (int i = 0; i < n_output; i++) {
     print_float(output[i * n_blocked]);
     for (int j = 1; j < n_output; j++) {
@@ -54,7 +54,7 @@ inline void print_matrix_float(float *output, int n_output, int n_blocked) {
   }
 }
 
-inline void print_matrix_double(double *output, int n_output, int n_blocked) {
+inline void print_matrix_double(const double *output, const int n_output, const int n_blocked) {
   for (int i = 0; i < n_output; i++) {
     print_double(output[i * n_blocked]);
     for (int j = 1; j < n_output; j++) {
