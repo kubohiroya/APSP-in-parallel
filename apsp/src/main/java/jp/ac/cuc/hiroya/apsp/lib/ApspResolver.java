@@ -5,6 +5,7 @@ public interface ApspResolver<T> {
     ApspResult<T> resolveWithFloydWarshall(String execEnv, T input, int v);
     ApspResult<T> resolveWithFloydWarshall(String execEnv, T input, int v, int numBlocks);
     ApspResult<T> resolve(String execEnv, String algorithm, T input, int v, int numBlocks);
+    T getInfinity(String execEnv);
 
     interface EXEC_ENV {
         String SEQ = "seq";
@@ -22,9 +23,4 @@ public interface ApspResolver<T> {
         int FLOYD_WARSHALL_BLOCK_SIZE = 96;
     }
 
-    interface INF {
-        int INT_INF = 1073741823;
-        float FLT_INF = 3.402823466e+37f;
-        double DBL_INF = 1.7976931348623158e+307;
-    }
 }

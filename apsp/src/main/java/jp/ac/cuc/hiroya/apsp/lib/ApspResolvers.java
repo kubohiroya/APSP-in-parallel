@@ -53,6 +53,11 @@ public class ApspResolvers {
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<int[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
         }
+
+        public int[] getInfinity(String execEnv){
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            return new int[]{impl.getIntegerInfinity()};
+        }
     }
 
     private static class ApspResolverFloatImpl implements ApspResolver<float[]> {
@@ -102,6 +107,11 @@ public class ApspResolvers {
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<float[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
         }
+
+        public float[] getInfinity(String execEnv){
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            return new float[]{impl.getFloatInfinity()};
+        }
     }
 
     private static class ApspResolverDoubleImpl implements ApspResolver<double[]> {
@@ -150,6 +160,11 @@ public class ApspResolvers {
             }
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<double[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
+        }
+
+        public double[] getInfinity(String execEnv){
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            return new double[]{impl.getDoubleInfinity()};
         }
     }
 

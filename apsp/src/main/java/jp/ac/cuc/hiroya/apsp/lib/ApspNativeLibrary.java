@@ -4,6 +4,10 @@ import com.sun.jna.Library;
 import com.sun.jna.ptr.PointerByReference;
 
 interface ApspNativeLibrary extends Library {
+    int getIntegerInfinity();
+    float getFloatInfinity();
+    double getDoubleInfinity();
+
     void floyd_warshall_blocked_int(int[] input, PointerByReference output, PointerByReference predecessors,
                                     int n, int b);
 
