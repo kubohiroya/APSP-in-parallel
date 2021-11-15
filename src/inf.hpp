@@ -1,3 +1,5 @@
+#include <stdexcept>
+#include <limits>
 
 #define INT_INF std::numeric_limits<int>::max() / 2
 
