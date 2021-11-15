@@ -196,3 +196,6 @@ cleanJar:
 	(cd apsp; mvn clean)
 
 clean: cleanBin cleanJar
+
+test: $(JAR) $(LIBS)
+	export LD_LIBRARY_PATH=../libs; cd apsp; mvn test
