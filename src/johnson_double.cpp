@@ -56,7 +56,7 @@ graph_t_double *init_graph_double(const double *adjacencyMatrix, const int n, co
           && adjacencyMatrix[i * n + j] != DBL_INF) {
 #ifdef _OPENMP
 #pragma omp critical (init_graph_double)
-#endif	
+#endif
         {
           edge_array[ei] = Edge_double(i, j);
           weights[ei] = adjacencyMatrix[i * n + j];
@@ -118,6 +118,38 @@ graph_cuda_t_double *johnson_cuda_random_init_double(const int n, const double p
   delete[] adjacencyMatrix;
 
   graph_cuda_t_double *gr = new graph_cuda_t_double;
+  gr->V = n;
+  gr->E = E;
+  gr->edge_array = edge_array;
+  gr->weights = weights;
+  gr->starts = starts;
+
+  return gr;
+}
+
+graph_cuda_t_double *init_graph_cuda_double(const double *adjacencyMatrix, const int n, const int E) {
+  Edge_double *edge_array = new Edge_double[E];
+  int* starts = new int[n + 1];  // Starting point for each edge
+  double *weights = new double[E];
+  int ei = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (adjacencyMatrix[i * n + j] != 0.0
+          && adjacencyMatrix[i * n + j] != DBL_INF) {
+#ifdef _OPENMP
+#pragma omp critical (init_graph_cuda_double)
+#endif
+        {
+          edge_array[ei] = Edge_double(i, j);
+          weights[ei] = adjacencyMatrix[i * n + j];
+          ei++;
+        }
+      }
+    }
+  }
+  starts[n] = ei; // One extra
+
+  graph_t_cuda_double *gr = new graph_t_cuda_double;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
@@ -253,7 +285,14 @@ void johnson_parallel_double(graph_t_double *gr, double *distanceMatrix, int *su
 void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n) {
   *distanceMatrix = (double *) malloc(sizeof(double) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
+
+#ifdef CUDA
+  graph_cuda_t_double* cuda_gr = init_graph_cuda_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  johnson_cuda_double(cuda_gr, *distanceMatrix, *successorMatrix);
+  free_cuda_graph_double(cuda_gr);
+#else
   johnson_parallel_double(init_graph_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+#endif
 }
 
 void free_johnson_parallel_matrix_double(double **distanceMatrix, int **successorMatrix) {

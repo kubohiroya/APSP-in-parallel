@@ -39,7 +39,7 @@ extern "C" void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **dis
 extern "C" void free_floyd_warshall_blocked_int(int *distanceMatrix, int *successorMatrix);
 
 #ifdef CUDA
-void floyd_warshall_cuda_int(int* adjacencyMatrix, int* distanceMatrix, int n);
-void floyd_warshall_blocked_cuda_int(int* adjacencyMatrix, int* distanceMatrix, int* successorMatrix, int n);
+void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int** successorMatrix, const int n);
 #endif
 

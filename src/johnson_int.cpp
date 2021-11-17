@@ -130,6 +130,38 @@ graph_cuda_t_int *johnson_cuda_random_init_int(const int n, const double p, cons
   return gr;
 }
 
+graph_cuda_t_int *init_graph_cuda_int(const int *adjacencyMatrix, const int n, const int E) {
+  Edge_int *edge_array = new Edge_int[E];
+  int* starts = new int[n + 1];  // Starting point for each edge
+  int* weights = new int[E];
+  int ei = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (adjacencyMatrix[i * n + j] != 0.0
+          && adjacencyMatrix[i * n + j] != INT_INF) {
+#ifdef _OPENMP
+#pragma omp critical (init_graph_cuda_int)
+#endif
+        {
+          edge_array[ei] = Edge_int(i, j);
+          weights[ei] = adjacencyMatrix[i * n + j];
+          ei++;
+        }
+      }
+    }
+  }
+  starts[n] = ei; // One extra
+
+  graph_t_cuda_int *gr = new graph_t_cuda_int;
+  gr->V = n;
+  gr->E = E;
+  gr->edge_array = edge_array;
+  gr->weights = weights;
+  gr->starts = starts;
+
+  return gr;
+}
+
 void free_cuda_graph_int(graph_cuda_t_int* g) {
   delete[] g->edge_array;
   delete[] g->weights;
@@ -256,7 +288,13 @@ void johnson_parallel_int(graph_t_int *gr, int *distanceMatrix, int *successorMa
 void johnson_parallel_matrix_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n) {
   *distanceMatrix = (int *) malloc(sizeof(int) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
+#ifdef CUDA
+  graph_cuda_t_int* cuda_gr = init_graph_cuda_int(adjacencyMatrix, n, count_edges_int(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  johnson_cuda_int(cuda_gr, *distanceMatrix, *successorMatrix);
+  free_cuda_graph_int(cuda_gr);
+#else
   johnson_parallel_int(init_graph_int(adjacencyMatrix, n, count_edges_int(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+#endif
 }
 
 void free_johnson_parallel_matrix_int(int **distanceMatrix, int **successorMatrix) {

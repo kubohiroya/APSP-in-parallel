@@ -122,14 +122,18 @@ void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **dista
       (*successorMatrix)[i * n + j] = j;
     }
   }
+#ifdef CUDA
+  floyd_warshall_blocked_cuda_double(adjacencyMatrix, *distanceMatrix, *successorMatrix, n);
+#else
   if(n >= b) {
     _floyd_warshall_blocked_double(*distanceMatrix, *successorMatrix, n, b);
   }else{
     floyd_warshall_double(*distanceMatrix, *successorMatrix, n);
   }
+#endif
 }
 
-void free_floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix) {
-  free(distanceMatrix);
-  free(successorMatrix);
+void free_floyd_warshall_blocked_double(double **distanceMatrix, int **successorMatrix) {
+  free(*distanceMatrix);
+  free(*successorMatrix);
 }
