@@ -10,7 +10,7 @@ public class ApspMain {
 
     public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, int[] adjacencyMatrix) throws IOException {
         int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
-        ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
+        ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 16);
 
         if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
@@ -26,7 +26,7 @@ public class ApspMain {
 
     public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, float[] adjacencyMatrix) throws IOException {
         int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
-        ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
+        ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 16);
 
         if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
@@ -42,7 +42,7 @@ public class ApspMain {
 
     public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, double[] adjacencyMatrix) throws IOException {
         int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
-        ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
+        ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 16);
 
         if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");

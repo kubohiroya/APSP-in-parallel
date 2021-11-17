@@ -2,13 +2,13 @@ package jp.ac.cuc.hiroya.apsp;
 
 import org.junit.Test;
 
-public class MatrixDetailedRealTest extends AbstractMatrixDetailedTest {
+public class MatrixRealDataTest extends AbstractMatrixDetailedTest {
 
     static String adjFilename = MatrixRealFilenames.adjFilename;
     static String distanceFilename = MatrixRealFilenames.distanceFilename;
     static String nodeFilename = MatrixRealFilenames.nodeFilename;
 
-    public MatrixDetailedRealTest()throws Exception{
+    public MatrixRealDataTest()throws Exception{
         super(adjFilename, distanceFilename, nodeFilename);
     }
 
@@ -21,28 +21,28 @@ public class MatrixDetailedRealTest extends AbstractMatrixDetailedTest {
     public void 本番データをFloydWarshall法で整合性チェック() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "f";
-        assertAlgorithmByItself(execEnv, algorithm, false);
+        assertAlgorithmWithSelfData(execEnv, algorithm, false);
     }
 
     @Test
     public void 本番データをJohnson法で整合性チェック() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "j";
-        assertAlgorithmByItself(execEnv, algorithm, false);
+        assertAlgorithmWithSelfData(execEnv, algorithm, false);
     }
 
     @Test
     public void 本番データをFloydWarshall法で処理結果チェック() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "f";
-        assertAlgorithmByTestData(execEnv, algorithm, true);
+        assertAlgorithmWithTestData(execEnv, algorithm, true);
     }
 
     @Test
     public void 本番データをJohnson法で処理結果をチェック() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "j";
-        assertAlgorithmByTestData(execEnv, algorithm,
+        assertAlgorithmWithTestData(execEnv, algorithm,
                 true);
     }
 }

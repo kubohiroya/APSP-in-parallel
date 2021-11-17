@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static jp.ac.cuc.hiroya.apsp.MatrixTestUtils.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -14,33 +15,36 @@ import static org.junit.Assert.assertThat;
 
 abstract class AbstractMatrixDetailedTest {
 
-    double[] adjMatrix;
+    double[] adjacencyMatrix;
     double[] distanceMatrix;
-    int[] nodeMatrix;
+    int[] successorMatrix;
 
     Map<String,ApspResult<double[]>> cache = new HashMap<>();
 
-    //日付をyyyyMMddの形で出力する
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
-
-    String getYYMMDDHHMM(Date date){
-        return sdf.format(date.getTime());
+    static TimeZone timeZoneJP = TimeZone.getTimeZone("Asia/Tokyo");
+    static SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    static{
+        sdf.setTimeZone(timeZoneJP);
     }
 
-    AbstractMatrixDetailedTest(String adjFilename, String distanceFilename, String nodeFilename)throws Exception{
-        System.out.println(getYYMMDDHHMM(new Date())+" step 1: load csv ");
-        System.out.println("   adj: " + adjFilename);
+    String getYYMMDDHHMM(){
+        return sdf.format(new Date());
+    }
+
+    AbstractMatrixDetailedTest(String adjacencyFilename, String distanceFilename, String successorFilename)throws Exception{
+        System.out.println(getYYMMDDHHMM()+" step 1: load csv ");
+        System.out.println("   adj: " + adjacencyFilename);
         System.out.println("   dst: " + distanceFilename);
-        System.out.println("   suc: " + nodeFilename);
-        this.adjMatrix = MatrixTestUtils.loadAdjMatrix(adjFilename);
+        System.out.println("   suc: " + successorFilename);
+        this.adjacencyMatrix = MatrixTestUtils.loadAdjacencyMatrix(adjacencyFilename);
         this.distanceMatrix = loadDistanceMatrix(distanceFilename);
-        this.nodeMatrix = loadNodeMatrix(nodeFilename);
+        this.successorMatrix = loadSuccessorMatrix(successorFilename);
     }
 
     void assertCsvSet(boolean verbose) {
-        System.out.println(getYYMMDDHHMM(new Date())+" step 2: calc successors");
-        double[] calculatedDistances = generateDistanceMatrix(this.distanceMatrix, this.nodeMatrix, verbose);
-        System.out.println("step 3: assert calculated distance " + new Date());
+        System.out.println(getYYMMDDHHMM()+" step 2: calculate distances with successor matrix");
+        double[] calculatedDistances = generateDistanceMatrix(this.adjacencyMatrix, this.successorMatrix, verbose);
+        System.out.println(getYYMMDDHHMM()+" step 3: assert calculated distance");
         assertThat(calculatedDistances, is(distanceMatrix));
     }
 
@@ -48,31 +52,31 @@ abstract class AbstractMatrixDetailedTest {
         String key = execEnv+":"+algorithm;
         ApspResult<double[]>result = cache.get(key);
         if(result == null){
-            int v = (int) Math.sqrt(adjMatrix.length);
+            int v = (int) Math.sqrt(adjacencyMatrix.length);
             result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm,
-                    adjMatrix, v, 64);
+                    adjacencyMatrix, v, 64);
             cache.put(key, result);
         }
         return result;
     }
 
-    void assertAlgorithmByTestData(String execEnv, String algorithm,
-                                          boolean verbose) {
-        System.out.println(getYYMMDDHHMM(new Date())+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
+    void assertAlgorithmWithTestData(String execEnv, String algorithm,
+                                     boolean verbose) {
+        System.out.println(getYYMMDDHHMM()+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
         ApspResult<double[]> result = getResult(execEnv, algorithm);
         int v = result.getNumVertex();
         double[] distances = result.getDistanceMatrix();
-        int[] nodes = result.getSuccessorMatrix();
+        int[] successors = result.getSuccessorMatrix();
 
-        System.out.println(getYYMMDDHHMM(new Date())+" step 3: assert distances");
+        System.out.println(getYYMMDDHHMM()+" step 3: assert distances with test data");
         if(verbose){
             for (int count = 0, i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
                     int index = i * v + j;
                     if (distances[index] != distanceMatrix[index]) {
                         System.out.println(i + "," + j + " actual:" + distances[index] + " expected:" + distanceMatrix[index]);
+                        count++;
                     }
-                    count++;
                     //assertThat(distances[index], is(distanceMatrix[index]));
                     if(count > 10) {
                         break;
@@ -87,48 +91,49 @@ abstract class AbstractMatrixDetailedTest {
             assertThat(distances, is(distanceMatrix));
         }
 
-        System.out.println(getYYMMDDHHMM(new Date())+" step 4: assert nodes");
+        System.out.println(getYYMMDDHHMM()+" step 4: assert successors with test data");
         if(false){
-            // disable assertion of nodes: there are more than one answers
+            // disable assertion of successors: there are more than one answers
             if(verbose){
                 for (int count = 0, i = 0; i < v; i++) {
                     for (int j = 0; j < v; j++) {
                         int index = i * v + j;
-                        if (nodes[index] != nodeMatrix[index]) {
-                            System.out.println("i=" + i + ", j=" + j + "  node= actual:" + nodes[index] + " expected:" + nodeMatrix[index]);
+                        if (successors[index] != successorMatrix[index]) {
+                            System.out.println("i=" + i + ", j=" + j + "  successor= actual:" + successors[index] + " expected:" + successorMatrix[index]);
                             if(count++ > 10) {
                                 System.out.println("...cancel step 4 assertion");
                                 break;
                             }
                         }
-                        assertThat(nodes[index], is(nodeMatrix[index])); // REMOVE
+                        assertThat(successors[index], is(successorMatrix[index])); // REMOVE
                     }
                 }
             }else{
-                assertThat(nodes, is(nodeMatrix)); // REMOVE
+                assertThat(successors, is(successorMatrix)); // REMOVE
             }
+        }else{
+            System.out.println("  ignore step 4 assertion, various algorithm generated various successor matrix");
         }
 
-        System.out.println(getYYMMDDHHMM(new Date())+" step 5: calc successors");
-        double[] calculatedDistances = generateDistanceMatrix(distances, nodes, false);
+        System.out.println(getYYMMDDHHMM()+" step 5: calculate distances with successor matrix");
+        double[] calculatedDistances = generateDistanceMatrix(adjacencyMatrix, successors, false);
 
-        System.out.println(getYYMMDDHHMM(new Date())+" step 6: assert calculated distance");
+        System.out.println(getYYMMDDHHMM()+" step 6: assert calculated distance");
         if(verbose){
             for (int i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
                     int index = i * v + j;
                     if (calculatedDistances[index] != distanceMatrix[index]) {
-                        System.out.println("("+i + "," + j + ") NODE"+
-                                " actual:" + nodes[index] + " expected:" + nodeMatrix[index]);
+                        System.out.println("("+i + "," + j + ") Successor "+
+                                " actual:" + successors[index] + " expected:" + successorMatrix[index]);
                         if(calculatedDistances[index] != distanceMatrix[index]){
                             System.out.println("("+i + "," + j + ") DISTANCE actual:");
-                            MatrixTestUtils.calculateDistance(i, j, v, distances, nodes, true);
+                            MatrixTestUtils.calculateDistance(i, j, v, distances, successors, true);
                             System.out.println("("+i + "," + j + "         expected:");
-                            MatrixTestUtils.calculateDistance(i, j, v, distanceMatrix, nodes, true);
+                            MatrixTestUtils.calculateDistance(i, j, v, distanceMatrix, successors, true);
                             System.out.println();
                         }
                     }
-                    // assertThat(nodes[index], is(nodeMatrix[index]));
                     assertThat(calculatedDistances[index], is(distanceMatrix[index]));
                 }
             }
@@ -137,26 +142,30 @@ abstract class AbstractMatrixDetailedTest {
         }
     }
 
-    void assertAlgorithmByItself(String execEnv, String algorithm,
-                                 boolean verbose) {
-        System.out.println(getYYMMDDHHMM(new Date())+" step 2: process");
+    void assertAlgorithmWithSelfData(String execEnv, String algorithm,
+                                     boolean verbose) {
+        System.out.println(getYYMMDDHHMM()+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
         ApspResult<double[]> result = getResult(execEnv, algorithm);
         int v = result.getNumVertex();
-        System.out.println(getYYMMDDHHMM(new Date())+" step 3: assert distances");
-        double[] distances = result.getDistanceMatrix();
-        int[] nodes = result.getSuccessorMatrix();
-        double[] calculatedDistances = generateDistanceMatrix(distances, nodes, verbose);
 
-        // assertThat(calculatedDistances, is(distances)); // FIXME
-        for (int i = 0; i < v; i++) {
-            for (int j = 0; j < v; j++) {
-                int index = i * v + j;
-                if (calculatedDistances[index] != distances[index]) {
-                    System.out.println(i + "," + j + " actual:" + calculatedDistances[index] + " expected:" + distances[index]);
-                    MatrixTestUtils.calculateDistance(i, j, v, distances, nodes, true);
+        System.out.println(getYYMMDDHHMM()+" step 3: assert calculated distance with self-generated data");
+        double[] distances = result.getDistanceMatrix();
+        int[] successors = result.getSuccessorMatrix();
+        double[] calculatedDistances = generateDistanceMatrix(adjacencyMatrix, successors, verbose);
+
+        if(verbose){
+            for (int i = 0; i < v; i++) {
+                for (int j = 0; j < v; j++) {
+                    int index = i * v + j;
+                    if (calculatedDistances[index] != distances[index]) {
+                        System.out.println("    "+i + "," + j + " actual:" + calculatedDistances[index] + " expected:" + distances[index]);
+                        MatrixTestUtils.calculateDistance(i, j, v, distances, successors, true);
+                    }
+                    assertThat(calculatedDistances[index], is(distances[index]));
                 }
-                assertThat(calculatedDistances[index], is(distances[index]));
             }
+        }else{
+            assertThat(calculatedDistances, is(distances));
         }
     }
 }
