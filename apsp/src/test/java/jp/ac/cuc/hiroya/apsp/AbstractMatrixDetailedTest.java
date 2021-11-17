@@ -60,12 +60,16 @@ abstract class AbstractMatrixDetailedTest {
                     int index = i * v + j;
                     if (distances[index] != distanceMatrix[index]) {
                         System.out.println(i + "," + j + " actual:" + distances[index] + " expected:" + distanceMatrix[index]);
-                        if(count++ > 10) {
-                            System.out.println("...cancel step 4 assertion");
-                            break;
-                        }
                     }
+                    count++;
                     //assertThat(distances[index], is(distanceMatrix[index]));
+                    if(count > 10) {
+                        break;
+                    }
+                }
+                if(count > 10) {
+                    System.out.println("...cancel step 3 assertion");
+                    break;
                 }
             }
         }else{
