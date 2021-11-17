@@ -175,9 +175,6 @@ benchmark-j-half:
 benchmark: benchmark-f benchmark-j
 
 
-install: $(LIBS)
-	cp $(LIBS) apsp/target/classes
-
 $(JAR): 
 	(cd apsp; mvn clean compile assembly:single)
 
@@ -185,11 +182,10 @@ jar:
 	make $(JAR)
 
 ApspMain: $(JAR) $(LIBS) install
-	java $(JAVA_OPT) -jar $(JAR) omp johnson double time input.csv
+	java $(JAVA_OPT) -jar $(JAR) omp johnson double time apsp/InputMatrix.csv
 
 javadoc: $(JAR)
 	cd apsp; javadoc -cp target/apsp-1.0.jar src/main/java/jp/ac/cuc/hiroya/apsp/*/* -d javadoc
-
 
 cleanBin:
 	$(RM) -r $(OBJ_DIR) $(LIBS_DIR)
@@ -201,4 +197,4 @@ cleanJar:
 clean: cleanBin cleanJar
 
 test: $(JAR) $(LIBS)
-	export LD_LIBRARY_PATH=../libs; cd apsp; mvn test
+	cp $(LIBS) apsp/target/classes;	(cd apsp; mvn test -Dtest=MatrixBasicTest,MatrixDetailedDummyTest)
