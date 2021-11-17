@@ -1,6 +1,7 @@
 objs/*
 libs/*
 apsp/DDMA*.csv
+apsp/*.log
 
 .vscode/*
 .idea/*
