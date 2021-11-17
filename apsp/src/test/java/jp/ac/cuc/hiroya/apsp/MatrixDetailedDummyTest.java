@@ -2,12 +2,13 @@ package jp.ac.cuc.hiroya.apsp;
 
 import org.junit.Test;
 
-public class MatrixDetailedTestWithTestData extends AbstractMatrixDetailedTest {
+public class MatrixDetailedDummyTest extends AbstractMatrixDetailedTest {
+
     static String adjFilename = MatrixTestFilenames.adjFilename;
     static String distanceFilename = MatrixTestFilenames.distanceFilename;
     static String nodeFilename = MatrixTestFilenames.nodeFilename;
 
-    public MatrixDetailedTestWithTestData()throws Exception{
+    public MatrixDetailedDummyTest()throws Exception{
         super(adjFilename, distanceFilename, nodeFilename);
     }
 
