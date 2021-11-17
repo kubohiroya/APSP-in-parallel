@@ -150,8 +150,8 @@ __global__ void floyd_warshall_block_kernel_phase3(int n, int k, int *graph) {
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_int(int *input, int *output, int *parents, int n) {
-  // FIXME: parents is dummy for now
+__host__ void floyd_warshall_blocked_cuda_int(int *adjancencyMatrix, int *distanceMatrix, int *successorMatrix, int n) {
+  // FIXME: successorMatrix is dummy for now
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -170,7 +170,7 @@ __host__ void floyd_warshall_blocked_cuda_int(int *input, int *output, int *pare
   int *device_graph;
   const size_t size = sizeof(int) * n * n;
   cudaMalloc(&device_graph, size);
-  cudaMemcpy(device_graph, input, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
   const int blocks = (n + BLOCK_DIM - 1) / BLOCK_DIM;
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
@@ -185,14 +185,14 @@ __host__ void floyd_warshall_blocked_cuda_int(int *input, int *output, int *pare
     floyd_warshall_block_kernel_phase3<<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
 
-  cudaMemcpy(output, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
 
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_int(int *input, int *output, int *parents, int n) {
-  // FIXME: parents is dummy for now
+__host__ void floyd_warshall_cuda_int(int *adjancencyMatrix, int *distanceMatrix, int *successorMatrix, int n) {
+  // FIXME: successorMatrix is dummy for now
 
   // from assignment 1
   int deviceCount;
@@ -217,7 +217,7 @@ __host__ void floyd_warshall_cuda_int(int *input, int *output, int *parents, int
 
   cudaMalloc(&device_graph, size);
 
-  cudaMemcpy(device_graph, input, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
   dim3 grid_dim((n + block_dim.x - 1) / block_dim.x,
@@ -228,7 +228,7 @@ __host__ void floyd_warshall_cuda_int(int *input, int *output, int *parents, int
     cudaThreadSynchronize();
   }
 
-  cudaMemcpy(output, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {

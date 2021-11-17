@@ -175,13 +175,16 @@ benchmark-j-half:
 benchmark: benchmark-f benchmark-j
 
 
-$(JAR): 
-	(cd apsp; mvn clean compile assembly:single)
+install: $(LIBS)
 	cp $(LIBS) apsp/target/classes
 
-jar: $(JAR)
+$(JAR): 
+	(cd apsp; mvn clean compile assembly:single)
 
-ApspMain: $(JAR) $(LIBS)
+jar:
+	make $(JAR)
+
+ApspMain: $(JAR) $(LIBS) install
 	java $(JAVA_OPT) -jar $(JAR) omp johnson double time input.csv
 
 javadoc: $(JAR)

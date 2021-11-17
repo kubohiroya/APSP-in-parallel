@@ -18,7 +18,7 @@ __device__ int min_distance(int *dist, char *visited, int n) {
   return min_index;
 }
 
-__global__ void dijkstra_kernel(int *output, int *parents, char *visited_global) {
+__global__ void dijkstra_kernel(int *distanceMatrix, int *successorMatrix, char *visited_global) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
   int V = graph_const.V;
 
@@ -28,7 +28,7 @@ __global__ void dijkstra_kernel(int *output, int *parents, char *visited_global)
   int *weights = graph_const.weights;
   edge_t_int *edge_array = graph_const.edge_array;
 
-  int *dist = &output[s * V];
+  int *dist = &distanceMatrix[s * V];
   char *visited = &visited_global[s * V];
   for (int i = 0; i < V; i++) {
     dist[i] = INT_INF;
@@ -45,7 +45,7 @@ __global__ void dijkstra_kernel(int *output, int *parents, char *visited_global)
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != INT_INF && dist_u + weights[v_i] < dist[v]) {
         dist[v] = dist_u + weights[v_i];
-        parents[count] = 0; // FIXME
+        successorMatrix[count] = 0; // FIXME
       }
     }
   }
@@ -114,7 +114,7 @@ __host__ bool bellman_ford_cuda(graph_cuda_t_int *gr, int *dist, int s) {
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *output, int *parents) {
+__host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *distanceMatrix, int *successorMatrix) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
@@ -138,16 +138,16 @@ __host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *output, int *parents) 
   // Structure of the graph
   edge_t_int *device_edge_array;
   int *device_weights;
-  int *device_output;
-  int *device_parents;
+  int *device_distanceMatrix;
+  int *device_successorMatrix;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
   // Allocating memory
   cudaMalloc(&device_edge_array, sizeof(edge_t_int) * E);
   cudaMalloc(&device_weights, sizeof(int) * E);
-  cudaMalloc(&device_output, sizeof(int) * V * V);
-  cudaMalloc(&device_parents, sizeof(int) * V * V);
+  cudaMalloc(&device_distanceMatrix, sizeof(int) * V * V);
+  cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
@@ -196,9 +196,9 @@ __host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *output, int *parents) 
 
   cudaMemcpy(device_weights, gr->weights, sizeof(int) * E, cudaMemcpyHostToDevice);
 
-  dijkstra_kernel<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_parents, device_visited);
+  dijkstra_kernel<<<blocks, THREADS_PER_BLOCK>>>(device_distanceMatrix, device_successorMatrix, device_visited);
 
-  cudaMemcpy(output, device_output, sizeof(int) * V * V, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(int) * V * V, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {
@@ -211,8 +211,8 @@ __host__ void johnson_cuda_int(graph_cuda_t_int *gr, int *output, int *parents) 
 
   cudaFree(device_edge_array);
   cudaFree(device_weights);
-  cudaFree(device_output);
-  cudaFree(device_parents);
+  cudaFree(device_distanceMatrix);
+  cudaFree(device_successorMatrix);
   cudaFree(device_starts);
   cudaFree(device_visited);
 

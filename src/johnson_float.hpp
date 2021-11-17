@@ -33,23 +33,23 @@ typedef struct graph_cuda_float {
 } graph_cuda_t_float;
 #endif
 
-int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p, const unsigned long seed);
+int init_random_adjacency_matrix_float(float *adjacencyMatrix, const int n, const double p, const unsigned long seed);
 
-int count_edges_float(const float *adj_matrix, const int n);
+int count_edges_float(const float *adjacencyMatrix, const int n);
 
 graph_t_float *init_random_graph_float(const int n, const double p, const unsigned long seed);
 
-graph_t_float *init_graph_float(const int *adj_matrix, const int n, const int e);
+graph_t_float *init_graph_float(const int *adjacencyMatrix, const int n, const int e);
 
 #ifdef CUDA
 graph_cuda_t_float *johnson_cuda_random_init_float(const int n, const double p, const unsigned long seed);
-void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *parents);
+void johnson_cuda_float(graph_cuda_t_float *gr, float *distanceMatrix, int *successorMatrix);
 void free_cuda_graph_float(graph_cuda_t_float *g);
 #endif
 
 void free_graph_float(graph_t_float *g);
 
-void johnson_parallel_float(graph_t_float *gr, float *output, int *parents);
+void johnson_parallel_float(graph_t_float *gr, float *distanceMatrix, int *successorMatrix);
 
-extern "C" void johnson_parallel_matrix_float(const float *adj_matrix, float **output, int **parents, const int n);
-extern "C" void free_johnson_parallel_matrix_float(float **output, int **parents);
+extern "C" void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_float(float **distanceMatrix, int **successorMatrix);

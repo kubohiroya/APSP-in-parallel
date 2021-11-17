@@ -7,7 +7,7 @@
 #include "johnson_float.hpp"
 #include "equals.hpp"
 
-int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p, const unsigned long seed) {
+int init_random_adjacency_matrix_float(float *adjacencyMatrix, const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
@@ -17,25 +17,25 @@ int init_random_adj_matrix_float(float *adj_matrix, const int n, const double p,
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i * n + j] = 0.0f;
+        adjacencyMatrix[i * n + j] = 0.0f;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i * n + j] = choose_weight(rand_engine);
+        adjacencyMatrix[i * n + j] = choose_weight(rand_engine);
         E++;
       } else {
-        adj_matrix[i * n + j] = FLT_INF;
+        adjacencyMatrix[i * n + j] = FLT_INF;
       }
     }
   }
   return E;
 }
 
-int count_edges_float(const float *adj_matrix, const int n) {
+int count_edges_float(const float *adjacencyMatrix, const int n) {
   size_t E = 0;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i = 0; i < n * n; i++) {
-    float weight = adj_matrix[i];
+    float weight = adjacencyMatrix[i];
     if (weight != 0 && weight != FLT_INF) {
 #ifdef _OPENMP      
 #pragma omp atomic
@@ -46,7 +46,7 @@ int count_edges_float(const float *adj_matrix, const int n) {
   return E;
 }
 
-graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int E) {
+graph_t_float *init_graph_float(const float *adjacencyMatrix, const int n, const int E) {
   Edge_float *edge_array = new Edge_float[E];
   float *weights = new float[E];
   int ei = 0;
@@ -55,14 +55,14 @@ graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int 
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (!equals_float(adj_matrix[i * n + j], 0.0f)
-          && !equals_float(adj_matrix[i * n + j], FLT_INF)) {
+      if (!equals_float(adjacencyMatrix[i * n + j], 0.0f)
+          && !equals_float(adjacencyMatrix[i * n + j], FLT_INF)) {
 #ifdef _OPENMP
 #pragma omp critical (init_graph_float)
 #endif	
         {
           edge_array[ei] = Edge_float(i, j);
-          weights[ei] = adj_matrix[i * n + j];
+          weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
       }
@@ -77,10 +77,10 @@ graph_t_float *init_graph_float(const float *adj_matrix, const int n, const int 
 }
 
 graph_t_float *init_random_graph_float(const int n, const double p, const unsigned long seed) {
-  float *adj_matrix = new float[n * n];
-  size_t E = init_random_adj_matrix_float(adj_matrix, n, p, seed);
-  graph_t_float *gr = init_graph_float(adj_matrix, n, E);
-  delete[] adj_matrix;
+  float *adjacencyMatrix = new float[n * n];
+  size_t E = init_random_adjacency_matrix_float(adjacencyMatrix, n, p, seed);
+  graph_t_float *gr = init_graph_float(adjacencyMatrix, n, E);
+  delete[] adjacencyMatrix;
   return gr;
 }
 
@@ -98,8 +98,8 @@ void set_edge_float(edge_t_float *edge, int u, int v) {
 
 graph_cuda_t_float *johnson_cuda_random_init_float(const int n, const double p, const unsigned long seed) {
 
-  float *adj_matrix = new float[n * n];
-  int E = init_random_adj_matrix_float(adj_matrix, n, p, seed);
+  float *adjacencyMatrix = new float[n * n];
+  int E = init_random_adjacency_matrix_float(adjacencyMatrix, n, p, seed);
 
   edge_t_float *edge_array = new edge_t_float[E];
   int* starts = new int[n + 1];  // Starting point for each edge
@@ -108,17 +108,17 @@ graph_cuda_t_float *johnson_cuda_random_init_float(const int n, const double p, 
   for (int i = 0; i < n; i++) {
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i*n + j] != 0.0f
-          && adj_matrix[i*n + j] != FLT_INF) {
+      if (adjacencyMatrix[i*n + j] != 0.0f
+          && adjacencyMatrix[i*n + j] != FLT_INF) {
         set_edge_float(&edge_array[ei], i, j);
-        weights[ei] = adj_matrix[i*n + j];
+        weights[ei] = adjacencyMatrix[i*n + j];
         ei++;
       }
     }
   }
   starts[n] = ei; // One extra
 
-  delete[] adj_matrix;
+  delete[] adjacencyMatrix;
 
   graph_cuda_t_float *gr = new graph_cuda_t_float;
   gr->V = n;
@@ -187,7 +187,7 @@ inline bool bellman_ford_float(graph_t_float *gr, float *dist, int src) {
   return no_neg_cycle;
 }
 
-void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
+void johnson_parallel_float(graph_t_float *gr, float *distanceMatrix, int *successorMatrix) {
 
   int V = gr->V;
 
@@ -244,8 +244,8 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(FLT_INF));
     for (int v = 0; v < V; v++) {
       int i = s * V + v;
-      output[i] = d[v] + h[v] - h[s];
-     parents[v*V+s] = p[v];
+      distanceMatrix[i] = d[v] + h[v] - h[s];
+      successorMatrix[v*V+s] = p[v];
     }
   }
 
@@ -253,15 +253,13 @@ void johnson_parallel_float(graph_t_float *gr, float *output, int *parents) {
   free_graph_float(bf_graph);
 }
 
-void johnson_parallel_matrix_float(const float *adj_matrix, float **output, int **parents, const int n) {
-  *output = (float *) malloc(sizeof(float) * n * n);
-  memset(*output, 0, sizeof(float) * n * n);
-  *parents = (int *) malloc(sizeof(int) * n * n);
-  memset(*parents, 0, sizeof(int) * n * n);
-  johnson_parallel_float(init_graph_float(adj_matrix, n, count_edges_float(adj_matrix, n)), *output, *parents);
+void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n) {
+  *distanceMatrix = (float *) malloc(sizeof(float) * n * n);
+  *successorMatrix = (int *) malloc(sizeof(int) * n * n);
+  johnson_parallel_float(init_graph_float(adjacencyMatrix, n, count_edges_float(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
 }
 
-void free_johnson_parallel_matrix_float(float **output, int **parents) {
-  free(*output);
-  free(*parents);
+void free_johnson_parallel_matrix_float(float **distanceMatrix, int **successorMatrix) {
+  free(*distanceMatrix);
+  free(*successorMatrix);
 }

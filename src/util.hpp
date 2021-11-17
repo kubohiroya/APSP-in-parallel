@@ -32,44 +32,44 @@ inline void print_double(const double value) {
   }
 }
 
-inline void print_matrix_int(const int *output, const int n_output, const int n_blocked) {
-  for (int i = 0; i < n_output; i++) {
-    print_int(output[i * n_blocked]);
-    for (int j = 1; j < n_output; j++) {
+inline void print_matrix_int(const int *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
+  for (int i = 0; i < n_distanceMatrix; i++) {
+    print_int(distanceMatrix[i * n_blocked]);
+    for (int j = 1; j < n_distanceMatrix; j++) {
       std::cout << ", ";
-      print_int(output[i * n_blocked + j]);
+      print_int(distanceMatrix[i * n_blocked + j]);
     }
     std::cout << std::endl;
   }
 }
 
-inline void print_matrix_float(const float *output, const int n_output, const int n_blocked) {
-  for (int i = 0; i < n_output; i++) {
-    print_float(output[i * n_blocked]);
-    for (int j = 1; j < n_output; j++) {
+inline void print_matrix_float(const float *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
+  for (int i = 0; i < n_distanceMatrix; i++) {
+    print_float(distanceMatrix[i * n_blocked]);
+    for (int j = 1; j < n_distanceMatrix; j++) {
       std::cout << ", ";
-      print_float(output[i * n_blocked + j]);
+      print_float(distanceMatrix[i * n_blocked + j]);
     }
     std::cout << std::endl;
   }
 }
 
-inline void print_matrix_double(const double *output, const int n_output, const int n_blocked) {
-  for (int i = 0; i < n_output; i++) {
-    print_double(output[i * n_blocked]);
-    for (int j = 1; j < n_output; j++) {
+inline void print_matrix_double(const double *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
+  for (int i = 0; i < n_distanceMatrix; i++) {
+    print_double(distanceMatrix[i * n_blocked]);
+    for (int j = 1; j < n_distanceMatrix; j++) {
       std::cout << ", ";
-      print_double(output[i * n_blocked + j]);
+      print_double(distanceMatrix[i * n_blocked + j]);
     }
     std::cout << std::endl;
   }
 }
 
-inline bool correctness_check_int(int *output, int n_output, int *solution, int n_solution) {
+inline bool correctness_check_int(int *distanceMatrix, int n_distanceMatrix, int *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (output[i * n_output + j] != solution[i * n_solution + j]) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+      if (distanceMatrix[i * n_distanceMatrix + j] != solution[i * n_solution + j]) {
+        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }
@@ -78,11 +78,11 @@ inline bool correctness_check_int(int *output, int n_output, int *solution, int 
   return true;
 }
 
-inline bool correctness_check_float(float *output, int n_output, float *solution, int n_solution) {
+inline bool correctness_check_float(float *distanceMatrix, int n_distanceMatrix, float *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (!equals_float(output[i * n_output + j], solution[i * n_solution + j])) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+      if (!equals_float(distanceMatrix[i * n_distanceMatrix + j], solution[i * n_solution + j])) {
+        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }
@@ -92,11 +92,11 @@ inline bool correctness_check_float(float *output, int n_output, float *solution
   return true;
 }
 
-inline bool correctness_check_double(double *output, int n_output, double *solution, int n_solution) {
+inline bool correctness_check_double(double *distanceMatrix, int n_distanceMatrix, double *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (!equals_double(output[i * n_output + j], solution[i * n_solution + j])) {
-        std::cerr << "\nOutput did not match at [" << i << "][" << j << "]: " << output[i * n_output + j]
+      if (!equals_double(distanceMatrix[i * n_distanceMatrix + j], solution[i * n_solution + j])) {
+        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }

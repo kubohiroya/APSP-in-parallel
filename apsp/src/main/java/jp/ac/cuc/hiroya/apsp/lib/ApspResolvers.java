@@ -8,50 +8,50 @@ public class ApspResolvers {
 
     private static class ApspResolverIntImpl implements ApspResolver<int[]> {
 
-        public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, input, numVertex, -1);
+        public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
         }
 
-        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] input, int numVertex, int numBlocks){
+        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix, int numVertex, int numBlocks){
 
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, numBlocks);
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
         }
 
-        public ApspResult<int[]> resolve(String execEnv, String algorithm, int[] input, int numVertex, int numBlocks){
+        public ApspResult<int[]> resolve(String execEnv, String algorithm, int[] adjacencyMatrix, int numVertex, int numBlocks){
             long timeStart = System.currentTimeMillis();
-            PointerByReference output = new PointerByReference();
-            PointerByReference postdecessors = new PointerByReference();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_int(input, output, postdecessors, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_int(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.johnson_parallel_matrix_int(input, output, postdecessors, numVertex);
+                    impl.johnson_parallel_matrix_int(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex);
                     break;
             }
-            int[] outputResult = output.getValue().getIntArray(0, numVertex * numVertex);
-            int[] postdecessorsResult = postdecessors.getValue().getIntArray(0, numVertex * numVertex);
+            int[] distanceMatrixResult = distanceMatrix.getValue().getIntArray(0, numVertex * numVertex);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, numVertex * numVertex);
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.free_floyd_warshall_blocked_int(output, postdecessors);
+                    impl.free_floyd_warshall_blocked_int(distanceMatrix, successorMatrix);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.free_johnson_parallel_matrix_int(output, postdecessors);
+                    impl.free_johnson_parallel_matrix_int(distanceMatrix, successorMatrix);
                     break;
             }
             long timeEnd = System.currentTimeMillis();
-            return new ApspResult<int[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
+            return new ApspResult<int[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
         }
 
         public int[] getInfinity(String execEnv){
@@ -62,50 +62,50 @@ public class ApspResolvers {
 
     private static class ApspResolverFloatImpl implements ApspResolver<float[]> {
 
-        public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, input, numVertex, -1);
+        public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
         }
 
-        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] input, int numVertex, int numBlocks){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, numBlocks);
+        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix, int numVertex, int numBlocks){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
         }
 
-        public ApspResult<float[]> resolve(String execEnv, String algorithm, float[] input, int numVertex, int numBlocks){
+        public ApspResult<float[]> resolve(String execEnv, String algorithm, float[] adjacencyMatrix, int numVertex, int numBlocks){
             long timeStart = System.currentTimeMillis();
-            PointerByReference output = new PointerByReference();
-            PointerByReference postdecessors = new PointerByReference();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
 
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_float(input, output, postdecessors, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_float(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.johnson_parallel_matrix_float(input, output, postdecessors, numVertex);
+                    impl.johnson_parallel_matrix_float(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex);
                     break;
             }
-            float[] outputResult = output.getValue().getFloatArray(0, numVertex * numVertex);
-            int[] postdecessorsResult = postdecessors.getValue().getIntArray(0, numVertex * numVertex);
+            float[] distanceMatrixResult = distanceMatrix.getValue().getFloatArray(0, numVertex * numVertex);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, numVertex * numVertex);
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.free_floyd_warshall_blocked_float(output, postdecessors);
+                    impl.free_floyd_warshall_blocked_float(distanceMatrix, successorMatrix);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.free_johnson_parallel_matrix_float(output, postdecessors);
+                    impl.free_johnson_parallel_matrix_float(distanceMatrix, successorMatrix);
                     break;
             }
             long timeEnd = System.currentTimeMillis();
-            return new ApspResult<float[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
+            return new ApspResult<float[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
         }
 
         public float[] getInfinity(String execEnv){
@@ -116,50 +116,50 @@ public class ApspResolvers {
 
     private static class ApspResolverDoubleImpl implements ApspResolver<double[]> {
 
-        public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, input, numVertex, -1);
+        public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
         }
 
-        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] input, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numVertex){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] input, int numVertex, int numBlocks){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, input, numVertex, numBlocks);
+        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numVertex, int numBlocks){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
         }
 
-        public ApspResult<double[]> resolve(String execEnv, String algorithm, double[] input, int numVertex, int numBlocks){
+        public ApspResult<double[]> resolve(String execEnv, String algorithm, double[] adjacencyMatrix, int numVertex, int numBlocks){
             long timeStart = System.currentTimeMillis();
-            PointerByReference output = new PointerByReference();
-            PointerByReference postdecessors = new PointerByReference();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
 
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_double(input, output, postdecessors, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_double(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.johnson_parallel_matrix_double(input, output, postdecessors, numVertex);
+                    impl.johnson_parallel_matrix_double(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex);
                     break;
             }
-            double[] outputResult = output.getValue().getDoubleArray(0, numVertex * numVertex);
-            int[] postdecessorsResult = postdecessors.getValue().getIntArray(0, numVertex * numVertex);
+            double[] distanceMatrixResult = distanceMatrix.getValue().getDoubleArray(0, numVertex * numVertex);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, numVertex * numVertex);
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.free_floyd_warshall_blocked_double(output, postdecessors);
+                    impl.free_floyd_warshall_blocked_double(distanceMatrix, successorMatrix);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
                 default:
-                    impl.free_johnson_parallel_matrix_double(output, postdecessors);
+                    impl.free_johnson_parallel_matrix_double(distanceMatrix, successorMatrix);
                     break;
             }
             long timeEnd = System.currentTimeMillis();
-            return new ApspResult<double[]>(outputResult, postdecessorsResult, numVertex, timeEnd - timeStart);
+            return new ApspResult<double[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
         }
 
         public double[] getInfinity(String execEnv){

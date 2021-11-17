@@ -17,7 +17,7 @@ __device__ int min_distance_float(float *dist, char *visited, int n) {
   return min_index;
 }
 
-__global__ void dijkstra_kernel_float(float *output, int *parents, char *visited_global) {
+__global__ void dijkstra_kernel_float(float *distanceMatrix, int *successorMatrix, char *visited_global) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
   int V = graph_const.V;
 
@@ -27,7 +27,7 @@ __global__ void dijkstra_kernel_float(float *output, int *parents, char *visited
   float *weights = graph_const.weights;
   edge_t_float *edge_array = graph_const.edge_array;
 
-  float *dist = &output[s * V];
+  float *dist = &distanceMatrix[s * V];
   char *visited = &visited_global[s * V];
   for (int i = 0; i < V; i++) {
     dist[i] = FLT_INF;
@@ -44,7 +44,7 @@ __global__ void dijkstra_kernel_float(float *output, int *parents, char *visited
       int v = edge_array[v_i].v;
       if (!visited[v] && dist_u != FLT_INF && dist_u + weights[v_i] < dist[v])
         dist[v] = dist_u + weights[v_i];
-      parents[count] = 0; // FIXME
+      successorMatrix[count] = 0; // FIXME
     }
   }
 }
@@ -112,7 +112,7 @@ __host__ bool bellman_ford_cuda_float(graph_cuda_t_float *gr, float *dist, int s
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *parents) {
+__host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *distanceMatrix, int *successorMatrix) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
@@ -136,16 +136,16 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
   // Structure of the graph
   edge_t_float *device_edge_array;
   float *device_weights;
-  float *device_output;
-  int *device_parents;
+  float *device_distanceMatrix;
+  int *device_successorMatrix;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
   // Allocating memory
   cudaMalloc(&device_edge_array, sizeof(edge_t_float) * E);
   cudaMalloc(&device_weights, sizeof(float) * E);
-  cudaMalloc(&device_output, sizeof(float) * V * V);
-  cudaMalloc(&device_parents, sizeof(int) * V * V);
+  cudaMalloc(&device_distanceMatrix, sizeof(float) * V * V);
+  cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
@@ -194,9 +194,9 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
 
   cudaMemcpy(device_weights, gr->weights, sizeof(float) * E, cudaMemcpyHostToDevice);
 
-  dijkstra_kernel_float<<<blocks, THREADS_PER_BLOCK>>>(device_output, device_parents, device_visited);
+  dijkstra_kernel_float<<<blocks, THREADS_PER_BLOCK>>>(device_distanceMatrix, device_successorMatrix, device_visited);
 
-  cudaMemcpy(output, device_output, sizeof(float) * V * V, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(float) * V * V, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {
@@ -209,8 +209,8 @@ __host__ void johnson_cuda_float(graph_cuda_t_float *gr, float *output, int *par
 
   cudaFree(device_edge_array);
   cudaFree(device_weights);
-  cudaFree(device_output);
-  cudaFree(device_parents);
+  cudaFree(device_distanceMatrix);
+  cudaFree(device_successorMatrix);
   cudaFree(device_starts);
   cudaFree(device_visited);
 

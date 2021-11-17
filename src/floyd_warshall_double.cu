@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, int *parents, int n) {
+__host__ void floyd_warshall_blocked_cuda_double(double *adjancencyMatrix, double *distanceMatrix, int *successorMatrix, int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -168,7 +168,7 @@ __host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, 
   double *device_graph;
   const size_t size = sizeof(double) * n * n;
   cudaMalloc(&device_graph, size);
-  cudaMemcpy(device_graph, input, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
   const int blocks = (n + BLOCK_DIM - 1) / BLOCK_DIM;
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
@@ -183,13 +183,13 @@ __host__ void floyd_warshall_blocked_cuda_double(double *input, double *output, 
     floyd_warshall_block_kernel_phase3_double<<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
 
-  cudaMemcpy(output, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
 
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_double(double *input, double *output, int *parents, int n) {
+__host__ void floyd_warshall_cuda_double(double *adjancencyMatrix, double *distanceMatrix, int *successorMatrix, int n) {
 
   // from assignment 1
   int deviceCount;
@@ -213,7 +213,7 @@ __host__ void floyd_warshall_cuda_double(double *input, double *output, int *par
 
   cudaMalloc(&device_graph, size);
 
-  cudaMemcpy(device_graph, input, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
   dim3 grid_dim((n + block_dim.x - 1) / block_dim.x,
@@ -224,7 +224,7 @@ __host__ void floyd_warshall_cuda_double(double *input, double *output, int *par
     cudaThreadSynchronize();
   }
 
-  cudaMemcpy(output, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {

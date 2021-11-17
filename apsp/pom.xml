@@ -108,7 +108,7 @@
               <LD_LIBRARY_PATH>../libs</LD_LIBRARY_PATH>
             </environmentVariables>
             <argLine>-Djna.library.path=../libs:${java.library.path}</argLine>
-            <argLine>-Xmx16g</argLine>
+            <argLine>-Xmx32g</argLine>
           </configuration>
         </plugin>
         <plugin>

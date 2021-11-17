@@ -8,51 +8,51 @@ import java.io.IOException;
 
 public class ApspMain {
 
-    public static void resolve(String execEnv, String algorithm, String outputMode, int[] input) throws IOException {
-        int numVertex = (int) Math.sqrt(input.length);
-        ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, input, numVertex, 64);
+    public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, int[] adjacencyMatrix) throws IOException {
+        int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
+        ApspResult<int[]> result = ApspResolvers.IntResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
 
-        if(outputMode.contains("time")) {
+        if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
             System.out.println("Finished in " + result.getElapsedTime() + " ms");
         }
-        if(outputMode.contains("distance")) {
-            ApspOutput.print_matrix_int(result.getOutput(), result.getNumVertex());
+        if(distanceMatrixMode.contains("distance")) {
+            CSVOutput.print(result.getDistanceMatrix(), result.getNumVertex());
         }
-        if(outputMode.contains("node")) {
-            ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        if(distanceMatrixMode.contains("node")) {
+            CSVOutput.print(result.getSuccessorMatrix(), result.getNumVertex());
         }
     }
 
-    public static void resolve(String execEnv, String algorithm, String outputMode, float[] input) throws IOException {
-        int numVertex = (int) Math.sqrt(input.length);
-        ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, input, numVertex, 64);
+    public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, float[] adjacencyMatrix) throws IOException {
+        int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
+        ApspResult<float[]> result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
 
-        if(outputMode.contains("time")) {
+        if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
             System.out.println("Finished in " + result.getElapsedTime() + " ms");
         }
-        if(outputMode.contains("distance")) {
-            ApspOutput.print_matrix_float(result.getOutput(), result.getNumVertex());
+        if(distanceMatrixMode.contains("distance")) {
+            CSVOutput.print(result.getDistanceMatrix(), result.getNumVertex());
         }
-        if(outputMode.contains("node")) {
-            ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        if(distanceMatrixMode.contains("node")) {
+            CSVOutput.print(result.getSuccessorMatrix(), result.getNumVertex());
         }
     }
 
-    public static void resolve(String execEnv, String algorithm, String outputMode, double[] input) throws IOException {
-        int numVertex = (int) Math.sqrt(input.length);
-        ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, input, numVertex, 64);
+    public static void resolve(String execEnv, String algorithm, String distanceMatrixMode, double[] adjacencyMatrix) throws IOException {
+        int numVertex = (int) Math.sqrt(adjacencyMatrix.length);
+        ApspResult<double[]> result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm, adjacencyMatrix, numVertex, 64);
 
-        if(outputMode.contains("time")) {
+        if(distanceMatrixMode.contains("time")) {
             System.out.println("Process " + result.getNumVertex() + " x " + result.getNumVertex() + " nodes");
             System.out.println("Finished in " + result.getElapsedTime() + " ms");
         }
-        if(outputMode.contains("distance")) {
-            ApspOutput.print_matrix_double(result.getOutput(), result.getNumVertex());
+        if(distanceMatrixMode.contains("distance")) {
+            CSVOutput.print(result.getDistanceMatrix(), result.getNumVertex());
         }
-        if(outputMode.contains("node")) {
-            ApspOutput.print_matrix_int(result.getPostdecessors(), result.getNumVertex());
+        if(distanceMatrixMode.contains("node")) {
+            CSVOutput.print(result.getSuccessorMatrix(), result.getNumVertex());
         }
     }
 
@@ -71,13 +71,13 @@ public class ApspMain {
         if (args.length <= 1) {
             System.err.println(
                     "java jp.ac.cuc.hiroya.apsp.util.ApspMain"+
-                            " [seq|seq-ispc|omp|omp-ispc|cuda] [Floyd-Warshall|Johnson|f|j] [int|float|double|i|f|d] [time|distance|node] input.csv");
+                            " [seq|seq-ispc|omp|omp-ispc|cuda] [Floyd-Warshall|Johnson|f|j] [int|float|double|i|f|d] [time|distance|node] adjacencyMatrix.csv");
             System.exit(0);
         }
         String execEnv = args[0];
         String algorithm = args[1];
         String distanceType = args[2];
-        String outputMode = args[3];
+        String distanceMatrixMode = args.length < 4 ? "time" : args[3];
         String filename = args.length != 5 ? null : args[4];
 
         switch (distanceType) {
@@ -86,14 +86,14 @@ public class ApspMain {
                 int[] adjMatrixInt = (filename == null)
                         ? DemoData.adjMatrixInt
                         : InfinityConverter.convert(CSVParser.parseIntCSV(filename), 0, Infinity.INT_INF);
-                resolve(execEnv, algorithm, outputMode, adjMatrixInt);
+                resolve(execEnv, algorithm, distanceMatrixMode, adjMatrixInt);
                 break;
             case "float":
             case "f":
                 float[] adjMatrixFloat = (filename == null)
                         ? DemoData.adjMatrixFloat
                         : InfinityConverter.convert(CSVParser.parseFloatCSV(filename), 0.0f, Infinity.FLT_INF);
-                resolve(execEnv, algorithm, outputMode, adjMatrixFloat);
+                resolve(execEnv, algorithm, distanceMatrixMode, adjMatrixFloat);
                 break;
             case "double":
             case "d":
@@ -101,7 +101,7 @@ public class ApspMain {
                 double[] adjMatrixDouble = (filename == null)
                         ? DemoData.adjMatrixDouble
                         : InfinityConverter.convert(CSVParser.parseDoubleCSV(filename), 0.0, Infinity.DBL_INF);
-                resolve(execEnv, algorithm, outputMode, adjMatrixDouble);
+                resolve(execEnv, algorithm, distanceMatrixMode, adjMatrixDouble);
                 break;
         }
         System.exit(0);

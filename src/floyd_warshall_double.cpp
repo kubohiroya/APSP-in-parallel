@@ -59,38 +59,38 @@ floyd_warshall_blocked_random_init_double(const int n, const int block_size, con
   return out;
 }
 
-void floyd_warshall_double(double *output, int *parents, const int n) {
+void floyd_warshall_double(double *distanceMatrix, int *successorMatrix, const int n) {
   #ifdef _OPENMP
   #pragma omp parallel for
   #endif
   for (int k = 0; k < n; k++) {
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (output[i * n + j] > output[i * n + k] + output[k * n + j]) {
-          output[i * n + j] = output[i * n + k] + output[k * n + j];
-          parents[i * n + j] = parents[i * n + k];
+        if (distanceMatrix[i * n + j] > distanceMatrix[i * n + k] + distanceMatrix[k * n + j]) {
+          distanceMatrix[i * n + j] = distanceMatrix[i * n + k] + distanceMatrix[k * n + j];
+          successorMatrix[i * n + j] = successorMatrix[i * n + k];
         }
       }
     }
   }
 }
 
-void _floyd_warshall_blocked_double(double *output, int *parents, const int n, const int b) {
+void _floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix, const int n, const int b) {
   // for now, assume b divides n
   const int blocks = n / b;
 
-  // note that [i][j] == [i * input_width * block_width + j * block_width]
+  // note that [i][j] == [i * adjancency_width * block_width + j * block_width]
   for (int k = 0; k < blocks; k++) {
     int kbnkb = k * b * n + k * b;
-    floyd_warshall_in_place_double(&output[kbnkb], &output[kbnkb], &output[kbnkb],
-                                   &parents[kbnkb], b, n);
+    floyd_warshall_in_place_double(&distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &distanceMatrix[kbnkb],
+                                   &successorMatrix[kbnkb], b, n);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int j = 0; j < blocks; j++) {
       if (j == k) continue;
       int kbnjb = k * b * n + j * b;
-      floyd_warshall_in_place_double(&output[kbnjb], &output[kbnkb], &output[kbnjb], &parents[kbnjb], b, n);
+      floyd_warshall_in_place_double(&distanceMatrix[kbnjb], &distanceMatrix[kbnkb], &distanceMatrix[kbnjb], &successorMatrix[kbnjb], b, n);
     }
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -98,38 +98,38 @@ void _floyd_warshall_blocked_double(double *output, int *parents, const int n, c
     for (int i = 0; i < blocks; i++) {
       if (i == k) continue;
       int ibnkb = i * b * n + k * b;
-      floyd_warshall_in_place_double(&output[ibnkb], &output[ibnkb], &output[ibnkb], &parents[ibnkb], b, n);
+      floyd_warshall_in_place_double(&distanceMatrix[ibnkb], &distanceMatrix[ibnkb], &distanceMatrix[ibnkb], &successorMatrix[ibnkb], b, n);
       for (int j = 0; j < blocks; j++) {
         if (j == k) continue;
         int ibnjb = i * b * n + j * b;
-        floyd_warshall_in_place_double(&output[ibnjb], &output[ibnkb],
-                                       &output[k * b * n + j * b], &parents[ibnjb], b, n);
+        floyd_warshall_in_place_double(&distanceMatrix[ibnjb], &distanceMatrix[ibnkb],
+                                       &distanceMatrix[k * b * n + j * b], &successorMatrix[ibnjb], b, n);
       }
     }
   }
 }
 
-void floyd_warshall_blocked_double(const double *input, double **output, int **parents, const int n, const int b) {
-  *output = (double *) malloc(sizeof(double) * n * n);
-  std::memcpy(*output, input, sizeof(double) * n * n);
-  *parents = (int *) malloc(sizeof(int) * n * n);
+void floyd_warshall_blocked_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b) {
+  *distanceMatrix = (double *) malloc(sizeof(double) * n * n);
+  std::memcpy(*distanceMatrix, adjancencyMatrix, sizeof(double) * n * n);
+  *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-        (*parents)[i * n + j] = j;
+      (*successorMatrix)[i * n + j] = j;
     }
   }
   if(n >= b) {
-    _floyd_warshall_blocked_double(*output, *parents, n, b);
+    _floyd_warshall_blocked_double(*distanceMatrix, *successorMatrix, n, b);
   }else{
-    floyd_warshall_double(*output, *parents, n);
+    floyd_warshall_double(*distanceMatrix, *successorMatrix, n);
   }
 }
 
-void free_floyd_warshall_blocked_double(double *output, int *parents) {
-  free(output);
-  free(parents);
+void free_floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix) {
+  free(distanceMatrix);
+  free(successorMatrix);
 }

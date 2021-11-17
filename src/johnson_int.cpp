@@ -7,7 +7,7 @@
 
 #include "johnson_int.hpp"
 
-int init_random_adj_matrix_int(int *adj_matrix, const int n, const double p, const unsigned long seed) {
+int init_random_adjacency_matrix_int(int *adjacencyMatrix, const int n, const double p, const unsigned long seed) {
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_int_distribution<int> choose_weight(1, 100);
 
@@ -17,25 +17,25 @@ int init_random_adj_matrix_int(int *adj_matrix, const int n, const double p, con
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
-        adj_matrix[i * n + j] = 0;
+        adjacencyMatrix[i * n + j] = 0;
       } else if (flip(rand_engine) < p) {
-        adj_matrix[i * n + j] = choose_weight(rand_engine);
+        adjacencyMatrix[i * n + j] = choose_weight(rand_engine);
         E++;
       } else {
-        adj_matrix[i * n + j] = INT_INF;
+        adjacencyMatrix[i * n + j] = INT_INF;
       }
     }
   }
   return E;
 }
 
-int count_edges_int(const int *adj_matrix, const int n) {
+int count_edges_int(const int *adjacencyMatrix, const int n) {
   size_t E = 0;
 #ifdef _OPENMP
   // #pragma omp parallel for
 #endif
   for (int i = 0; i < n * n; i++) {
-    int weight = adj_matrix[i];
+    int weight = adjacencyMatrix[i];
     if (weight != 0 && weight != INT_INF) {
 #ifdef _OPENMP
 #pragma omp atomic
@@ -46,7 +46,7 @@ int count_edges_int(const int *adj_matrix, const int n) {
   return E;
 }
 
-graph_t_int *init_graph_int(const int *adj_matrix, const int n, const int E) {
+graph_t_int *init_graph_int(const int *adjacencyMatrix, const int n, const int E) {
   Edge_int *edge_array = new Edge_int[E];
   int *weights = new int[E];
   int ei = 0;
@@ -55,14 +55,14 @@ graph_t_int *init_graph_int(const int *adj_matrix, const int n, const int E) {
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i * n + j] != 0
-          && adj_matrix[i * n + j] != INT_INF) {
+      if (adjacencyMatrix[i * n + j] != 0
+          && adjacencyMatrix[i * n + j] != INT_INF) {
 #ifdef _OPENMP
 #pragma omp critical (init_graph_int)
 #endif	
         {
           edge_array[ei] = Edge_int(i, j);
-          weights[ei] = adj_matrix[i * n + j];
+          weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
       }
@@ -77,10 +77,10 @@ graph_t_int *init_graph_int(const int *adj_matrix, const int n, const int E) {
 }
 
 graph_t_int *init_random_graph_int(const int n, const double p, const unsigned long seed) {
-  int *adj_matrix = new int[n * n];
-  size_t E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
-  graph_t_int *gr = init_graph_int(adj_matrix, n, E);
-  delete[] adj_matrix;
+  int *adjacencyMatrix = new int[n * n];
+  size_t E = init_random_adjacency_matrix_int(adjacencyMatrix, n, p, seed);
+  graph_t_int *gr = init_graph_int(adjacencyMatrix, n, E);
+  delete[] adjacencyMatrix;
   return gr;
 }
 
@@ -98,8 +98,8 @@ void set_edge_int(edge_t_int *edge, int u, int v) {
 
 graph_cuda_t_int *johnson_cuda_random_init_int(const int n, const double p, const unsigned long seed) {
 
-  int *adj_matrix = new int[n * n];
-  int E = init_random_adj_matrix_int(adj_matrix, n, p, seed);
+  int *adjacencyMatrix = new int[n * n];
+  int E = init_random_adjacency_matrix_int(adjacencyMatrix, n, p, seed);
 
   edge_t_int *edge_array = new edge_t_int[E];
   int* starts = new int[n + 1];  // Starting point for each edge
@@ -108,17 +108,17 @@ graph_cuda_t_int *johnson_cuda_random_init_int(const int n, const double p, cons
   for (int i = 0; i < n; i++) {
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
-      if (adj_matrix[i*n + j] != 0
-          && adj_matrix[i*n + j] != INT_INF) {
+      if (adjacencyMatrix[i*n + j] != 0
+          && adjacencyMatrix[i*n + j] != INT_INF) {
         set_edge_int(&edge_array[ei], i, j);
-        weights[ei] = adj_matrix[i*n + j];
+        weights[ei] = adjacencyMatrix[i*n + j];
         ei++;
       }
     }
   }
   starts[n] = ei; // One extra
 
-  delete[] adj_matrix;
+  delete[] adjacencyMatrix;
 
   graph_cuda_t_int *gr = new graph_cuda_t_int;
   gr->V = n;
@@ -187,7 +187,7 @@ inline bool bellman_ford_int(graph_t_int *gr, int *dist, int src) {
   return no_neg_cycle;
 }
 
-void johnson_parallel_int(graph_t_int *gr, int *output, int *parents) {
+void johnson_parallel_int(graph_t_int *gr, int *distanceMatrix, int *successorMatrix) {
 
   int V = gr->V;
 
@@ -244,8 +244,8 @@ void johnson_parallel_int(graph_t_int *gr, int *output, int *parents) {
     dijkstra_shortest_paths(G, s, distance_map(&d[0]).predecessor_map(&p[0]).distance_inf(INT_INF));
     for (int v = 0; v < V; v++) {
       int i = s * V + v;
-      output[i] = d[v] + h[v] - h[s];
-      parents[v*V+s] = p[v];
+      distanceMatrix[i] = d[v] + h[v] - h[s];
+      successorMatrix[v*V+s] = p[v];
     }
   }
 
@@ -253,15 +253,13 @@ void johnson_parallel_int(graph_t_int *gr, int *output, int *parents) {
   free_graph_int(bf_graph);
 }
 
-void johnson_parallel_matrix_int(const int *adj_matrix, int **output, int **parents, const int n) {
-  *output = (int *) malloc(sizeof(int) * n * n);
-  memset(*output, 0, sizeof(int) * n * n);
-  *parents = (int *) malloc(sizeof(int) * n * n);
-  memset(*parents, 0, sizeof(int) * n * n);
-  johnson_parallel_int(init_graph_int(adj_matrix, n, count_edges_int(adj_matrix, n)), *output, *parents);
+void johnson_parallel_matrix_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n) {
+  *distanceMatrix = (int *) malloc(sizeof(int) * n * n);
+  *successorMatrix = (int *) malloc(sizeof(int) * n * n);
+  johnson_parallel_int(init_graph_int(adjacencyMatrix, n, count_edges_int(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
 }
 
-void free_johnson_parallel_matrix_int(int **output, int **parents) {
-  free(*output);
-  free(*parents);
+void free_johnson_parallel_matrix_int(int **distanceMatrix, int **successorMatrix) {
+  free(*distanceMatrix);
+  free(*successorMatrix);
 }

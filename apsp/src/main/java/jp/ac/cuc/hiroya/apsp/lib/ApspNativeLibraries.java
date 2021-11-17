@@ -19,11 +19,9 @@ class ApspNativeLibraries {
         ApspOmpIspc INSTANCE = Native.load("apsp-omp-ispc", ApspOmpIspc.class);
     }
 
-    /*
-    public static class ApspCuda extends ApspNativeLibrary {
+    public interface ApspCuda extends ApspNativeLibrary {
         ApspCuda INSTANCE = Native.load("apsp-cuda", ApspCuda.class);
     }
-     */
 
     public static ApspNativeLibrary getImplementation(String execEnv) {
         switch (execEnv) {
@@ -33,6 +31,8 @@ class ApspNativeLibraries {
                 return ApspSeqIspc.INSTANCE;
             case ApspResolver.EXEC_ENV.OMP_ISPC:
                 return ApspOmpIspc.INSTANCE;
+            case ApspResolver.EXEC_ENV.CUDA:
+                return ApspCuda.INSTANCE;
             case ApspResolver.EXEC_ENV.OMP:
             default:
                 return ApspOmp.INSTANCE;

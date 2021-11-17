@@ -1,24 +1,24 @@
 package jp.ac.cuc.hiroya.apsp.lib;
 
 public class ApspResult<T> {
-    T output;
-    int[] postdecessors;
+    T distanceMatrix;
+    int[] successorMatrix;
     int numVertex;
     long elapsedTime;
 
-    ApspResult(T output, int[] postdecessors, int numVertex, long elapsedTime) {
-        this.output = output;
-        this.postdecessors = postdecessors;
+    ApspResult(T distanceMatrix, int[] successorMatrix, int numVertex, long elapsedTime) {
+        this.distanceMatrix = distanceMatrix;
+        this.successorMatrix = successorMatrix;
         this.numVertex = numVertex;
         this.elapsedTime = elapsedTime;
     }
 
-    public T getOutput() {
-        return output;
+    public T getDistanceMatrix() {
+        return distanceMatrix;
     }
 
-    public int[] getPostdecessors() {
-        return postdecessors;
+    public int[] getSuccessorMatrix() {
+        return successorMatrix;
     }
 
     public int getNumVertex() {
