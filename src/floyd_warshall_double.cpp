@@ -79,7 +79,7 @@ void _floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix
   // for now, assume b divides n
   const int blocks = n / b;
 
-  // note that [i][j] == [i * adjancency_width * block_width + j * block_width]
+  // note that [i][j] == [i * adjacency_width * block_width + j * block_width]
   for (int k = 0; k < blocks; k++) {
     int kbnkb = k * b * n + k * b;
     floyd_warshall_in_place_double(&distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &distanceMatrix[kbnkb],
@@ -109,9 +109,9 @@ void _floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix
   }
 }
 
-void floyd_warshall_blocked_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b) {
+void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b) {
   *distanceMatrix = (double *) malloc(sizeof(double) * n * n);
-  std::memcpy(*distanceMatrix, adjancencyMatrix, sizeof(double) * n * n);
+  std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(double) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 
 #ifdef _OPENMP

@@ -626,7 +626,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
       int *solution = new int[v * v];
       int *successorMatrix = new int[v * v];
 
-      int *matrix_blocked = matrix; // try to reuse adjancencyMatrixs
+      int *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
@@ -685,7 +685,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
       float *matrix = floyd_warshall_random_init_float(v, p, seed);
       float *solution = new float[v * v];
 
-      float *matrix_blocked = matrix; // try to reuse adjancencyMatrixs
+      float *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
@@ -743,7 +743,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
       double *matrix = floyd_warshall_random_init_double(v, p, seed);
       double *solution = new double[v * v];
 
-      double *matrix_blocked = matrix; // try to reuse adjancencyMatrixs
+      double *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
       int v_blocked = v;
       int block_remainder = v % block_size;
       if (block_remainder != 0) {

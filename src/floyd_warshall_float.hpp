@@ -10,7 +10,7 @@ float *floyd_warshall_random_init_float(const int n, const double p, const unsig
 float *
 floyd_warshall_blocked_random_init_float(const int n, const int block_size, const double p, const unsigned long seed);
 
-// expects len(adjancencyMatrix) == len(distanceMatrix) == n*n
+// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 void floyd_warshall_float(float *distanceMatrix, int *successorMatrix, const int n);
 
 // used for blocked_floyd_warshall
@@ -36,13 +36,13 @@ floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *suc
 
 #endif
 
-// expects len(adjancencyMatrix) == len(distanceMatrix) == n*n
+// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void
-floyd_warshall_blocked_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, const int n, const int b);
+floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n, const int b);
 extern "C" void free_floyd_warshall_blocked_float(float *distanceMatrix, int *successorMatrix);
 
 #ifdef CUDA
-void floyd_warshall_cuda_float(float* adjancencyMatrix, float* distanceMatrix, int *successorMatrix, int n);
-void floyd_warshall_blocked_cuda_float(float* adjancencyMatrix, float* distanceMatrix, int *successorMatrix, int n);
+void floyd_warshall_cuda_float(float* adjacencyMatrix, float* distanceMatrix, int *successorMatrix, int n);
+void floyd_warshall_blocked_cuda_float(float* adjacencyMatrix, float* distanceMatrix, int *successorMatrix, int n);
 #endif
 
