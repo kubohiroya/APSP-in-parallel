@@ -3,6 +3,7 @@ package jp.ac.cuc.hiroya.apsp;
 import jp.ac.cuc.hiroya.apsp.lib.ApspResolvers;
 import jp.ac.cuc.hiroya.apsp.lib.ApspResult;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,17 +18,27 @@ abstract class AbstractMatrixDetailedTest {
     double[] distanceMatrix;
     int[] nodeMatrix;
 
-    Map<String,ApspResult<double[]>> cache = new HashMap();
+    Map<String,ApspResult<double[]>> cache = new HashMap<>();
+
+    //日付をyyyyMMddの形で出力する
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
+
+    String getYYMMDDHHMM(Date date){
+        return sdf.format(date.getTime());
+    }
 
     AbstractMatrixDetailedTest(String adjFilename, String distanceFilename, String nodeFilename)throws Exception{
-        System.out.println("step 1: load csv " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 1: load csv ");
+        System.out.println("   adj: " + adjFilename);
+        System.out.println("   dst: " + distanceFilename);
+        System.out.println("   suc: " + nodeFilename);
         this.adjMatrix = MatrixTestUtils.loadAdjMatrix(adjFilename);
         this.distanceMatrix = loadDistanceMatrix(distanceFilename);
         this.nodeMatrix = loadNodeMatrix(nodeFilename);
     }
 
     void assertCsvSet(boolean verbose) {
-        System.out.println("step 2: calc successors " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 2: calc successors");
         double[] calculatedDistances = generateDistanceMatrix(this.distanceMatrix, this.nodeMatrix, verbose);
         System.out.println("step 3: assert calculated distance " + new Date());
         assertThat(calculatedDistances, is(distanceMatrix));
@@ -46,14 +57,14 @@ abstract class AbstractMatrixDetailedTest {
     }
 
     void assertAlgorithmByTestData(String execEnv, String algorithm,
-                                          boolean verbose) throws Exception {
-        System.out.println("step 2: process " + new Date());
+                                          boolean verbose) {
+        System.out.println(getYYMMDDHHMM(new Date())+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
         ApspResult<double[]> result = getResult(execEnv, algorithm);
         int v = result.getNumVertex();
         double[] distances = result.getDistanceMatrix();
         int[] nodes = result.getSuccessorMatrix();
 
-        System.out.println("step 3: assert distances " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 3: assert distances");
         if(verbose){
             for (int count = 0, i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
@@ -68,7 +79,7 @@ abstract class AbstractMatrixDetailedTest {
                     }
                 }
                 if(count > 10) {
-                    System.out.println("...cancel step 3 assertion");
+                    System.out.println("  ...cancel step 3 assertion");
                     break;
                 }
             }
@@ -76,7 +87,7 @@ abstract class AbstractMatrixDetailedTest {
             assertThat(distances, is(distanceMatrix));
         }
 
-        System.out.println("step 4: assert nodes " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 4: assert nodes");
         if(false){
             // disable assertion of nodes: there are more than one answers
             if(verbose){
@@ -98,10 +109,10 @@ abstract class AbstractMatrixDetailedTest {
             }
         }
 
-        System.out.println("step 5: calc successors " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 5: calc successors");
         double[] calculatedDistances = generateDistanceMatrix(distances, nodes, false);
 
-        System.out.println("step 6: assert calculated distance " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 6: assert calculated distance");
         if(verbose){
             for (int i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
@@ -127,11 +138,11 @@ abstract class AbstractMatrixDetailedTest {
     }
 
     void assertAlgorithmByItself(String execEnv, String algorithm,
-                                 boolean verbose) throws Exception {
-        System.out.println("step 2: process " + new Date());
+                                 boolean verbose) {
+        System.out.println(getYYMMDDHHMM(new Date())+" step 2: process");
         ApspResult<double[]> result = getResult(execEnv, algorithm);
         int v = result.getNumVertex();
-        System.out.println("step 3: assert distances " + new Date());
+        System.out.println(getYYMMDDHHMM(new Date())+" step 3: assert distances");
         double[] distances = result.getDistanceMatrix();
         int[] nodes = result.getSuccessorMatrix();
         double[] calculatedDistances = generateDistanceMatrix(distances, nodes, verbose);
