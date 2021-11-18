@@ -4,9 +4,9 @@ import org.junit.Test;
 
 public class MatrixDummyDataTest extends AbstractMatrixDetailedTest {
 
-    static String adjFilename = MatrixTestFilenames.adjFilename;
-    static String distanceFilename = MatrixTestFilenames.distanceFilename;
-    static String nodeFilename = MatrixTestFilenames.nodeFilename;
+    static String adjFilename = MatrixDummyFilenames.adjFilename;
+    static String distanceFilename = MatrixDummyFilenames.distanceFilename;
+    static String nodeFilename = MatrixDummyFilenames.nodeFilename;
 
     public MatrixDummyDataTest()throws Exception{
         super(adjFilename, distanceFilename, nodeFilename);

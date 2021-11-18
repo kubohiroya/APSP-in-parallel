@@ -19,7 +19,7 @@ public class MatrixBasicTest {
 
     @Test
     public void 簡易データの距離行列を読み込んだ結果が一致する() throws Exception {
-        String filename = MatrixTestFilenames.adjFilename;
+        String filename = MatrixDummyFilenames.adjFilename;
         double[] expectedMatrix = {
                 0, 1, 2, 0, 0,
                 1, 0, 0, 1, 4,
@@ -35,7 +35,7 @@ public class MatrixBasicTest {
 
     @Test
     public void 簡易データの距離行列をInf値を置き換えした結果が一致する() throws Exception {
-        String filename = MatrixTestFilenames.adjFilename;
+        String filename = MatrixDummyFilenames.adjFilename;
         double inf = Infinity.DBL_INF;
         double[] expectedMatrix = {
                 0, 1, 2, inf, inf,

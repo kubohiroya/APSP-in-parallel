@@ -13,33 +13,33 @@ public class MatrixRealDataTest extends AbstractMatrixDetailedTest {
     }
 
     @Test
-    public void 本番データの整合性チェック() throws Exception {
+    public void 本番データの整合性チェック() {
         assertCsvSet(false);
     }
 
     @Test
-    public void 本番データをFloydWarshall法で整合性チェック() throws Exception {
+    public void 本番データをFloydWarshall法で整合性チェック() {
         String execEnv = "omp-ispc";
         String algorithm = "f";
         assertAlgorithmWithSelfData(execEnv, algorithm, false);
     }
 
     @Test
-    public void 本番データをJohnson法で整合性チェック() throws Exception {
+    public void 本番データをJohnson法で整合性チェック() {
         String execEnv = "omp-ispc";
         String algorithm = "j";
         assertAlgorithmWithSelfData(execEnv, algorithm, false);
     }
 
     @Test
-    public void 本番データをFloydWarshall法で処理結果チェック() throws Exception {
+    public void 本番データをFloydWarshall法で処理結果チェック()  {
         String execEnv = "omp-ispc";
         String algorithm = "f";
         assertAlgorithmWithTestData(execEnv, algorithm, true);
     }
 
     @Test
-    public void 本番データをJohnson法で処理結果をチェック() throws Exception {
+    public void 本番データをJohnson法で処理結果をチェック() {
         String execEnv = "omp-ispc";
         String algorithm = "j";
         assertAlgorithmWithTestData(execEnv, algorithm,
