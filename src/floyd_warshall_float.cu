@@ -150,7 +150,7 @@ __global__ void floyd_warshall_block_kernel_phase3_float(int n, int k, float *gr
 ************************************************************************/
 
 
-__host__ void floyd_warshall_blocked_cuda_float(float *adjancencyMatrix, float *distanceMatrix, int *successorMatrix, int n) {
+__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, const int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -184,13 +184,13 @@ __host__ void floyd_warshall_blocked_cuda_float(float *adjancencyMatrix, float *
     floyd_warshall_block_kernel_phase3_float<<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
 
-  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
 
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_float(float *adjancencyMatrix, float *distanceMatrix, int n) {
+__host__ void floyd_warshall_cuda_float(float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, int n) {
 
   // from assignment 1
   int deviceCount;
@@ -226,7 +226,7 @@ __host__ void floyd_warshall_cuda_float(float *adjancencyMatrix, float *distance
     cudaThreadSynchronize();
   }
 
-  cudaMemcpy(distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {

@@ -128,7 +128,7 @@ void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distance
       }
     }
 #ifdef CUDA
-  floyd_warshall_blocked_cuda_float(adjacencyMatrix, *distanceMatrix, *successorMatrix, n);
+  floyd_warshall_blocked_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
 #else
   if(n >= b) {
     _floyd_warshall_blocked_float(*distanceMatrix, *successorMatrix, n, b);

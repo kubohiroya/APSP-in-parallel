@@ -66,7 +66,6 @@ OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -lomp
 # $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" -DCUDA
 $(CUDA): NVCCFLAGS += -arch=sm_80 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86 --compiler-options "-fPIC" -DCUDA --expt-relaxed-constexpr
-
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
 $(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/$(LLVM)/lib -L/usr/local/cuda/lib64 -lcudart -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)

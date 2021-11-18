@@ -123,7 +123,7 @@ void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **dista
     }
   }
 #ifdef CUDA
-  floyd_warshall_blocked_cuda_double(adjacencyMatrix, *distanceMatrix, *successorMatrix, n);
+  floyd_warshall_blocked_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
 #else
   if(n >= b) {
     _floyd_warshall_blocked_double(*distanceMatrix, *successorMatrix, n, b);

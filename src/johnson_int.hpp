@@ -10,20 +10,20 @@ no_property, property<edge_weight_t, int>> Graph_int;
 typedef graph_traits<Graph_int>::vertex_descriptor Vertex_int;
 typedef std::pair<int, int> Edge_int;
 
-typedef struct graph {
+typedef struct graph_int {
   int V;
   int E;
   Edge_int *edge_array;
   int *weights;
 } graph_t_int;
 
-typedef struct edge {
+typedef struct edge_int {
   int u;
   int v;
 } edge_t_int;
 
 #ifdef CUDA
-typedef struct graph_cuda {
+typedef struct graph_cuda_int {
   int V;
   int E;
   int *starts;
@@ -42,6 +42,7 @@ graph_t_int *init_graph_int(const int *adjacencyMatrix, const int n, const int e
 
 #ifdef CUDA
 graph_cuda_t_int *johnson_cuda_random_init_int(const int n, const double p, const unsigned long seed);
+graph_cuda_t_int *init_graph_cuda_int(const int *adjacencyMatrix, const int n, const int e);
 void johnson_cuda_int(graph_cuda_t_int *gr, int *distanceMatrix, int *successorMatrix);
 void free_cuda_graph_int(graph_cuda_t_int *g);
 #endif

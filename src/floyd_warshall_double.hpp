@@ -39,7 +39,7 @@ floyd_warshall_in_place_double(double *C, const double *A, const double *B, int 
 // expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void
 floyd_warshall_blocked_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b);
-extern "C" void free_floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix);
+extern "C" void free_floyd_warshall_blocked_double(double **distanceMatrix, int **successorMatrix);
 
 #ifdef CUDA
 void floyd_warshall_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n);

@@ -36,7 +36,7 @@ inline void floyd_warshall_in_place(int *C, const int *A, const int *B, int *suc
 
 // expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n, const int b);
-extern "C" void free_floyd_warshall_blocked_int(int *distanceMatrix, int *successorMatrix);
+extern "C" void free_floyd_warshall_blocked_int(int **distanceMatrix, int **successorMatrix);
 
 #ifdef CUDA
 void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);

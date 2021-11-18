@@ -128,7 +128,7 @@ graph_cuda_t_double *johnson_cuda_random_init_double(const int n, const double p
 }
 
 graph_cuda_t_double *init_graph_cuda_double(const double *adjacencyMatrix, const int n, const int E) {
-  Edge_double *edge_array = new Edge_double[E];
+  edge_t_double *edge_array = new edge_t_double[E];
   int* starts = new int[n + 1];  // Starting point for each edge
   double *weights = new double[E];
   int ei = 0;
@@ -140,7 +140,7 @@ graph_cuda_t_double *init_graph_cuda_double(const double *adjacencyMatrix, const
 #pragma omp critical (init_graph_cuda_double)
 #endif
         {
-          edge_array[ei] = Edge_double(i, j);
+          set_edge_double(&edge_array[ei], i, j);
           weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
@@ -149,7 +149,7 @@ graph_cuda_t_double *init_graph_cuda_double(const double *adjacencyMatrix, const
   }
   starts[n] = ei; // One extra
 
-  graph_t_cuda_double *gr = new graph_t_cuda_double;
+  graph_cuda_t_double *gr = new graph_cuda_t_double;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
@@ -287,7 +287,7 @@ void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **dist
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 
 #ifdef CUDA
-  graph_cuda_t_double* cuda_gr = init_graph_cuda_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  graph_cuda_t_double* cuda_gr = init_graph_cuda_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n));
   johnson_cuda_double(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph_double(cuda_gr);
 #else

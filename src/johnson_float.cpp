@@ -97,7 +97,7 @@ void set_edge_float(edge_t_float *edge, int u, int v) {
 }
 
 graph_cuda_t_float *init_graph_cuda_float(const float *adjacencyMatrix, const int n, const int E) {
-  Edge_float *edge_array = new Edge_float[E];
+  edge_t_float *edge_array = new edge_t_float[E];
   int* starts = new int[n + 1];  // Starting point for each edge
   float* weights = new float[E];
   int ei = 0;
@@ -109,7 +109,7 @@ graph_cuda_t_float *init_graph_cuda_float(const float *adjacencyMatrix, const in
 #pragma omp critical (init_graph_cuda_float)
 #endif
         {
-          edge_array[ei] = Edge_float(i, j);
+          set_edge_float(&edge_array[ei], i, j);
           weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
@@ -118,7 +118,7 @@ graph_cuda_t_float *init_graph_cuda_float(const float *adjacencyMatrix, const in
   }
   starts[n] = ei; // One extra
 
-  graph_t_cuda_float *gr = new graph_t_cuda_float;
+  graph_cuda_t_float *gr = new graph_cuda_t_float;
   gr->V = n;
   gr->E = E;
   gr->edge_array = edge_array;
@@ -289,7 +289,7 @@ void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanc
   *distanceMatrix = (float *) malloc(sizeof(float) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 #ifdef CUDA
-  graph_cuda_t_float* cuda_gr = init_graph_cuda_float(adjacencyMatrix, n, count_edges_float(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  graph_cuda_t_float* cuda_gr = init_graph_cuda_float(adjacencyMatrix, n, count_edges_float(adjacencyMatrix, n));
   johnson_cuda_float(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph_float(cuda_gr);
 #else

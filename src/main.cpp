@@ -234,7 +234,7 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda_int(matrix, distanceMatrix, successorMatrix, n_blocked);
+      floyd_warshall_blocked_cuda_int(matrix, &distanceMatrix, &successorMatrix, n_blocked);
 #else
       floyd_warshall_blocked_int(matrix, &distanceMatrix, &successorMatrix, n_blocked, block_size);
 #endif
@@ -389,7 +389,7 @@ int do_main_float(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda_float(matrix, distanceMatrix, successorMatrix, n_blocked);
+      floyd_warshall_blocked_cuda_float(matrix, &distanceMatrix, &successorMatrix, n_blocked);
 #else
       floyd_warshall_blocked_float(matrix, &distanceMatrix, &successorMatrix, n_blocked, block_size);
 #endif
@@ -541,7 +541,7 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda_double(matrix, distanceMatrix, successorMatrix, n_blocked);
+      floyd_warshall_blocked_cuda_double(matrix, &distanceMatrix, &successorMatrix, n_blocked);
 #else
       floyd_warshall_blocked_double(matrix, &distanceMatrix, &successorMatrix, n_blocked, block_size);
 #endif
