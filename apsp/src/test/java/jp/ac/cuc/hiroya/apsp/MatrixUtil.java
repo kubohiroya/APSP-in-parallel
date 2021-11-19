@@ -72,11 +72,18 @@ public class MatrixUtil {
     public static double calculateDistance(int from, int to, int v, double[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
         double distance = 0;
+        if(from == to){
+            return distance;
+        }
         while(true){
             int next = successorMatrix[from * v + to];
             distance += adjacencyMatrix[from * v + next];
             if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next || next == to){
+            if(from == next){
+                distance = Infinity.DBL_INF;
+                break;
+            }
+            if(next == to){
                 if(verbose) System.out.println("    合計距離 = "+value(distance));
                 break;
             }
@@ -88,11 +95,18 @@ public class MatrixUtil {
     public static float calculateDistance(int from, int to, int v, float[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
         float distance = 0;
+        if(from == to){
+            return distance;
+        }
         while(true){
             int next = successorMatrix[from * v + to];
             distance += adjacencyMatrix[from * v + next];
             if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next || next == to){
+            if(from == next){
+                distance = Infinity.FLT_INF;
+                break;
+            }
+            if(next == to){
                 if(verbose) System.out.println("    合計距離 = "+value(distance));
                 break;
             }
@@ -104,11 +118,18 @@ public class MatrixUtil {
     public static int calculateDistance(int from, int to, int v, int[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
         int distance = 0;
+        if(from == to){
+            return distance;
+        }
         while(true){
             int next = successorMatrix[from * v + to];
             distance += adjacencyMatrix[from * v + next];
             if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next || next == to){
+            if(from == next){
+                distance = Infinity.INT_INF;
+                break;
+            }
+            if(next == to){
                 if(verbose) System.out.println("    合計距離 = "+value(distance));
                 break;
             }

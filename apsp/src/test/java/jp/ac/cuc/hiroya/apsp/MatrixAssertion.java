@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import static jp.ac.cuc.hiroya.apsp.DateTimeUtil.getYYMMDDHHMM;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class MatrixAssertion {
@@ -49,7 +50,7 @@ public class MatrixAssertion {
                     if (calculatedDistances[index] != distances[index]) {
                         System.out.println("*** " + i + "," + j + " actual:" + calculatedDistances[index] + " expected:" + distances[index]);
                         MatrixUtil.calculateDistance(i, j, v, set.getAdjacencyMatrix(), successors, true);
-                        assertThat(calculatedDistances[index], is(distances[index]));
+                        assertEquals(calculatedDistances[index], distances[index], 0.0001);
                     }
                 }
             }

@@ -9,8 +9,8 @@ public class MatrixRandomDataTest {
 
     String getAdjName() throws IOException {
         long seed = 0;
-        int n = 5;
-        double p = 0.75;
+        int n = 16;
+        double p = 0.25;
         double min = 1.0;
         double max = 100.0;
         double inf = Infinity.DBL_INF;
