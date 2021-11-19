@@ -3,7 +3,7 @@ package jp.ac.cuc.hiroya.apsp;
 import jp.ac.cuc.hiroya.apsp.lib.Infinity;
 import jp.ac.cuc.hiroya.apsp.util.CSVParser;
 import jp.ac.cuc.hiroya.apsp.util.InfinityConverter;
-import jp.ac.cuc.hiroya.apsp.util.PostcedessorNormalizer;
+import jp.ac.cuc.hiroya.apsp.util.SuccessorNormalizer;
 
 import java.io.IOException;
 
@@ -164,7 +164,7 @@ public class MatrixUtil {
     }
 
     static int[] loadSuccessorMatrix(String nodeFilename)throws IOException{
-        return PostcedessorNormalizer.normalize(CSVParser.parseIntCSV(nodeFilename));
+        return SuccessorNormalizer.normalize(CSVParser.parseIntCSV(nodeFilename));
     }
 
 }

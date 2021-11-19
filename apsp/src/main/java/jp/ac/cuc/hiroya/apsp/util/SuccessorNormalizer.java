@@ -1,6 +1,6 @@
 package jp.ac.cuc.hiroya.apsp.util;
 
-public class PostcedessorNormalizer {
+public class SuccessorNormalizer {
     public static int[] normalize(int[] matrix){
         int v = (int)Math.sqrt(matrix.length);
         for(int i = 0; i < v; i++){
