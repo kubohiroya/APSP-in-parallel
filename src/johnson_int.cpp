@@ -277,7 +277,7 @@ void johnson_parallel_int(graph_t_int *gr, int *distanceMatrix, int *successorMa
     for (int v = 0; v < V; v++) {
       int i = s * V + v;
       distanceMatrix[i] = d[v] + h[v] - h[s];
-      successorMatrix[v*V+s] = p[v];
+      successorMatrix[v * V + s] = p[v];
     }
   }
 
