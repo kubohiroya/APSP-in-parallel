@@ -1,10 +1,10 @@
 package jp.ac.cuc.hiroya.apsp.lib;
 
 public interface ApspResolver<T> {
-    ApspResult<T> resolveWithJohnson(String execEnv, T adjacencyMatrix, int v);
-    ApspResult<T> resolveWithFloydWarshall(String execEnv, T adjacencyMatrix, int v);
-    ApspResult<T> resolveWithFloydWarshall(String execEnv, T adjacencyMatrix, int v, int numBlocks);
-    ApspResult<T> resolve(String execEnv, String algorithm, T adjacencyMatrix, int v, int numBlocks);
+    ApspResult<T> resolveWithJohnson(String execEnv, T adjacencyMatrix);
+    ApspResult<T> resolveWithFloydWarshall(String execEnv, T adjacencyMatrix);
+    ApspResult<T> resolveWithFloydWarshall(String execEnv, T adjacencyMatrix, int numBlocks);
+    ApspResult<T> resolve(String execEnv, String algorithm, T adjacencyMatrix, int numBlocks);
     T getInfinity(String execEnv);
 
     interface EXEC_ENV {

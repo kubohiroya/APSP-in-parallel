@@ -8,24 +8,28 @@ public class ApspResolvers {
 
     private static class ApspResolverIntImpl implements ApspResolver<int[]> {
 
-        public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
+        public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, -1);
         }
 
-        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix, int numVertex, int numBlocks){
+        public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix, int numBlocks){
 
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numBlocks);
         }
 
-        public ApspResult<int[]> resolve(String execEnv, String algorithm, int[] adjacencyMatrix, int numVertex, int numBlocks){
+        public ApspResult<int[]> resolve(String execEnv, String algorithm, int[] adjacencyMatrix, int numBlocks){
             long timeStart = System.currentTimeMillis();
             PointerByReference distanceMatrix = new PointerByReference();
             PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            int numVertex = (int)Math.sqrt(adjacencyMatrix.length);
+            if(numVertex * numVertex != adjacencyMatrix.length){
+                throw new RuntimeException("Invalid adjacencyMatrix");
+            }
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
@@ -62,24 +66,27 @@ public class ApspResolvers {
 
     private static class ApspResolverFloatImpl implements ApspResolver<float[]> {
 
-        public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
+        public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix,-1);
         }
 
-        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix, int numVertex, int numBlocks){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
+        public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix, int numBlocks){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numBlocks);
         }
 
-        public ApspResult<float[]> resolve(String execEnv, String algorithm, float[] adjacencyMatrix, int numVertex, int numBlocks){
+        public ApspResult<float[]> resolve(String execEnv, String algorithm, float[] adjacencyMatrix, int numBlocks){
             long timeStart = System.currentTimeMillis();
             PointerByReference distanceMatrix = new PointerByReference();
             PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
-
+            int numVertex = (int)Math.sqrt(adjacencyMatrix.length);
+            if(numVertex * numVertex != adjacencyMatrix.length){
+                throw new RuntimeException("Invalid adjacencyMatrix");
+            }
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
@@ -116,23 +123,27 @@ public class ApspResolvers {
 
     private static class ApspResolverDoubleImpl implements ApspResolver<double[]> {
 
-        public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, numVertex, -1);
+        public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, -1);
         }
 
-        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numVertex){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix,ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
-        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numVertex, int numBlocks){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numVertex, numBlocks);
+        public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numBlocks){
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, numBlocks);
         }
 
-        public ApspResult<double[]> resolve(String execEnv, String algorithm, double[] adjacencyMatrix, int numVertex, int numBlocks){
+        public ApspResult<double[]> resolve(String execEnv, String algorithm, double[] adjacencyMatrix, int numBlocks){
             long timeStart = System.currentTimeMillis();
             PointerByReference distanceMatrix = new PointerByReference();
             PointerByReference successorMatrix = new PointerByReference();
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            int numVertex = (int)Math.sqrt(adjacencyMatrix.length);
+            if(numVertex * numVertex != adjacencyMatrix.length){
+                throw new RuntimeException("Invalid adjacencyMatrix");
+            }
 
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
