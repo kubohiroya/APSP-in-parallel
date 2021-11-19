@@ -195,5 +195,9 @@ cleanJar:
 
 clean: cleanBin cleanJar
 
-test: $(JAR) $(LIBS)
-	cp $(LIBS) apsp/target/classes;	(cd apsp; mvn test -Dtest=MatrixBasicTest,MatrixDetailedDummyTest)
+installLibs: $(LIBS) jar
+	mkdir -p apsp/target/classes
+	cp $(LIBS) apsp/target/classes
+
+test: $(JAR) installLibs
+	(cd apsp; mvn test)
