@@ -60,7 +60,7 @@ public class ApspResolvers {
 
         public int[] getInfinity(String execEnv){
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
-            return new int[]{impl.getIntegerInfinity()};
+            return new int[]{impl.get_infinity_int()};
         }
     }
 
@@ -117,7 +117,7 @@ public class ApspResolvers {
 
         public float[] getInfinity(String execEnv){
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
-            return new float[]{impl.getFloatInfinity()};
+            return new float[]{impl.get_infinity_float()};
         }
     }
 
@@ -128,7 +128,7 @@ public class ApspResolvers {
         }
 
         public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix){
-            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix,ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
+            return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
 
         public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix, int numBlocks){
@@ -144,7 +144,6 @@ public class ApspResolvers {
             if(numVertex * numVertex != adjacencyMatrix.length){
                 throw new RuntimeException("Invalid adjacencyMatrix");
             }
-
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
@@ -175,7 +174,7 @@ public class ApspResolvers {
 
         public double[] getInfinity(String execEnv){
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
-            return new double[]{impl.getDoubleInfinity()};
+            return new double[]{impl.get_infinity_double()};
         }
     }
 

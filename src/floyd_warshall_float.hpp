@@ -17,7 +17,6 @@ void floyd_warshall_float(float *distanceMatrix, int *successorMatrix, const int
 #ifdef ISPC
 extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, int *successorMatrix, const int b, const int n);
 #else
-
 inline void
 floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *successorMatrix, const int b, const int n) {
   for (int k = 0; k < b; k++) {

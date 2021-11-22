@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static jp.ac.cuc.hiroya.apsp.DateTimeUtil.getYYMMDDHHMM;
+import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.end;
+import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.grey;
 
 public class MatrixSetManager {
 
@@ -25,35 +27,49 @@ public class MatrixSetManager {
     Map<String, ApspResult<float[]>> cacheResultFloat = new HashMap<>();
     Map<String, ApspResult<int[]>> cacheResultInt = new HashMap<>();
 
-    synchronized MatrixSet.Double getMatrixSetDouble(String adjacencyFilename, String distanceFilename, String successorFilename) throws IOException,NumberFormatException{
+    synchronized MatrixSet.Double getMatrixSetDouble(String adjacencyFilename, String distanceFilename, String successorFilename, boolean verbose) throws IOException,NumberFormatException{
         String key = adjacencyFilename;
         MatrixSet.Double set = cacheMatrixDouble.get(key);
         if (set == null) {
-            System.out.println(getYYMMDDHHMM() + " prepare 1: load csv key="+key);
-            System.out.println("   adj: " + adjacencyFilename);
+            if(verbose){
+                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv key="+key+end);
+                System.out.println(grey+"   adj: " + adjacencyFilename+end);
+            }
             double[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.DBL_INF);
-            System.out.println("   dst: " + distanceFilename);
+            if(verbose) {
+                System.out.println(grey+"   dst: " + distanceFilename+end);
+            }
             double[] distanceMatrix = distanceFilename!=null? MatrixUtil.loadCsvFileDouble(distanceFilename):null;
-            System.out.println("   suc: " + successorFilename);
+            if(verbose) {
+                System.out.println(grey+"   suc: " + successorFilename+end);
+            }
             int[] successorMatrix = successorFilename!=null? MatrixUtil.loadSuccessorMatrix(successorFilename):null;
             set = new MatrixSet.Double(adjacencyMatrix, distanceMatrix, successorMatrix);
             cacheMatrixDouble.put(key, set);
-        }else{
-            System.out.println(getYYMMDDHHMM() + " prepare 1: use cached csv key="+key);
+        }else {
+            if (verbose) {
+                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: use cached csv key=" + key+end);
+            }
         }
         return set;
     }
 
-    synchronized MatrixSet.Float getMatrixSetFloat(String adjacencyFilename, String distanceFilename, String successorFilename) throws IOException,NumberFormatException{
+    synchronized MatrixSet.Float getMatrixSetFloat(String adjacencyFilename, String distanceFilename, String successorFilename, boolean verbose) throws IOException,NumberFormatException{
         String key = adjacencyFilename;
         MatrixSet.Float set = cacheMatrixFloat.get(key);
         if (set == null) {
-            System.out.println(getYYMMDDHHMM() + " prepare 1: load csv ");
-            System.out.println("   adj: " + adjacencyFilename);
+            if(verbose){
+                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv "+end);
+                System.out.println(grey+"   adj: " + adjacencyFilename+end);
+            }
             float[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.FLT_INF);
-            System.out.println("   dst: " + distanceFilename);
+            if(verbose) {
+                System.out.println(grey+"   dst: " + distanceFilename+end);
+            }
             float[] distanceMatrix = distanceFilename!=null? MatrixUtil.loadCsvFileFloat(distanceFilename):null;
-            System.out.println("   suc: " + successorFilename);
+            if(verbose) {
+                System.out.println(grey+"   suc: " + successorFilename+end);
+            }
             int[] successorMatrix = successorFilename!=null? MatrixUtil.loadSuccessorMatrix(successorFilename):null;
             set = new MatrixSet.Float(adjacencyMatrix, distanceMatrix, successorMatrix);
             cacheMatrixFloat.put(key, set);
@@ -61,16 +77,22 @@ public class MatrixSetManager {
         return set;
     }
 
-    synchronized MatrixSet.Int getMatrixSetInt(String adjacencyFilename, String distanceFilename, String successorFilename) throws IOException,NumberFormatException{
+    synchronized MatrixSet.Int getMatrixSetInt(String adjacencyFilename, String distanceFilename, String successorFilename, boolean verbose) throws IOException,NumberFormatException{
         String key = adjacencyFilename;
         MatrixSet.Int set = cacheMatrixInt.get(key);
         if (set == null) {
-            System.out.println(getYYMMDDHHMM() + " prepare 1: load csv ");
-            System.out.println("   adj: " + adjacencyFilename);
+            if(verbose) {
+                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv "+end);
+                System.out.println(grey+"   adj: " + adjacencyFilename+end);
+            }
             int[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.INT_INF);
-            System.out.println("   dst: " + distanceFilename);
+            if(verbose) {
+                System.out.println(grey+"   dst: " + distanceFilename+end);
+            }
             int[] distanceMatrix = distanceFilename!=null? MatrixUtil.loadCsvFileInt(distanceFilename):null;
-            System.out.println("   suc: " + successorFilename);
+            if(verbose) {
+                System.out.println(grey+"   suc: " + successorFilename+end);
+            }
             int[] successorMatrix = successorFilename!=null? MatrixUtil.loadSuccessorMatrix(successorFilename):null;
             set = new MatrixSet.Int(adjacencyMatrix, distanceMatrix, successorMatrix);
             cacheMatrixInt.put(key, set);
@@ -78,43 +100,49 @@ public class MatrixSetManager {
         return set;
     }
 
-    synchronized ApspResult<double[]> getApspResultDouble(String adjacencyFilename, String execEnv, String algorithm) throws IOException{
+    synchronized ApspResult<double[]> getApspResultDouble(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
         String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
         ApspResult<double[]> result = cacheResultDouble.get(key);
         if (result == null) {
             double[] adjacencyMatrix = getMatrixSetDouble(adjacencyFilename,
-                    null, null).getAdjacencyMatrix();
-            System.out.println(getYYMMDDHHMM()+" prepare 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
+                    null, null, verbose).getAdjacencyMatrix();
+            if(verbose) {
+                System.out.println(grey+getYYMMDDHHMM() + " prepare 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+            }
             result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm,
-                    adjacencyMatrix, 64);
+                    adjacencyMatrix, b);
             cacheResultDouble.put(key, result);
         }
         return result;
     }
 
-    synchronized ApspResult<float[]> getApspResultFloat(String adjacencyFilename, String execEnv, String algorithm) throws IOException{
+    synchronized ApspResult<float[]> getApspResultFloat(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
         String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
         ApspResult<float[]> result = cacheResultFloat.get(key);
         if (result == null) {
             float[] adjacencyMatrix = getMatrixSetFloat(adjacencyFilename,
-                    null, null).getAdjacencyMatrix();
-            System.out.println(getYYMMDDHHMM()+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
+                    null, null, verbose).getAdjacencyMatrix();
+            if(verbose) {
+                System.out.println(grey+getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+            }
             result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm,
-                    adjacencyMatrix, 64);
+                    adjacencyMatrix, b);
             cacheResultFloat.put(key, result);
         }
         return result;
     }
 
-    synchronized ApspResult<int[]> getApspResultInt(String adjacencyFilename, String execEnv, String algorithm) throws IOException{
+    synchronized ApspResult<int[]> getApspResultInt(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
         String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
         ApspResult<int[]> result = cacheResultInt.get(key);
         if (result == null) {
             int[] adjacencyMatrix = getMatrixSetInt(adjacencyFilename,
-                    null, null).getAdjacencyMatrix();
-            System.out.println(getYYMMDDHHMM()+" step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm);
+                    null, null, verbose).getAdjacencyMatrix();
+            if(verbose) {
+                System.out.println(grey+getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+            }
             result = ApspResolvers.IntResolver.resolve(execEnv, algorithm,
-                    adjacencyMatrix, 64);
+                    adjacencyMatrix, b);
             cacheResultInt.put(key, result);
         }
         return result;

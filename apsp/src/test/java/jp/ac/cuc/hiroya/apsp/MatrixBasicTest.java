@@ -11,9 +11,23 @@ import static org.junit.Assert.assertThat;
 
 public class MatrixBasicTest {
     @Test
-    public void java側のInf値はネイティブライブラリ側のInf値と一致する() throws Exception {
+    public void java側のDoubleのInf値はネイティブライブラリ側のInf値と一致する() {
         double inf = Infinity.DBL_INF;
         double[] expectedInf = ApspResolvers.DoubleResolver.getInfinity("omp");
+        assertThat(inf, is(expectedInf[0]));
+    }
+
+    @Test
+    public void java側のFloatのInf値はネイティブライブラリ側のInf値と一致する() {
+        float inf = Infinity.FLT_INF;
+        float[] expectedInf = ApspResolvers.FloatResolver.getInfinity("omp");
+        assertThat(inf, is(expectedInf[0]));
+    }
+
+    @Test
+    public void java側のIntのInf値はネイティブライブラリ側のInf値と一致する() {
+        int inf = Infinity.INT_INF;
+        int[] expectedInf = ApspResolvers.IntResolver.getInfinity("omp");
         assertThat(inf, is(expectedInf[0]));
     }
 
@@ -65,14 +79,15 @@ public class MatrixBasicTest {
         String filename = MatrixRealFilenames.adjFilename;
         double[] adjMatrix = InfinityConverter.convert(CSVParser.parseDoubleCSV(filename), 0.0, Infinity.DBL_INF);
         int v = (int) Math.sqrt(adjMatrix.length);
-        for(int i=0; i<v; i++) {
-            if(adjMatrix[i * v + i] != 0.0){
-                System.out.println(i+"="+adjMatrix[i * v + i]);;
-            }
-        }
-        for(int i=0; i<v; i++) {
-            assertThat(adjMatrix[i * v + i], is(0.0));
-        }
+        MatrixAssertion.assertDiagonalElementsAllZero(adjMatrix, v, false);
+    }
+
+    @Test
+    public void 本番データの距離行列は対象行列である() throws Exception {
+        String filename = MatrixRealFilenames.adjFilename;
+        double[] adjMatrix = InfinityConverter.convert(CSVParser.parseDoubleCSV(filename), 0.0, Infinity.DBL_INF);
+        int v = (int) Math.sqrt(adjMatrix.length);
+        MatrixAssertion.assertSymmetricMatrix(adjMatrix, v, false);
     }
 
 }

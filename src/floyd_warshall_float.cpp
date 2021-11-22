@@ -66,10 +66,10 @@ floyd_warshall_blocked_random_init_float(const int n, const int block_size, cons
 }
 
 void floyd_warshall_float(float *distanceMatrix, int *successorMatrix, const int n) {
-  #ifdef _OPENMP
-  #pragma omp parallel for
-  #endif
   for (int k = 0; k < n; k++) {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
         if (distanceMatrix[i * n + j] > distanceMatrix[i * n + k] + distanceMatrix[k * n + j]) {
@@ -130,8 +130,39 @@ void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distance
 #ifdef CUDA
   floyd_warshall_blocked_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
 #else
-  if(n >= b) {
-    _floyd_warshall_blocked_float(*distanceMatrix, *successorMatrix, n, b);
+  if(b != -1 && n > b) {
+    int block_remainder = n % b;
+      int n_oversized = (block_remainder == 0) ? n : n + b - block_remainder;
+
+      float *_distanceMatrix = new float[n_oversized * n_oversized];
+      int *_successorMatrix = new int[n_oversized * n_oversized];
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+      for (int i = 0; i < n_oversized; i++) {
+        for (int j = 0; j < n_oversized; j++) {
+          if(i < n || j < n){
+            _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
+            _successorMatrix[i * n_oversized + j] = (*successorMatrix)[i * n + j];
+          }else{
+            _distanceMatrix[i * n_oversized + j] = FLT_INF;
+            _successorMatrix[i * n_oversized + j] = j;
+          }
+        }
+      }
+
+      _floyd_warshall_blocked_float(_distanceMatrix, _successorMatrix, n, b);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+      for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+          (*distanceMatrix)[i * n + j] = _distanceMatrix[i * n_oversized + j];
+          (*successorMatrix)[i * n + j] = _successorMatrix[i * n_oversized + j];
+        }
+      }
   }else{
     floyd_warshall_float(*distanceMatrix, *successorMatrix, n);
   }

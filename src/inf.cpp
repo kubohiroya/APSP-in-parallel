@@ -1,12 +1,12 @@
 #include "inf.hpp"
 #include<string>
 
-int getIntegerInfinity(){
+int get_infinity_int(){
   return INT_INF;
 }
-float getFloatInfinity(){
+float get_infinity_float(){
   return FLT_INF;
 }
-double getDoubleInfinity(){
+double get_infinity_double(){
   return DBL_INF;
 }

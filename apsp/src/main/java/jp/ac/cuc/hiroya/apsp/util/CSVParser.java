@@ -11,13 +11,16 @@ public class CSVParser {
         int[] ret = null;
         int p = 0;
         File file = new File(filename);
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file), 8192*64)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
                     int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new int[n * n];
+                }
+                if(row.length <= 1){
+                    break;
                 }
                 for (String s : row) {
                     try {
@@ -34,13 +37,16 @@ public class CSVParser {
         float[] ret = null;
         int p = 0;
         File file = new File(filename);
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file), 8192*64)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
                 if (ret == null) {
                     int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new float[n * n];
+                }
+                if(row.length <= 1){
+                    break;
                 }
                 for (String s : row) {
                     try {
@@ -57,7 +63,7 @@ public class CSVParser {
         double[] ret = null;
         int p = 0;
         File file = new File(filename);
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file), 8192*64)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] row = line.split(",");
@@ -65,7 +71,7 @@ public class CSVParser {
                     int n = !row[row.length - 1].equals("") ? row.length : row.length - 1;
                     ret = new double[n * n];
                 }
-                if(row.length == 1){
+                if(row.length <= 1){
                     break;
                 }
                 for (String s : row) {

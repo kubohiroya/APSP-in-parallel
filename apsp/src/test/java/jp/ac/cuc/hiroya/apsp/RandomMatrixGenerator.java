@@ -15,8 +15,8 @@ public class RandomMatrixGenerator {
             for(int j = 0; j < n; j++){
                 int index = i * n + j;
                 if(i == j){
-                    adjacencyMatrix[index] = 0;
-                }else if(i < j){
+                    adjacencyMatrix[index] = 0.0;
+                }else if(j > i){
                     if(rand.nextDouble() < p) {
                         adjacencyMatrix[index] = min + rand.nextDouble() * (max - min);
                     }else {

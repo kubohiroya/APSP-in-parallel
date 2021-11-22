@@ -71,73 +71,81 @@ public class MatrixUtil {
 
     public static double calculateDistance(int from, int to, int v, double[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
-        double distance = 0;
         if(from == to){
-            return distance;
+            if(verbose) System.out.println("    合計距離 = 0");
+            return 0;
         }
-        while(true){
-            int next = successorMatrix[from * v + to];
-            distance += adjacencyMatrix[from * v + next];
-            if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next){
-                distance = Infinity.DBL_INF;
-                break;
+        double distanceTotal = 0;
+        int current = from;
+        for(int i = 0; i < v; i++){
+            int next = successorMatrix[current * v + to];
+            if(current == next){
+                if(verbose) System.out.println("    合計距離 = Inf");
+                return Infinity.DBL_INF;
             }
+            double distance = adjacencyMatrix[current * v + next];
+            if(verbose) System.out.println("   "+current+"発 => "+next+"行 \t+ "+value(distance));
+            distanceTotal += distance;
             if(next == to){
-                if(verbose) System.out.println("    合計距離 = "+value(distance));
-                break;
+                if(verbose) System.out.println("    合計距離 = "+value(distanceTotal));
+                return distanceTotal;
             }
-            from = next;
+            current = next;
         }
-        return distance;
+        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
     }
 
     public static float calculateDistance(int from, int to, int v, float[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
-        float distance = 0;
         if(from == to){
-            return distance;
+            if(verbose) System.out.println("    合計距離 = 0");
+            return 0;
         }
-        while(true){
-            int next = successorMatrix[from * v + to];
-            distance += adjacencyMatrix[from * v + next];
-            if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next){
-                distance = Infinity.FLT_INF;
-                break;
+        float distanceTotal = 0;
+        int current = from;
+        for(int i = 0; i < v; i++){
+            int next = successorMatrix[current * v + to];
+            if(current == next){
+                if(verbose) System.out.println("    合計距離 = Inf");
+                return Infinity.FLT_INF;
             }
+            float distance = adjacencyMatrix[current * v + next];
+            if(verbose) System.out.println("   "+current+"発 => "+next+"行 \t+ "+value(distance));
+            distanceTotal += distance;
             if(next == to){
-                if(verbose) System.out.println("    合計距離 = "+value(distance));
-                break;
+                if(verbose) System.out.println("    合計距離 = "+value(distanceTotal));
+                return distanceTotal;
             }
-            from = next;
+            current = next;
         }
-        return distance;
+        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
     }
 
     public static int calculateDistance(int from, int to, int v, int[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         if(verbose) System.out.println(from+"発 => "+to+"行");
-        int distance = 0;
         if(from == to){
-            return distance;
+            if(verbose) System.out.println("    合計距離 = 0");
+            return 0;
         }
-        while(true){
-            int next = successorMatrix[from * v + to];
-            distance += adjacencyMatrix[from * v + next];
-            if(verbose) System.out.println("   "+from+"発 => "+next+"行 \t+ "+value(adjacencyMatrix[from * v + next]));
-            if(from == next){
-                distance = Infinity.INT_INF;
-                break;
+        int distanceTotal = 0;
+        int current = from;
+        for(int i = 0; i < v; i++){
+            int next = successorMatrix[current * v + to];
+            if(current == next){
+                if(verbose) System.out.println("    合計距離 = Inf");
+                return Infinity.INT_INF;
             }
+            int distance = adjacencyMatrix[current * v + next];
+            if(verbose) System.out.println("   "+current+"発 => "+next+"行 \t+ "+value(distance));
+            distanceTotal += distance;
             if(next == to){
-                if(verbose) System.out.println("    合計距離 = "+value(distance));
-                break;
+                if(verbose) System.out.println("    合計距離 = "+value(distanceTotal));
+                return distanceTotal;
             }
-            from = next;
+            current = next;
         }
-        return distance;
+        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
     }
-
 
     static double[] calculateDistanceMatrix(double[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
         int v = (int) Math.sqrt(adjacencyMatrix.length);

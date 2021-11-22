@@ -7,6 +7,6 @@
 
 #define DBL_INF std::numeric_limits<double>::max() / 2
 
-extern "C" int getIntegerInfinity();
-extern "C" float getFloatInfinity();
-extern "C" double getDoubleInfinity();
+extern "C" int get_infinity_int();
+extern "C" float get_infinity_float();
+extern "C" double get_infinity_double();

@@ -163,7 +163,7 @@ pgo:
 run: ApspMain
 
 benchmark-f:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -b serious2 -r --cuda
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a f -T d -d 256 -b serious2 -r --cuda
 
 benchmark-j:
 	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious2 -r
