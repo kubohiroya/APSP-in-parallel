@@ -23,6 +23,7 @@ NVCCFLAGS ?= -std=c++11 -O3
 OBJ_DIR := objs
 LIBS_DIR := libs
 SRC_DIR := src
+JAVA_SRC_DIR := apsp/src
 
 # executable names
 SEQ := apsp-seq
@@ -34,6 +35,7 @@ OMP_ISPC = $(OMP)-ispc
 CPP_SOURCES := $(shell find $(SRC_DIR) -name '*cpp')
 CU_SOURCES := $(shell find $(SRC_DIR) -name '*cu')
 ISPC_SOURCES := $(shell find $(SRC_DIR) -name '*ispc')
+JAVA_SOURCES := $(shell find $(JAVA_SRC_DIR) -name '*java')
 
 SEQ_OBJECTS := $(CPP_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/seq-%.o)
 OMP_OBJECTS := $(CPP_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/omp-%.o)
@@ -173,14 +175,14 @@ benchmark-j-half:
 
 benchmark: benchmark-f benchmark-j
 
-
-$(JAR): 
+$(JAR): $(JAVA_SOURCES)
 	(cd apsp; mvn clean compile assembly:single)
+	make installLibs
 
 jar:
 	make $(JAR)
 
-ApspMain: $(JAR) $(LIBS) install
+ApspMain: $(JAR) $(LIBS) installLibs
 	java $(JAVA_OPT) -jar $(JAR) omp johnson double time apsp/InputMatrix.csv
 
 javadoc: $(JAR)
@@ -195,7 +197,7 @@ cleanJar:
 
 clean: cleanBin cleanJar
 
-installLibs: $(LIBS) jar
+installLibs: $(LIBS)
 	mkdir -p apsp/target/classes
 	cp $(LIBS) apsp/target/classes
 
