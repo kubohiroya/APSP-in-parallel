@@ -4,7 +4,7 @@ export void floyd_warshall_in_place_float(uniform float C[], const uniform float
     foreach (i = 0 ... b, j = 0 ... b) {
       if (C[i*n + j] > A[i*n + k] + B[k*n + j]) {
 	    C[i*n + j] = A[i*n + k] + B[k*n + j];
-		successorMatrix[i*n + j] = successorMatrix[i*n + k];
+	    successorMatrix[j * n + i] = successorMatrix[j * n + k];
       }
     }
   }

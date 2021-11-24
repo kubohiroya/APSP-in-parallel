@@ -26,7 +26,7 @@ floyd_warshall_in_place_double(double *C, const double *A, const double *B, int 
         double sum = A[i * n + k] + B[kth + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          successorMatrix[i * n + j] = successorMatrix[i * n + k];
+          successorMatrix[j * n + i] = successorMatrix[j * n + k];
         }
       }
     }

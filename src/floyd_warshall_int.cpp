@@ -70,9 +70,10 @@ void floyd_warshall_int(int *distanceMatrix, int *successorMatrix, const int n) 
 #endif
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (distanceMatrix[i * n + j] > distanceMatrix[i * n + k] + distanceMatrix[k * n + j]) {
-          distanceMatrix[i * n + j] = distanceMatrix[i * n + k] + distanceMatrix[k * n + j];
-          successorMatrix[i * n + j] = successorMatrix[i * n + k];
+        int sum = distanceMatrix[i * n + k] + distanceMatrix[k * n + j];
+        if (distanceMatrix[i * n + j] > sum) {
+          distanceMatrix[i * n + j] = sum;
+          successorMatrix[j * n + i] = successorMatrix[j * n + k];
         }
       }
     }
@@ -86,14 +87,16 @@ void _floyd_warshall_blocked_int(int *distanceMatrix, int *successorMatrix, cons
   // note that [i][j] == [i * adjacencyMatrix_width * block_width + j * block_width]
   for (int k = 0; k < blocks; k++) {
     int kbnkb = k * b * n + k * b;
-    floyd_warshall_in_place_int(&distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &successorMatrix[kbnkb], b, n);
+    floyd_warshall_in_place_int(&distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &distanceMatrix[kbnkb],
+                                &successorMatrix[kbnkb], b, n);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int j = 0; j < blocks; j++) {
       if (j == k) continue;
       int kbnjb = k * b * n + j * b;
-      floyd_warshall_in_place_int(&distanceMatrix[kbnjb], &distanceMatrix[kbnkb], &distanceMatrix[kbnjb], &successorMatrix[kbnjb], b, n);
+      floyd_warshall_in_place_int(&distanceMatrix[kbnjb], &distanceMatrix[kbnkb], &distanceMatrix[kbnjb],
+                                  &successorMatrix[kbnjb], b, n);
     }
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -101,11 +104,13 @@ void _floyd_warshall_blocked_int(int *distanceMatrix, int *successorMatrix, cons
     for (int i = 0; i < blocks; i++) {
       if (i == k) continue;
       int ibnkb = i * b * n + k * b;
-      floyd_warshall_in_place_int(&distanceMatrix[ibnkb], &distanceMatrix[ibnkb], &distanceMatrix[kbnkb], &successorMatrix[ibnkb], b, n);
+      floyd_warshall_in_place_int(&distanceMatrix[ibnkb], &distanceMatrix[ibnkb], &distanceMatrix[kbnkb],
+                                  &successorMatrix[ibnkb], b, n);
       for (int j = 0; j < blocks; j++) {
         if (j == k) continue;
         int ibnjb = i * b * n + j * b;
-        floyd_warshall_in_place_int(&distanceMatrix[ibnjb], &distanceMatrix[ibnkb], &distanceMatrix[k * b * n + j * b], &successorMatrix[ibnjb], b, n);
+        floyd_warshall_in_place_int(&distanceMatrix[ibnjb], &distanceMatrix[ibnkb], &distanceMatrix[k * b * n + j * b],
+                                    &successorMatrix[ibnjb], b, n);
       }
     }
   }
@@ -134,16 +139,17 @@ void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **distanceMatrix
       int *_distanceMatrix = new int[n_oversized * n_oversized];
       int *_successorMatrix = new int[n_oversized * n_oversized];
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
       for (int i = 0; i < n_oversized; i++) {
         for (int j = 0; j < n_oversized; j++) {
           if(i < n || j < n){
             _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
             _successorMatrix[i * n_oversized + j] = (*successorMatrix)[i * n + j];
           }else{
-            _distanceMatrix[i * n_oversized + j] = INT_INF;
+            if(i == j){
+              _distanceMatrix[i * n_oversized + j] = 0;
+            }else{
+              _distanceMatrix[i * n_oversized + j] = INT_INF;
+            }
             _successorMatrix[i * n_oversized + j] = j;
           }
         }
@@ -151,15 +157,15 @@ void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **distanceMatrix
 
       _floyd_warshall_blocked_int(_distanceMatrix, _successorMatrix, n, b);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
       for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
           (*distanceMatrix)[i * n + j] = _distanceMatrix[i * n_oversized + j];
           (*successorMatrix)[i * n + j] = _successorMatrix[i * n_oversized + j];
         }
       }
+
+      delete[] _distanceMatrix;
+      delete[] _successorMatrix;
 
   }else{
       floyd_warshall_int(*distanceMatrix, *successorMatrix, n);

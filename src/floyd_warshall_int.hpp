@@ -25,7 +25,7 @@ inline void floyd_warshall_in_place_int(int *C, const int *A, const int *B, int 
         int sum = A[i * n + k] + B[ktn + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          successorMatrix[i * n + j] = successorMatrix[i * n + k];
+          successorMatrix[j * n + i] = successorMatrix[j * n + k];
         }
       }
     }
