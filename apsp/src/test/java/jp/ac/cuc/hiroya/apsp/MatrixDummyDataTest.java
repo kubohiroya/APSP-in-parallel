@@ -17,7 +17,7 @@ public class MatrixDummyDataTest {
     public void ダミーデータのFloydWarshall法での処理結果を外部ファイルで検証() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "f";
-        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, 16, true);
+        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, 16, false);
     }
 
     @Test

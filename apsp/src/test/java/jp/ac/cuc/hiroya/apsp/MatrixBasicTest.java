@@ -63,7 +63,7 @@ public class MatrixBasicTest {
         assertThat(matrix.length, is(expectedLength));
         assertThat(matrix, is(expectedMatrix));
     }
-
+    /*
     @Test
     public void 本番データの距離行列が読み込める() throws Exception {
         String filename = MatrixRealFilenames.adjFilename;
@@ -89,5 +89,5 @@ public class MatrixBasicTest {
         int v = (int) Math.sqrt(adjMatrix.length);
         MatrixAssertion.assertSymmetricMatrix(adjMatrix, v, false);
     }
-
+*/
 }

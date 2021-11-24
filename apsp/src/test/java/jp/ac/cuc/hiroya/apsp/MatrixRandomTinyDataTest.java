@@ -1,6 +1,5 @@
 package jp.ac.cuc.hiroya.apsp;
 
-import jp.ac.cuc.hiroya.apsp.lib.Infinity;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -13,16 +12,16 @@ public class MatrixRandomTinyDataTest {
 
     interface tinyRandomMatrixDouble {
         long seed = 0;
-        int n = 8;
-        double p = 0.4;
+        int n = 5;
+        double p = 0.5;
         double min = 1.0;
         double max = 100.0;
     }
 
     interface tinyRandomMatrixInt {
         long seed = 0;
-        int n = 8;
-        double p = 0.3;
+        int n = 5;
+        double p = 0.5;
         int min = 1;
         int max = 100;
     }
@@ -33,7 +32,7 @@ public class MatrixRandomTinyDataTest {
         double p = tinyRandomMatrixDouble.p;
         double min = tinyRandomMatrixDouble.min;
         double max = tinyRandomMatrixDouble.max;
-        return "random:" + seed + "," + n + "," + p + "," + min + "," + max + ",inf";
+        return "random:" + seed + "," + n + "," + p + "," + min + "," + max;
     }
 
     String getRandomTinyMatrixInt() {
@@ -42,8 +41,7 @@ public class MatrixRandomTinyDataTest {
         double p = tinyRandomMatrixInt.p;
         int min = tinyRandomMatrixInt.min;
         int max = tinyRandomMatrixInt.max;
-        double inf = Infinity.INT_INF;
-        return "random:" + seed + "," + n + "," + p + "," + min + "," + max + ",inf";
+        return "random:" + seed + "," + n + "," + p + "," + min + "," + max;
     }
 
     @Test
@@ -53,16 +51,15 @@ public class MatrixRandomTinyDataTest {
         double p = tinyRandomMatrixInt.p;
         int min = tinyRandomMatrixInt.min;
         int max = tinyRandomMatrixInt.max;
-        int inf = Infinity.INT_INF;
 
         int[] matrix1 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         int[] matrix2 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         int[] matrix3 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         assertThat(matrix1, is(matrix2));
         assertThat(matrix1, is(matrix3));
@@ -73,7 +70,7 @@ public class MatrixRandomTinyDataTest {
         String execEnv = ENV;
         String algorithm = "f";
         MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomTinyMatrixDouble(),
-                null, null, execEnv, algorithm, NUM_BLOCKS, false);
+                null, null, execEnv, algorithm, NUM_BLOCKS, true);
     }
 
     @Test

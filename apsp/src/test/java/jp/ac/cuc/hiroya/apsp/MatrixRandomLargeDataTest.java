@@ -1,6 +1,5 @@
 package jp.ac.cuc.hiroya.apsp;
 
-import jp.ac.cuc.hiroya.apsp.lib.Infinity;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -9,21 +8,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MatrixRandomLargeDataTest {
 
-    static int NUM_BLOCKS = -1;
+    static int NUM_BLOCKS = 3;
     static String ENV = "omp-ispc";
 
     interface largeRandomMatrixDouble{
-        long seed = 0;
-        int n = 512;
-        double p = 0.4;
+        long seed = 1;
+        int n = 6;
+        double p = 0.3;
         double min = 1.0;
         double max = 100.0;
     }
 
     interface largeRandomMatrixInt{
-        long seed = 0;
-        int n = 512;
-        double p = 0.4;
+        long seed = 1;
+        int n = 6;
+        double p = 0.3;
         int min = 1;
         int max = 100;
     }
@@ -34,8 +33,7 @@ public class MatrixRandomLargeDataTest {
         double p = largeRandomMatrixDouble.n;
         double min = largeRandomMatrixDouble.min;
         double max = largeRandomMatrixDouble.max;
-        double inf = Infinity.DBL_INF;
-        return "random:"+seed+","+n+","+p+","+min+","+max+",inf";
+        return "random:"+seed+","+n+","+p+","+min+","+max;
     }
 
     String getRandomLargeMatrixInt(){
@@ -44,8 +42,7 @@ public class MatrixRandomLargeDataTest {
         double p = largeRandomMatrixInt.p;
         int min = largeRandomMatrixInt.min;
         int max = largeRandomMatrixInt.max;
-        double inf = Infinity.INT_INF;
-        return "random:"+seed+","+n+","+p+","+min+","+max+",inf";
+        return "random:"+seed+","+n+","+p+","+min+","+max;
     }
 
     @Test
@@ -55,16 +52,15 @@ public class MatrixRandomLargeDataTest {
         double p = largeRandomMatrixInt.p;
         int min = largeRandomMatrixInt.min;
         int max = largeRandomMatrixInt.max;
-        int inf = Infinity.INT_INF;
 
         int[] matrix1 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         int[] matrix2 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         int[] matrix3 = RandomMatrixGenerator.generateRandomAdjacencyMatrix(
-                seed, n, p, min, max, inf
+                seed, n, p, min, max
         );
         assertThat(matrix1, is(matrix2));
         assertThat(matrix1, is(matrix3));
@@ -74,7 +70,7 @@ public class MatrixRandomLargeDataTest {
     public void 大きめDoubleランダムデータのFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
         String execEnv = ENV;
         String algorithm = "f";
-        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(), null, null, execEnv, algorithm, NUM_BLOCKS, true);
+        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(), null, null, execEnv, algorithm, NUM_BLOCKS, false);
     }
 
     @Test
@@ -87,7 +83,7 @@ public class MatrixRandomLargeDataTest {
     @Test
     public void 大きめDoubleランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
         MatrixAssertion.assertDistancesBetweenAlgorithmsDouble(getRandomLargeMatrixDouble(), null, null,
-                new String[][] {{ENV, "f"},{ENV, "j"}},  NUM_BLOCKS, true);
+                new String[][] {{ENV, "f"},{ENV, "j"}},  NUM_BLOCKS, false);
     }
 
     @Test
@@ -107,6 +103,6 @@ public class MatrixRandomLargeDataTest {
     @Test
     public void 大きめIntランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
         MatrixAssertion.assertDistancesBetweenAlgorithmsInt(getRandomLargeMatrixInt(), null, null,
-                new String[][] {{ENV, "f"},{ENV, "j"}}, NUM_BLOCKS,  true);
+                new String[][] {{ENV, "f"},{ENV, "j"}}, NUM_BLOCKS,  false);
     }
 }

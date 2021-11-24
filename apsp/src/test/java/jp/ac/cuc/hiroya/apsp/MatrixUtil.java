@@ -22,7 +22,7 @@ public class MatrixUtil {
             double p = Double.parseDouble(args[2]);
             double min = Double.parseDouble(args[3]);
             double max = Double.parseDouble(args[4]);
-            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max, inf);
+            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
         return MatrixUtil.loadCsvFileDouble(adjacencyFilename);
     }
@@ -38,7 +38,7 @@ public class MatrixUtil {
             double p = Double.parseDouble(args[2]);
             float min = Float.parseFloat(args[3]);
             float max = Float.parseFloat(args[4]);
-            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max, inf);
+            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
         return MatrixUtil.loadCsvFileFloat(adjacencyFilename);
     }
@@ -54,7 +54,7 @@ public class MatrixUtil {
             double p = Double.parseDouble(args[2]);
             int min = Integer.parseInt(args[3]);
             int max = Integer.parseInt(args[4]);
-            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max, inf);
+            return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
         return MatrixUtil.loadCsvFileInt(adjacencyFilename);
     }
@@ -92,7 +92,11 @@ public class MatrixUtil {
             }
             current = next;
         }
-        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        if(verbose){
+            throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        }else{
+            return calculateDistance(from, to, v, adjacencyMatrix, successorMatrix, true);
+        }
     }
 
     public static float calculateDistance(int from, int to, int v, float[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
@@ -118,7 +122,11 @@ public class MatrixUtil {
             }
             current = next;
         }
-        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        if(verbose){
+            throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        }else{
+            return calculateDistance(from, to, v, adjacencyMatrix, successorMatrix, true);
+        }
     }
 
     public static int calculateDistance(int from, int to, int v, int[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
@@ -144,7 +152,11 @@ public class MatrixUtil {
             }
             current = next;
         }
-        throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        if(verbose){
+            throw new RuntimeException("LoopDetected: "+ from +"発 => "+to+"行");
+        }else{
+            return calculateDistance(from, to, v, adjacencyMatrix, successorMatrix, true);
+        }
     }
 
     static double[] calculateDistanceMatrix(double[] adjacencyMatrix, int[] successorMatrix, boolean verbose){
