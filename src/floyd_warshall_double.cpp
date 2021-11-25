@@ -16,6 +16,9 @@ double *floyd_warshall_random_init_double(const int n, const double p, const uns
   std::mt19937_64 rand_engine(seed);
 
   double *out = new double[n * n];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (i == j) {
@@ -44,6 +47,9 @@ floyd_warshall_blocked_random_init_double(const int n, const int block_size, con
   int n_oversized = (block_remainder == 0) ? n : n + block_size - block_remainder;
 
   double *out = new double[n_oversized * n_oversized];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n_oversized; i++) {
     for (int j = 0; j < n_oversized; j++) {
       if (i == j) {
