@@ -294,7 +294,9 @@ void johnson_parallel_matrix_int(const int *adjacencyMatrix, int **distanceMatri
   johnson_cuda_int(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph_int(cuda_gr);
 #else
-  johnson_parallel_int(init_graph_int(adjacencyMatrix, n, count_edges_int(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  graph_t_int* gr = init_graph_int(adjacencyMatrix, n, count_edges_int(adjacencyMatrix, n));
+  johnson_parallel_int(gr, *distanceMatrix, *successorMatrix);
+  free(gr);
 #endif
 }
 

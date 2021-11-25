@@ -293,7 +293,9 @@ void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanc
   johnson_cuda_float(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph_float(cuda_gr);
 #else
-  johnson_parallel_float(init_graph_float(adjacencyMatrix, n, count_edges_float(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  graph_t_float* gr = init_graph_float(adjacencyMatrix, n, count_edges_float(adjacencyMatrix, n));
+  johnson_parallel_float(gr, *distanceMatrix, *successorMatrix);
+  free(gr);
 #endif
 }
 

@@ -291,7 +291,9 @@ void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **dist
   johnson_cuda_double(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph_double(cuda_gr);
 #else
-  johnson_parallel_double(init_graph_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n)), *distanceMatrix, *successorMatrix);
+  graph_t_double* gr = init_graph_double(adjacencyMatrix, n, count_edges_double(adjacencyMatrix, n));
+  johnson_parallel_double(gr, *distanceMatrix, *successorMatrix);
+  delete gr;
 #endif
 }
 
