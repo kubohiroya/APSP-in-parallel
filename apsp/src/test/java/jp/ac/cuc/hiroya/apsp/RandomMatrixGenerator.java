@@ -8,7 +8,7 @@ import java.util.Random;
 public class RandomMatrixGenerator {
 
     public static double[] generateRandomAdjacencyMatrix(final long seed, final int n, final double p, final double min, final double max){
-        double adjacencyMatrix[] = new double[n * n];
+        double[] adjacencyMatrix = new double[n * n];
         Random rand = new Random(seed);
         for(int i = 0; i < n; i++){
             for(int j = 0; j < n; j++){
@@ -31,7 +31,7 @@ public class RandomMatrixGenerator {
     }
 
     public static float[] generateRandomAdjacencyMatrix(final long seed, final int n, final double p, final float min, final float max){
-        float adjacencyMatrix[] = new float[n * n];
+        float[] adjacencyMatrix = new float[n * n];
         Random rand = new Random(seed);
         for(int i = 0; i < n; i++){
             for(int j = 0; j < n; j++){
@@ -54,7 +54,7 @@ public class RandomMatrixGenerator {
     }
 
     public static int[] generateRandomAdjacencyMatrix(final long seed, final int n, final double p, final int min, final int max){
-        int adjacencyMatrix[] = new int[n * n];
+        int[] adjacencyMatrix = new int[n * n];
         Random rand = new Random(seed);
         for(int i = 0; i < n; i++){
             for(int j = 0; j < n; j++){

@@ -8,7 +8,7 @@ public class MatrixSet {
         int[] successorMatrix;
         ApspResult<T> apspResult;
         Base(int numElements){
-            this.numVertex = (int)Math.sqrt(numElements);;
+            this.numVertex = (int)Math.sqrt(numElements);
             if(this.numVertex * this.numVertex != numElements){
                 throw new RuntimeException("Invalid numElements:"+numElements);
             }

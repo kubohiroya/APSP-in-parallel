@@ -1,7 +1,7 @@
 package jp.ac.cuc.hiroya.apsp;
 
 interface MatrixDummyFilenames {
-    static String adjFilename = "./InputMatrix.csv";
-    static String distanceFilename = "./inputMatrix(distance).csv";
-    static String successorFilename = "./inputMatrix(node).csv";
+    String adjFilename = "./InputMatrix.csv";
+    String distanceFilename = "./inputMatrix(distance).csv";
+    String successorFilename = "./inputMatrix(node).csv";
 }
