@@ -8,7 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MatrixRandomLargeDataTest {
 
-    static int NUM_BLOCKS = 3;
+    static int NUM_BLOCKS = 7; // FIXME NUM_BLOCKS must be lesser than n
     static String ENV = "omp-ispc";
 
     interface largeRandomMatrixDouble{
