@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static jp.ac.cuc.hiroya.apsp.DateTimeUtil.getYYMMDDHHMM;
 import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.end;
 import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.grey;
 
@@ -32,7 +31,7 @@ public class MatrixSetManager {
         MatrixSet.Double set = cacheMatrixDouble.get(key);
         if (set == null) {
             if(verbose){
-                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv key="+key+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " prepare 1: load csv key="+key+end);
                 System.out.println(grey+"   adj: " + adjacencyFilename+end);
             }
             double[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.DBL_INF);
@@ -48,7 +47,7 @@ public class MatrixSetManager {
             cacheMatrixDouble.put(key, set);
         }else {
             if (verbose) {
-                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: use cached csv key=" + key+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " prepare 1: use cached csv key=" + key+end);
             }
         }
         return set;
@@ -59,7 +58,7 @@ public class MatrixSetManager {
         MatrixSet.Float set = cacheMatrixFloat.get(key);
         if (set == null) {
             if(verbose){
-                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv "+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " prepare 1: load csv "+end);
                 System.out.println(grey+"   adj: " + adjacencyFilename+end);
             }
             float[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.FLT_INF);
@@ -82,7 +81,7 @@ public class MatrixSetManager {
         MatrixSet.Int set = cacheMatrixInt.get(key);
         if (set == null) {
             if(verbose) {
-                System.out.println(grey+getYYMMDDHHMM() + " prepare 1: load csv "+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " prepare 1: load csv "+end);
                 System.out.println(grey+"   adj: " + adjacencyFilename+end);
             }
             int[] adjacencyMatrix = MatrixUtil.getAdjacencyMatrix(adjacencyFilename, Infinity.INT_INF);
@@ -107,7 +106,7 @@ public class MatrixSetManager {
             double[] adjacencyMatrix = getMatrixSetDouble(adjacencyFilename,
                     null, null, verbose).getAdjacencyMatrix();
             if(verbose) {
-                System.out.println(grey+getYYMMDDHHMM() + " prepare 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " prepare 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
             }
             result = ApspResolvers.DoubleResolver.resolve(execEnv, algorithm,
                     adjacencyMatrix, b);
@@ -123,7 +122,7 @@ public class MatrixSetManager {
             float[] adjacencyMatrix = getMatrixSetFloat(adjacencyFilename,
                     null, null, verbose).getAdjacencyMatrix();
             if(verbose) {
-                System.out.println(grey+getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
             }
             result = ApspResolvers.FloatResolver.resolve(execEnv, algorithm,
                     adjacencyMatrix, b);
@@ -139,7 +138,7 @@ public class MatrixSetManager {
             int[] adjacencyMatrix = getMatrixSetInt(adjacencyFilename,
                     null, null, verbose).getAdjacencyMatrix();
             if(verbose) {
-                System.out.println(grey+getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
+                System.out.println(grey+DateTimeUtil.getYYMMDDHHMM() + " step 2: resolve all-pairs-shortest-paths " + execEnv + "-" + algorithm+end);
             }
             result = ApspResolvers.IntResolver.resolve(execEnv, algorithm,
                     adjacencyMatrix, b);

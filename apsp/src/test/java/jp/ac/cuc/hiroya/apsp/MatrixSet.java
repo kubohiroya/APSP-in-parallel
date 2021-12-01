@@ -3,7 +3,7 @@ package jp.ac.cuc.hiroya.apsp;
 import jp.ac.cuc.hiroya.apsp.lib.ApspResult;
 
 public class MatrixSet {
-    static abstract class Base<T>{
+    static class Base<T>{
         int numVertex;
         int[] successorMatrix;
         ApspResult<T> apspResult;

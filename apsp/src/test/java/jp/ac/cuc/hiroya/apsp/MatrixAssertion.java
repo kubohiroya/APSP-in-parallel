@@ -5,7 +5,6 @@ import jp.ac.cuc.hiroya.apsp.util.CSVOutput;
 
 import java.io.IOException;
 
-import static jp.ac.cuc.hiroya.apsp.DateTimeUtil.getYYMMDDHHMM;
 import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
@@ -88,12 +87,12 @@ public class MatrixAssertion {
                                                   String distanceFilename,
                                                   String successorFilename, boolean verbose) throws IOException{
         if(verbose) {
-            System.out.println(grey + getYYMMDDHHMM() + " step A: calculate distances with successor matrix" + end);
+            System.out.println(grey + DateTimeUtil.getYYMMDDHHMM() + " step A: calculate distances with successor matrix" + end);
         }
         MatrixSet.Double set = MatrixSetManager.getInstance().getMatrixSetDouble(adjacencyFilename, distanceFilename, successorFilename, verbose);
         double[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.adjacencyMatrix, set.successorMatrix, verbose);
         if(verbose){
-            System.out.println(grey+getYYMMDDHHMM()+" step B: assert calculated distance"+end);
+            System.out.println(grey+DateTimeUtil.getYYMMDDHHMM()+" step B: assert calculated distance"+end);
         }
         int v = set.getNumVertex();
         assertDiagonalElementsAllZero(calculatedDistances, v, false);
@@ -105,43 +104,38 @@ public class MatrixAssertion {
                                                   String distanceFilename,
                                                   String successorFilename,
                                                   String execEnv, String algorithm,
-                                                  int b,
+                                                  int blocks,
                                                   boolean verbose) throws IOException {
         MatrixSet.Double set = MatrixSetManager.getInstance().getMatrixSetDouble(adjacencyFilename, distanceFilename, successorFilename, verbose);
 
         assertDiagonalElementsAllZero(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
         assertSymmetricMatrix(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
 
-        ApspResult<double[]> result = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv, algorithm, b, verbose);
+        ApspResult<double[]> result = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv, algorithm, blocks, verbose);
         if(verbose) {
-            System.out.println(grey + getYYMMDDHHMM() + " step A: assert calculated distance with self-generated data" + end);
+            System.out.println(grey + DateTimeUtil.getYYMMDDHHMM() + " step A: assert calculated distance with self-generated data" + end);
         }
         double[] distances = result.getDistanceMatrix();
         int[] successors = result.getSuccessorMatrix();
         int v = set.getNumVertex();
-        /*
+
         if(verbose){
             System.out.println(purple+"adjacency:"+end);
             CSVOutput.print(set.getAdjacencyMatrix(), v);
             System.out.println(purple+"successor:"+end);
             CSVOutput.print(successors, v);
-            System.out.println(yellow+"distances:"+end);
+            System.out.println(purple+"distances:"+end);
             CSVOutput.print(distances, v);
-        }*/
+        }
+        System.out.println(yellow+"check distances:"+end);
         assertDiagonalElementsAllZero(distances, v, verbose);
         assertSymmetricMatrix(distances, v, verbose);
-        try {
-            assertDiagonalElementsSequential(successors, v, verbose);
-        }catch(Error err){
-            assertDiagonalElementsSequential(successors, v, true);
-        }
-
+        System.out.println(yellow+"check successors:"+end);
+        assertDiagonalElementsSequential(successors, v, true);
+        System.out.println(yellow+"check calculated distances:"+end);
         double[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.getAdjacencyMatrix(), successors, verbose);
-
-        assertThat(v * v, is(calculatedDistances.length));
         assertDiagonalElementsAllZero(calculatedDistances, v, verbose);
-        // assertSymmetricMatrix(calculatedDistances, v, verbose);
-
+        assertSymmetricMatrix(calculatedDistances, v, true);
         if (verbose) {
             for (int i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
@@ -165,38 +159,35 @@ public class MatrixAssertion {
                                                int b,
                                                boolean verbose) throws IOException {
         MatrixSet.Int set = MatrixSetManager.getInstance().getMatrixSetInt(adjacencyFilename, distanceFilename, successorFilename, verbose);
-        int v = set.getNumVertex();
-        System.out.println(purple+"adjacency:"+end);
-        CSVOutput.print(set.getAdjacencyMatrix(), v);
 
         assertDiagonalElementsAllZero(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
         assertSymmetricMatrix(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
 
         ApspResult<int[]> result = MatrixSetManager.getInstance().getApspResultInt(adjacencyFilename, execEnv, algorithm, b, verbose);
         if(verbose) {
-            System.out.println(grey + getYYMMDDHHMM() + " step A: assert calculated distance with self-generated data" + end);
+            System.out.println(grey + DateTimeUtil.getYYMMDDHHMM() + " step A: assert calculated distance with self-generated data" + end);
         }
         int[] distances = result.getDistanceMatrix();
         int[] successors = result.getSuccessorMatrix();
+        int v = set.getNumVertex();
 
         if(verbose){
+            System.out.println(purple+"adjacency:"+end);
+            CSVOutput.print(set.getAdjacencyMatrix(), v);
             System.out.println(purple+"successor:"+end);
             CSVOutput.print(successors, v);
             System.out.println(yellow+"distances:"+end);
             CSVOutput.print(distances, v);
         }
-        assertThat(v * v, is(distances.length));
+        System.out.println(yellow+"check distances:"+end);
         assertDiagonalElementsAllZero(distances, v, verbose);
         assertSymmetricMatrix(distances, v, verbose);
-        assertDiagonalElementsSequential(successors, v, verbose);
-
+        System.out.println(yellow+"check successors:"+end);
+        assertDiagonalElementsSequential(successors, v, true);
+        System.out.println(yellow+"check calculated distances:"+end);
         int[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.getAdjacencyMatrix(), successors, verbose);
         assertDiagonalElementsAllZero(calculatedDistances, v, verbose);
-        try {
-            assertSymmetricMatrix(calculatedDistances, v, verbose);
-        }catch(Error err){
-            assertSymmetricMatrix(calculatedDistances, v, true);
-        }
+        assertSymmetricMatrix(calculatedDistances, v, true);
 
         if (verbose) {
             for (int i = 0; i < v; i++) {
@@ -223,7 +214,7 @@ public class MatrixAssertion {
         MatrixSet.Double set = MatrixSetManager.getInstance().getMatrixSetDouble(adjacencyFilename, distanceFilename, successorFilename, verbose);
         ApspResult<double[]> result = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv, algorithm, b, verbose);
         if(verbose) {
-            System.out.println(grey + getYYMMDDHHMM() + " step A: assert distances with test data" + end);
+            System.out.println(grey + DateTimeUtil.getYYMMDDHHMM() + " step A: assert distances with test data" + end);
         }
         double[] distances = result.getDistanceMatrix();
         int v = set.getNumVertex();
@@ -268,20 +259,20 @@ public class MatrixAssertion {
                                                        String distanceFilename,
                                                        String successorFilename,
                                                        String[][] env,
-                                                       int b,
+                                                       int[] blocks,
                                                        boolean verbose) throws IOException{
         MatrixSet.Double set = MatrixSetManager.getInstance().getMatrixSetDouble(adjacencyFilename, distanceFilename, successorFilename, verbose);
 
         String execEnv0 = env[0][0];
         String algorithm0 = env[0][1];
-        ApspResult<double[]> result0 = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv0, algorithm0, b, verbose);
+        ApspResult<double[]> result0 = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv0, algorithm0, blocks[0], verbose);
         double[] distances0 = result0.getDistanceMatrix();
         int v = set.getNumVertex();
 
         for(int a = 1; a < env.length;  a++) {
             String execEnv1 = env[a][0];
             String algorithm1 = env[a][1];
-            ApspResult<double[]> result1 = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv1, algorithm1, b, verbose);
+            ApspResult<double[]> result1 = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv1, algorithm1, blocks[a], verbose);
             double[] distances1 = result1.getDistanceMatrix();
             try{
                 assertArrayEquals(distances0, distances1, 0);
@@ -312,20 +303,20 @@ public class MatrixAssertion {
                                                     String distanceFilename,
                                                     String successorFilename,
                                                     String[][] env,
-                                                    int b,
+                                                    int[] blocks,
                                                     boolean verbose) throws IOException{
         MatrixSet.Int set = MatrixSetManager.getInstance().getMatrixSetInt(adjacencyFilename, distanceFilename, successorFilename, verbose);
 
         String execEnv0 = env[0][0];
         String algorithm0 = env[0][1];
-        ApspResult<int[]> result0 = MatrixSetManager.getInstance().getApspResultInt(adjacencyFilename, execEnv0, algorithm0, b, verbose);
+        ApspResult<int[]> result0 = MatrixSetManager.getInstance().getApspResultInt(adjacencyFilename, execEnv0, algorithm0, blocks[0], verbose);
         int[] distances0 = result0.getDistanceMatrix();
         int v = set.getNumVertex();
 
         for(int a = 1; a < env.length;  a++){
             String execEnv1 = env[a][0];
             String algorithm1 = env[a][1];
-            ApspResult<int[]> result1 = MatrixSetManager.getInstance().getApspResultInt(adjacencyFilename, execEnv1, algorithm1, b, verbose);
+            ApspResult<int[]> result1 = MatrixSetManager.getInstance().getApspResultInt(adjacencyFilename, execEnv1, algorithm1, blocks[a], verbose);
             int[] distances1 = result1.getDistanceMatrix();
             try{
                 assertArrayEquals(distances0, distances1);

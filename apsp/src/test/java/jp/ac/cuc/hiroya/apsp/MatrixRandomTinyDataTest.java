@@ -70,7 +70,7 @@ public class MatrixRandomTinyDataTest {
         String execEnv = ENV;
         String algorithm = "f";
         MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomTinyMatrixDouble(),
-                null, null, execEnv, algorithm, NUM_BLOCKS, true);
+                null, null, execEnv, algorithm, NUM_BLOCKS, false);
     }
 
     @Test
@@ -78,12 +78,6 @@ public class MatrixRandomTinyDataTest {
         String execEnv = ENV;
         String algorithm = "j";
         MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomTinyMatrixDouble(), null, null, execEnv, algorithm, NUM_BLOCKS, false);
-    }
-
-    @Test
-    public void 小さめDoubleランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
-        MatrixAssertion.assertDistancesBetweenAlgorithmsDouble(getRandomTinyMatrixDouble(), null, null,
-                new String[][]{{ENV, "f"}, {ENV, "j"}}, NUM_BLOCKS, false);
     }
 
     @Test
@@ -102,8 +96,14 @@ public class MatrixRandomTinyDataTest {
     }
 
     @Test
+    public void 小さめDoubleランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
+        MatrixAssertion.assertDistancesBetweenAlgorithmsDouble(getRandomTinyMatrixDouble(), null, null,
+                new String[][]{{ENV, "f"}, {ENV, "j"}}, new int[]{-1, -1}, false);
+    }
+
+    @Test
     public void 小さめIntランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
         MatrixAssertion.assertDistancesBetweenAlgorithmsInt(getRandomTinyMatrixInt(), null, null,
-                new String[][]{{ENV, "f"}, {ENV, "j"}}, NUM_BLOCKS, false);
+                new String[][]{{ENV, "f"}, {ENV, "j"}}, new int[]{-1, -1}, false);
     }
 }
