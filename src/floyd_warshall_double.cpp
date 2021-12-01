@@ -89,32 +89,36 @@ void _floyd_warshall_blocked_double(double *distanceMatrix, int *successorMatrix
 
   // note that [i][j] == [i * adjacency_width * block_width + j * block_width]
   for (int k = 0; k < blocks; k++) {
-    int kbnkb = k * b * n + k * b;
-    floyd_warshall_in_place_double(&distanceMatrix[kbnkb], &distanceMatrix[kbnkb], &distanceMatrix[kbnkb],
-                                   &successorMatrix[kbnkb], b, n);
+    int kb = k * b;
+    int kk = kb * n + kb;
+    floyd_warshall_in_place_double(&distanceMatrix[kk], &distanceMatrix[kk], &distanceMatrix[kk],
+                                   successorMatrix, kb, kb, kb, b, n);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int j = 0; j < blocks; j++) {
       if (j == k) continue;
-      int kbnjb = k * b * n + j * b;
-      floyd_warshall_in_place_double(&distanceMatrix[kbnjb], &distanceMatrix[kbnkb], &distanceMatrix[kbnjb],
-                                     &successorMatrix[kbnjb], b, n);
+      int jb = j * b;
+      int kj = kb * n + jb;
+      floyd_warshall_in_place_double(&distanceMatrix[kj], &distanceMatrix[kk], &distanceMatrix[kj],
+                                     successorMatrix, kb, kb, jb, b, n);
     }
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int i = 0; i < blocks; i++) {
       if (i == k) continue;
-      int ibnkb = i * b * n + k * b;
-      floyd_warshall_in_place_double(&distanceMatrix[ibnkb], &distanceMatrix[ibnkb], &distanceMatrix[kbnkb],
-                                     &successorMatrix[kbnkb], b, n);
+      int ib = i * b;
+      int ik = ib * n + kb;
+      floyd_warshall_in_place_double(&distanceMatrix[ik], &distanceMatrix[ik], &distanceMatrix[kk],
+                                     successorMatrix, kb, ib, kb, b, n);
       for (int j = 0; j < blocks; j++) {
         if (j == k) continue;
-        int ibnjb = i * b * n + j * b;
-        floyd_warshall_in_place_double(&distanceMatrix[ibnjb], &distanceMatrix[ibnkb],
-                                       &distanceMatrix[k * b * n + j * b],
-                                       &successorMatrix[ibnjb], b, n);
+        int jb = j * b;
+        int ij = ib * n + jb;
+        int kj = kb * n + jb;
+        floyd_warshall_in_place_double(&distanceMatrix[ij], &distanceMatrix[ik], &distanceMatrix[kj],
+                                       successorMatrix, kb, ib, jb, b, n);
       }
     }
   }
@@ -133,36 +137,49 @@ void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **dista
       (*successorMatrix)[i * n + j] = j;
     }
   }
+
 #ifdef CUDA
   floyd_warshall_blocked_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
 #else
   if(b != -1 && n > b) {
     int block_remainder = n % b;
     int n_oversized = (block_remainder == 0) ? n : n + b - block_remainder;
-
     double *_distanceMatrix = new double[n_oversized * n_oversized];
-    int *_successorMatrix = new int[n_oversized * n_oversized];
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < n_oversized; i++) {
-      for (int j = 0; j < n_oversized; j++) {
-        if(i < n || j < n){
-          _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
-          _successorMatrix[i * n_oversized + j] = (*successorMatrix)[i * n + j];
-        }else{
-          if(i == j){
-            _distanceMatrix[i * n_oversized + j] = 0;
-          }else{
-            _distanceMatrix[i * n_oversized + j] = DBL_INF;
-          }
-          _successorMatrix[i * n_oversized + j] = j;
-        }
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
       }
     }
 
-    _floyd_warshall_blocked_double(_distanceMatrix, _successorMatrix, n, b);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = n; i < n_oversized; i++) {
+      for (int j = 0; j < n; j++) {
+        _distanceMatrix[i * n_oversized + j] = DBL_INF;
+        _distanceMatrix[j * n_oversized + i] = DBL_INF;
+      }
+   }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = n; i < n_oversized; i++) {
+      for (int j = n; j < n_oversized; j++) {
+        _distanceMatrix[i * n_oversized + j] = DBL_INF;
+      }
+   }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = n; i < n_oversized; i++) {
+      _distanceMatrix[i * n_oversized + i] = 0;
+    }
+
+    _floyd_warshall_blocked_double(_distanceMatrix, *successorMatrix, n, b);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -170,12 +187,10 @@ void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **dista
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
         (*distanceMatrix)[i * n + j] = _distanceMatrix[i * n_oversized + j];
-        (*successorMatrix)[i * n + j] = _successorMatrix[i * n_oversized + j];
       }
     }
 
     delete[] _distanceMatrix;
-    delete[] _successorMatrix;
 
   }else{
     floyd_warshall_double(*distanceMatrix, *successorMatrix, n);

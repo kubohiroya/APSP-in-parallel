@@ -102,7 +102,6 @@ inline bool correctness_check_double(double *distanceMatrix, int n_distanceMatri
       }
     }
   }
-
   return true;
 }
 
@@ -126,7 +125,7 @@ inline void print_usage() {
 inline void print_table_row(double p, int v, double seq, double par, bool check_correctness, bool correct) {
   std::printf("\n| %-3.2f | %-7d | %-12.3f | %-12.3f | %-10.3f |", p, v, seq, par, seq / par);
   if (check_correctness) {
-    std::printf(" %-8s |", (correct ? "x" : "!"));
+    std::printf(" %-8s |", (correct ? "OK" : "NG"));
   }
 }
 

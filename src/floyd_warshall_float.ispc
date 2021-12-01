@@ -1,10 +1,13 @@
 export void floyd_warshall_in_place_float(uniform float C[], const uniform float A[], const uniform float B[], uniform int successorMatrix[],
+				    const uniform int _kb, const uniform int _ib, const uniform int _jb,
 				    const uniform int b, const uniform int n) {
   for (int k = 0; k < b; k++) {
     foreach (i = 0 ... b, j = 0 ... b) {
       if (C[i*n + j] > A[i*n + k] + B[k*n + j]) {
 	    C[i*n + j] = A[i*n + k] + B[k*n + j];
-	    successorMatrix[j * n + i] = successorMatrix[j * n + k];
+  	    if(_jb + j < n && _ib + i < n && _kb + k < n){
+          successorMatrix[(_jb + j) * n + _ib + i] = successorMatrix[(_jb + j) * n + _kb + k];
+        }
       }
     }
   }

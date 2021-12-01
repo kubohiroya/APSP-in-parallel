@@ -15,10 +15,10 @@ void floyd_warshall_double(double *distanceMatrix, int *successorMatrix, const i
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
-extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, int *successorMatrix, const int b, const int n);
+extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n);
 #else
 inline void
-floyd_warshall_in_place_double(double *C, const double *A, const double *B, int *successorMatrix, const int b, const int n) {
+floyd_warshall_in_place_double(double *C, const double *A, const double *B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n) {
   for (int k = 0; k < b; k++) {
     int kth = k * n;
     for (int i = 0; i < b; i++) {
@@ -26,7 +26,9 @@ floyd_warshall_in_place_double(double *C, const double *A, const double *B, int 
         double sum = A[i * n + k] + B[kth + j];
         if (C[i * n + j] > sum) {
           C[i * n + j] = sum;
-          successorMatrix[j * n + i] = successorMatrix[j * n + k];
+    	  if(_jb + j < n && _ib + i < n && _kb + k < n){
+            successorMatrix[(_jb + j) * n + _ib + i] = successorMatrix[(_jb + j) * n + _kb + k];
+          }
         }
       }
     }
