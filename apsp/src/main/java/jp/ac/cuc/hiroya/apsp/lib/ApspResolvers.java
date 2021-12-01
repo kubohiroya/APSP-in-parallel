@@ -4,8 +4,6 @@ import com.sun.jna.ptr.PointerByReference;
 
 public class ApspResolvers {
 
-    private ApspResolvers(){}
-
     private static class ApspResolverIntImpl implements ApspResolver<int[]> {
 
         public ApspResult<int[]> resolveWithJohnson(String execEnv, int[] adjacencyMatrix){

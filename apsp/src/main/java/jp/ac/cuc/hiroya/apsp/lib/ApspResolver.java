@@ -7,7 +7,7 @@ public interface ApspResolver<T> {
     ApspResult<T> resolve(String execEnv, String algorithm, T adjacencyMatrix, int numBlocks);
     T getInfinity(String execEnv);
 
-    interface EXEC_ENV {
+    public interface EXEC_ENV {
         String SEQ = "seq";
         String SEQ_ISPC = "seq-ispc";
         String OMP = "omp";
@@ -15,7 +15,7 @@ public interface ApspResolver<T> {
         String CUDA = "cuda";
     }
 
-    interface ALGORITHM {
+    public interface ALGORITHM {
         String FLOYD_WARSHALL = "Floyd-Warshall";
         String F = "f";
         String JOHNSON = "Johnson";

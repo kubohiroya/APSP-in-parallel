@@ -2,7 +2,7 @@ package jp.ac.cuc.hiroya.apsp.lib;
 
 import com.sun.jna.Native;
 
-class ApspNativeLibraries {
+public class ApspNativeLibraries {
     public interface ApspSeq extends ApspNativeLibrary {
         ApspSeq INSTANCE = Native.load("apsp-seq", ApspSeq.class);
     }

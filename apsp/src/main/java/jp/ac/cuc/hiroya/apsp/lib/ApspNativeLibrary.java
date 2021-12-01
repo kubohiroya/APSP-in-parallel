@@ -3,7 +3,7 @@ package jp.ac.cuc.hiroya.apsp.lib;
 import com.sun.jna.Library;
 import com.sun.jna.ptr.PointerByReference;
 
-interface ApspNativeLibrary extends Library {
+public interface ApspNativeLibrary extends Library {
     int get_infinity_int();
     float get_infinity_float();
     double get_infinity_double();

@@ -6,7 +6,7 @@ public class ApspResult<T> {
     int numVertex;
     long elapsedTime;
 
-    ApspResult(T distanceMatrix, int[] successorMatrix, int numVertex, long elapsedTime) {
+    public ApspResult(T distanceMatrix, int[] successorMatrix, int numVertex, long elapsedTime) {
         this.distanceMatrix = distanceMatrix;
         this.successorMatrix = successorMatrix;
         this.numVertex = numVertex;
