@@ -20,3 +20,5 @@ Once you compile the code, you can run different benchmarks using benchmark.py. 
 * The original project's Makefile is designed for Linux. The folked project's Makefile has additional support of macOS(CUDA version is disabled, though).
 * The original project builds executable files apsp-seq, apsp-omp, apsp-omp-ispc and apsp-cuda. The folked project also builds its shared libraries such as libapsp-seq.so, libapsp-omp.so, libapsp-omp-ispc.so and libapsp-cuda.so for Linux, libapsp-seq.dylib, libapsp-omp.dylib and libapsp-omp-ispc.dylib for macOS.
 * The original project was designed for benchmarkings of parallelism. The folked project is re-designed to build the reusable libraries for C++ and Java project.
+* Unit tests (using JUnit).
+* Python 3 support.
