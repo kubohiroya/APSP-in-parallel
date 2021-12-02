@@ -31,7 +31,7 @@ public class ApspResolvers {
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_int(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_int(adjacencyMatrix, distanceMatrix, successorMatrix, numBlocks, numVertex);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
@@ -88,7 +88,7 @@ public class ApspResolvers {
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_float(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_float(adjacencyMatrix, distanceMatrix, successorMatrix, numBlocks, numVertex);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:
@@ -145,7 +145,7 @@ public class ApspResolvers {
             switch(algorithm){
                 case ALGORITHM.FLOYD_WARSHALL:
                 case ALGORITHM.F:
-                    impl.floyd_warshall_blocked_double(adjacencyMatrix, distanceMatrix, successorMatrix, numVertex, numBlocks);
+                    impl.floyd_warshall_blocked_double(adjacencyMatrix, distanceMatrix, successorMatrix, numBlocks, numVertex);
                     break;
                 case ALGORITHM.JOHNSON:
                 case ALGORITHM.J:

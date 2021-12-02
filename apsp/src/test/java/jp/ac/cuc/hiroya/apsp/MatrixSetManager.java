@@ -100,7 +100,7 @@ public class MatrixSetManager {
     }
 
     synchronized ApspResult<double[]> getApspResultDouble(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
-        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
+        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm+":"+b;
         ApspResult<double[]> result = cacheResultDouble.get(key);
         if (result == null) {
             double[] adjacencyMatrix = getMatrixSetDouble(adjacencyFilename,
@@ -116,7 +116,7 @@ public class MatrixSetManager {
     }
 
     synchronized ApspResult<float[]> getApspResultFloat(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
-        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
+        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm+":"+b;
         ApspResult<float[]> result = cacheResultFloat.get(key);
         if (result == null) {
             float[] adjacencyMatrix = getMatrixSetFloat(adjacencyFilename,
@@ -132,7 +132,7 @@ public class MatrixSetManager {
     }
 
     synchronized ApspResult<int[]> getApspResultInt(String adjacencyFilename, String execEnv, String algorithm, int b, boolean verbose) throws IOException{
-        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm;
+        String key = adjacencyFilename+"\t"+execEnv + ":" + algorithm+":"+b;
         ApspResult<int[]> result = cacheResultInt.get(key);
         if (result == null) {
             int[] adjacencyMatrix = getMatrixSetInt(adjacencyFilename,

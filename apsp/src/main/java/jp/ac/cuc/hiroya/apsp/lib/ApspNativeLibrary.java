@@ -9,17 +9,17 @@ public interface ApspNativeLibrary extends Library {
     double get_infinity_double();
 
     void floyd_warshall_blocked_int(int[] adjacencyMatrix, PointerByReference distanceMatrix, PointerByReference predecessors,
-                                    int n, int b);
+                                    int b, int n);
 
     void free_floyd_warshall_blocked_int(PointerByReference distanceMatrix, PointerByReference predecessors);
 
     void floyd_warshall_blocked_float(float[] adjacencyMatrix, PointerByReference distanceMatrix, PointerByReference predecessors,
-                                      int n, int b);
+                                      int b, int n);
 
     void free_floyd_warshall_blocked_float(PointerByReference distanceMatrix, PointerByReference predecessors);
 
     void floyd_warshall_blocked_double(double[] adjacencyMatrix, PointerByReference distanceMatrix, PointerByReference predecessors,
-                                       int n, int b);
+                                       int b, int n);
 
     void free_floyd_warshall_blocked_double(PointerByReference distanceMatrix, PointerByReference predecessors);
 

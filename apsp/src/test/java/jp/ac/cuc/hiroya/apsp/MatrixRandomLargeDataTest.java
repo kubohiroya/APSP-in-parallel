@@ -8,37 +8,37 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MatrixRandomLargeDataTest {
 
-    static int NUM_BLOCKS = 4; // FIXME NUM_BLOCKS must be lesser than n
+    static int NUM_BLOCKS_0 = 4;
+    static int NUM_BLOCKS_1 = 5;
+
     static String ENV = "omp-ispc";
 
     interface largeRandomMatrixDouble{
         long seed = 10;
-        int n = 15;
-        double p = 0.2;
+        int n = 12;
+        double p = 0.4;
         double min = 1.0;
         double max = 100.0;
     }
 
     interface largeRandomMatrixInt{
         long seed = 10;
-        int n = 15;
-        double p = 0.2;
+        int n = 12;
+        double p = 0.4;
         int min = 1;
         int max = 100;
     }
 
-    String getRandomLargeMatrixDouble(){
+    String getRandomLargeMatrixDouble(int n){
         long seed = largeRandomMatrixDouble.seed;
-        int n = largeRandomMatrixDouble.n;
         double p = largeRandomMatrixDouble.n;
         double min = largeRandomMatrixDouble.min;
         double max = largeRandomMatrixDouble.max;
         return "random:"+seed+","+n+","+p+","+min+","+max;
     }
 
-    String getRandomLargeMatrixInt(){
+    String getRandomLargeMatrixInt(int n){
         long seed = largeRandomMatrixInt.seed;
-        int n = largeRandomMatrixInt.n;
         double p = largeRandomMatrixInt.p;
         int min = largeRandomMatrixInt.min;
         int max = largeRandomMatrixInt.max;
@@ -67,42 +67,64 @@ public class MatrixRandomLargeDataTest {
     }
 
     @Test
-    public void 大きめDoubleランダムデータのFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
+    public void 大きめDoubleランダムデータを余り有りブロックFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
         String execEnv = ENV;
         String algorithm = "f";
-        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(), null, null, execEnv, algorithm, 5, true);
+        int n = largeRandomMatrixDouble.n;
+        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(n), null, null, execEnv, algorithm, NUM_BLOCKS_1, false);
     }
 
     @Test
-    public void 大きめIntランダムデータのFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
+    public void 大きめIntランダムデータを余り有りブロックFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
         String execEnv = ENV;
         String algorithm = "f";
-        MatrixAssertion.assertDistancesWithSelfDataInt(getRandomLargeMatrixInt(), null, null, execEnv, algorithm, 5, true);
+        int n = largeRandomMatrixInt.n;
+        MatrixAssertion.assertDistancesWithSelfDataInt(getRandomLargeMatrixInt(n), null, null, execEnv, algorithm, NUM_BLOCKS_1, false);
+    }
+
+    @Test
+    public void 大きめDoubleランダムデータを余り無しブロックFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
+        String execEnv = ENV;
+        String algorithm = "f";
+        int n = largeRandomMatrixDouble.n;
+        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(n), null, null, execEnv, algorithm, NUM_BLOCKS_0, false);
+    }
+
+    @Test
+    public void 大きめIntランダムデータを余り無しブロックFloydWarshall法での処理結果の整合性を自己検証() throws Exception {
+        String execEnv = ENV;
+        String algorithm = "f";
+        int n = largeRandomMatrixInt.n;
+        MatrixAssertion.assertDistancesWithSelfDataInt(getRandomLargeMatrixInt(n), null, null, execEnv, algorithm, NUM_BLOCKS_0, false);
     }
 
     @Test
     public void 大きめIntランダムデータのJohnson法での処理結果の整合性を自己検証() throws Exception {
         String execEnv = ENV;
         String algorithm = "j";
-        MatrixAssertion.assertDistancesWithSelfDataInt(getRandomLargeMatrixInt(), null, null, execEnv, algorithm, NUM_BLOCKS, false);
+        int n = largeRandomMatrixInt.n;
+        MatrixAssertion.assertDistancesWithSelfDataInt(getRandomLargeMatrixInt(n), null, null, execEnv, algorithm, -1, false);
     }
 
     @Test
     public void 大きめDoubleランダムデータのJohnson法での処理結果の整合性を自己検証() throws Exception {
         String execEnv = ENV;
         String algorithm = "j";
-        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(), null, null, execEnv, algorithm, NUM_BLOCKS, false);
+        int n = largeRandomMatrixDouble.n;
+        MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(n), null, null, execEnv, algorithm, -1, false);
     }
 
     @Test
     public void 大きめDoubleランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
-        MatrixAssertion.assertDistancesBetweenAlgorithmsDouble(getRandomLargeMatrixDouble(), null, null,
+        int n = 99;
+        MatrixAssertion.assertDistancesBetweenAlgorithmsDouble(getRandomLargeMatrixDouble(n), null, null,
                 new String[][] {{ENV, "f"}, {ENV, "f"}, {ENV, "f"}, {ENV, "f"}}, new int[]{-1, 3, 4, 5}, false);
     }
 
     @Test
     public void 大きめIntランダムデータのアルゴリズム間での処理結果の整合性を相互検証() throws Exception {
-        MatrixAssertion.assertDistancesBetweenAlgorithmsInt(getRandomLargeMatrixInt(), null, null,
+        int n = 99;
+        MatrixAssertion.assertDistancesBetweenAlgorithmsInt(getRandomLargeMatrixInt(n), null, null,
                 new String[][] {{ENV, "f"}, {ENV, "f"}, {ENV, "f"}, {ENV, "f"}}, new int[]{-1, 3, 4, 5},  false);
     }
 

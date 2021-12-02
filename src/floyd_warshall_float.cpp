@@ -82,49 +82,44 @@ void floyd_warshall_float(float *distanceMatrix, int *successorMatrix, const int
   }
 }
 
-void _floyd_warshall_blocked_float(float *distanceMatrix, int *successorMatrix, const int n, const int b) {
+void _floyd_warshall_blocked_float(float *distanceMatrix, int *successorMatrix, const int b, const int n, const int n_oversized) {
   // for now, assume b divides n
    const int blocks = (n / b > 0) ? n / b : 1;
 
-  // note that [i][j] == [i * adjacencyMatrix_width * block_width + j * block_width]
-  for (int k = 0; k < blocks; k++) {
-    int kb = k * b;
-    int kk = kb * n + kb;
+// note that [i][j] == [i * adjacencyMatrix_width * block_width + j * block_width]
+  for (int k = 0; k < n_oversized; k += b) {
+    int kk = k * n_oversized + k;
     floyd_warshall_in_place_float(&distanceMatrix[kk], &distanceMatrix[kk], &distanceMatrix[kk],
-                                  successorMatrix, kb, kb, kb, b, n);
+                                successorMatrix, k, k, k, b, n, n_oversized);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int j = 0; j < blocks; j++) {
+    for (int j = 0; j < n_oversized; j += b) {
       if (j == k) continue;
-      int jb = j * b;
-      int kj = kb * n + jb;
+      int kj = k * n_oversized + j;
       floyd_warshall_in_place_float(&distanceMatrix[kj], &distanceMatrix[kk], &distanceMatrix[kj],
-                                    successorMatrix, kb, kb, jb, b, n);
+                                  successorMatrix, k, k, j, b, n, n_oversized);
     }
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < blocks; i++) {
+    for (int i = 0; i < n_oversized; i += b) {
       if (i == k) continue;
-      int ib = i * b;
-      int ik = ib * n + kb;
+      int ik = i * n_oversized + k;
       floyd_warshall_in_place_float(&distanceMatrix[ik], &distanceMatrix[ik], &distanceMatrix[kk],
-                                    successorMatrix, kb, ib, kb, b, n);
-      for (int j = 0; j < blocks; j++) {
+                                  successorMatrix, k, i, k, b, n, n_oversized);
+      for (int j = 0; j < n_oversized; j += b) {
         if (j == k) continue;
-        int jb = j * b;
-        int ij = ib * n + jb;
-        int kj = kb * n + jb;
-        floyd_warshall_in_place_float(&distanceMatrix[ij], &distanceMatrix[ik],
-                                      &distanceMatrix[kj],
-                                      successorMatrix, kb, ib, jb, b, n);
+        int ij = i * n_oversized + j;
+        int kj = k * n_oversized + j;
+        floyd_warshall_in_place_float(&distanceMatrix[ij], &distanceMatrix[ik], &distanceMatrix[kj],
+                                    successorMatrix, k, i, j, b, n, n_oversized);
       }
     }
   }
 }
 
-void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n, const int b) {
+void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int b, const int n) {
   *distanceMatrix = (float *) malloc(sizeof(float) * n * n);
   std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(float) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
@@ -178,7 +173,7 @@ void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distance
       _distanceMatrix[i * n_oversized + i] = 0;
     }
 
-    _floyd_warshall_blocked_float(_distanceMatrix, *successorMatrix, n, b);
+    _floyd_warshall_blocked_float(_distanceMatrix, *successorMatrix, b, n, n_oversized);
 
 #ifdef _OPENMP
 #pragma omp parallel for

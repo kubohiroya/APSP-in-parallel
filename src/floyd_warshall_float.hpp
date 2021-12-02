@@ -15,19 +15,21 @@ void floyd_warshall_float(float *distanceMatrix, int *successorMatrix, const int
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
-extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n);
+extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 #else
 inline void
-floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n) {
+floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized) {
   for (int k = 0; k < b; k++) {
-    int ktn = k * n;
     for (int i = 0; i < b; i++) {
+      int ik = i * n_oversized + k;
       for (int j = 0; j < b; j++) {
-        float sum = A[i * n + k] + B[ktn + j];
-        if (C[i * n + j] > sum) {
-          C[i * n + j] = sum;
-    	  if(_jb + j < n && _ib + i < n && _kb + k < n){
-            successorMatrix[(_jb + j) * n + _ib + i] = successorMatrix[(_jb + j) * n + _kb + k];
+        int kj = k * n_oversized + j;
+        int ij = i * n_oversized + j;
+        float sum = A[ik] + B[kj];
+        if (C[ij] > sum) {
+          C[ij] = sum;
+    	  if(jb + j < n && ib + i < n && kb + k < n){
+            successorMatrix[(jb + j) * n + ib + i] = successorMatrix[(jb + j) * n + kb + k];
           }
         }
       }
@@ -39,7 +41,7 @@ floyd_warshall_in_place_float(float *C, const float *A, const float *B, int *suc
 
 // expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void
-floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n, const int b);
+floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int b, const int n);
 extern "C" void free_floyd_warshall_blocked_float(float **distanceMatrix, int **successorMatrix);
 
 #ifdef CUDA

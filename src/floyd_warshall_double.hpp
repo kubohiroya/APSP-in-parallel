@@ -15,19 +15,21 @@ void floyd_warshall_double(double *distanceMatrix, int *successorMatrix, const i
 
 // used for blocked_floyd_warshall
 #ifdef ISPC
-extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n);
+extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 #else
 inline void
-floyd_warshall_in_place_double(double *C, const double *A, const double *B, int *successorMatrix, const int _kb, const int _ib, const int _jb, const int b, const int n) {
+floyd_warshall_in_place_double(double *C, const double *A, const double *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized) {
   for (int k = 0; k < b; k++) {
-    int kth = k * n;
     for (int i = 0; i < b; i++) {
+      int ik = i * n_oversized + k;
       for (int j = 0; j < b; j++) {
-        double sum = A[i * n + k] + B[kth + j];
-        if (C[i * n + j] > sum) {
-          C[i * n + j] = sum;
-    	  if(_jb + j < n && _ib + i < n && _kb + k < n){
-            successorMatrix[(_jb + j) * n + _ib + i] = successorMatrix[(_jb + j) * n + _kb + k];
+        int kj = k * n_oversized + j;
+        int ij = i * n_oversized + j;
+        double sum = A[ik] + B[kj];
+        if (C[ij] > sum) {
+          C[ij] = sum;
+    	  if(jb + j < n && ib + i < n && kb + k < n){
+            successorMatrix[(jb + j) * n + ib + i] = successorMatrix[(jb + j) * n + kb + k];
           }
         }
       }
@@ -39,7 +41,7 @@ floyd_warshall_in_place_double(double *C, const double *A, const double *B, int 
 
 // expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void
-floyd_warshall_blocked_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b);
+floyd_warshall_blocked_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int b, const int n);
 extern "C" void free_floyd_warshall_blocked_double(double **distanceMatrix, int **successorMatrix);
 
 #ifdef CUDA

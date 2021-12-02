@@ -24,7 +24,12 @@ public class MatrixUtil {
             double max = Double.parseDouble(args[4]);
             return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
-        return MatrixUtil.loadCsvFileDouble(adjacencyFilename);
+        double[] matrix = MatrixUtil.loadCsvFileDouble(adjacencyFilename);
+        int n = (int)Math.sqrt(matrix.length);
+        for(int i=0; i < n; i++) {
+            matrix[i * n + i] = 0.0;
+        }
+        return matrix;
     }
 
     public static float[] getAdjacencyMatrix(String adjacencyFilename, float inf)throws IOException, NumberFormatException{
@@ -40,7 +45,12 @@ public class MatrixUtil {
             float max = Float.parseFloat(args[4]);
             return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
-        return MatrixUtil.loadCsvFileFloat(adjacencyFilename);
+        float[] matrix = MatrixUtil.loadCsvFileFloat(adjacencyFilename);
+        int n = (int)Math.sqrt(matrix.length);
+        for(int i=0; i < n; i++) {
+            matrix[i * n + i] = 0f;
+        }
+        return matrix;
     }
 
     public static int[] getAdjacencyMatrix(String adjacencyFilename, int inf)throws IOException, NumberFormatException{
@@ -56,7 +66,12 @@ public class MatrixUtil {
             int max = Integer.parseInt(args[4]);
             return RandomMatrixGenerator.generateRandomAdjacencyMatrix(seed, n, p, min, max);
         }
-        return MatrixUtil.loadCsvFileInt(adjacencyFilename);
+        int[] matrix = MatrixUtil.loadCsvFileInt(adjacencyFilename);
+        int n = (int)Math.sqrt(matrix.length);
+        for(int i=0; i < n; i++) {
+            matrix[i * n + i] = 0;
+        }
+        return matrix;
     }
 
     static String value(double v){
