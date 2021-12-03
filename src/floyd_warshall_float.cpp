@@ -133,62 +133,63 @@ void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distance
       }
     }
 #ifdef CUDA
+  // floyd_warshall_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
   floyd_warshall_blocked_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
+  return;
 #else
-  if(b != -1 && n > b) {
-    int block_remainder = n % b;
-    int n_oversized = (block_remainder == 0) ? n : n + b - block_remainder;
-    float *_distanceMatrix = new float[n_oversized * n_oversized];
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
-      }
-    }
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = n; i < n_oversized; i++) {
-      for (int j = 0; j < n; j++) {
-        _distanceMatrix[i * n_oversized + j] = FLT_INF;
-        _distanceMatrix[j * n_oversized + i] = FLT_INF;
-      }
-   }
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = n; i < n_oversized; i++) {
-      for (int j = n; j < n_oversized; j++) {
-        _distanceMatrix[i * n_oversized + j] = FLT_INF;
-      }
-   }
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = n; i < n_oversized; i++) {
-      _distanceMatrix[i * n_oversized + i] = 0;
-    }
-
-    _floyd_warshall_blocked_float(_distanceMatrix, *successorMatrix, b, n, n_oversized);
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        (*distanceMatrix)[i * n + j] = _distanceMatrix[i * n_oversized + j];
-      }
-    }
-
-    delete[] _distanceMatrix;
-
-  }else{
+  if(b == -1 || n <= b) {
     floyd_warshall_float(*distanceMatrix, *successorMatrix, n);
+    return;
   }
+
+  int block_remainder = n % b;
+  if(block_remainder == 0){
+    _floyd_warshall_blocked_float(*distanceMatrix, *successorMatrix, b, n, n);
+    return;
+  }
+
+  int n_oversized = n + b - block_remainder;
+  float *_distanceMatrix = new float[n_oversized * n_oversized];
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
+    }
+  }
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = n; i < n_oversized; i++) {
+    for (int j = 0; j < n; j++) {
+      _distanceMatrix[i * n_oversized + j] = FLT_INF;
+      _distanceMatrix[j * n_oversized + i] = FLT_INF;
+    }
+ }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = n; i < n_oversized; i++) {
+    for (int j = n; j < n_oversized; j++) {
+      _distanceMatrix[i * n_oversized + j] = FLT_INF;
+    }
+    _distanceMatrix[i * n_oversized + i] = 0;
+ }
+
+ _floyd_warshall_blocked_float(_distanceMatrix, *successorMatrix, b, n, n_oversized);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      (*distanceMatrix)[i * n + j] = _distanceMatrix[i * n_oversized + j];
+    }
+  }
+  delete[] _distanceMatrix;
 #endif
 }
 
