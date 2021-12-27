@@ -134,12 +134,12 @@ public class MatrixAssertion {
             System.out.println(purple+"distances:"+end);
             CSVOutput.print(distances, v);
         }
-        System.out.println(yellow+"check distances:"+end);
+        if(verbose) System.out.println(yellow+"check distances:"+end);
         assertDiagonalElementsAllZero(distances, v, verbose);
         assertSymmetricMatrix(distances, v, verbose);
-        System.out.println(yellow+"check successors:"+end);
+        if(verbose) System.out.println(yellow+"check successors:"+end);
         assertDiagonalElementsSequential(successors, v, verbose);
-        System.out.println(yellow+"check calculated distances:"+end);
+        if(verbose) System.out.println(yellow+"check calculated distances:"+end);
         double[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.getAdjacencyMatrix(), successors, verbose);
         assertDiagonalElementsAllZero(calculatedDistances, v, verbose);
         assertSymmetricMatrix(calculatedDistances, v, verbose);

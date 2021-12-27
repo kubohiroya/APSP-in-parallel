@@ -2,6 +2,8 @@ package jp.ac.cuc.hiroya.apsp;
 
 import org.junit.Test;
 
+import java.text.NumberFormat;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -23,8 +25,8 @@ public class MatrixRandomLargeDataTest {
 
     interface largeRandomMatrixInt{
         long seed = 10;
-        int n = 12;
-        double p = 0.4;
+        int n = 10000;
+        double p = 0.001;
         int min = 1;
         int max = 100;
     }
@@ -126,6 +128,31 @@ public class MatrixRandomLargeDataTest {
         int n = 99;
         MatrixAssertion.assertDistancesBetweenAlgorithmsInt(getRandomLargeMatrixInt(n), null, null,
                 new String[][] {{ENV, "f"}, {ENV, "f"}, {ENV, "f"}, {ENV, "f"}}, new int[]{-1, 3, 4, 5},  false);
+    }
+
+    @Test
+    public void 本番データのJohnson法でのメモリリークをしているかどうかの検証() throws Exception {
+        String execEnv = ENV;
+        String algorithm = "j";
+        int n = largeRandomMatrixDouble.n;
+
+        long total = Runtime.getRuntime().totalMemory();
+        long max = Runtime.getRuntime().maxMemory();
+        NumberFormat nfNum = NumberFormat.getNumberInstance();
+
+        System.out.println("total " + nfNum.format(total / 1024/1024) + " MB");
+        System.out.println("max   " + nfNum.format(max / 1024 /1024)+ " MB");
+
+        for(int i = 0; i < 1000; i++) {
+            MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(i), null, null, execEnv, algorithm, -1, false);
+            System.gc();
+            MatrixSetManager.getInstance().clear();
+            long free = Runtime.getRuntime().freeMemory();
+            long used = total - free;
+            System.out.println("Trial: # "+i);
+            System.out.println("  free  => " + nfNum.format(free / 1024 / 1024) + " MB");
+            System.out.println("  used  => " + nfNum.format((total - free) / 1024 / 1024) + " MB");
+        }
     }
 
 }

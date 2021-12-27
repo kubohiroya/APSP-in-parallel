@@ -26,6 +26,15 @@ public class MatrixSetManager {
     Map<String, ApspResult<float[]>> cacheResultFloat = new HashMap<>();
     Map<String, ApspResult<int[]>> cacheResultInt = new HashMap<>();
 
+    public void clear(){
+        cacheMatrixDouble.clear();
+        cacheMatrixFloat.clear();
+        cacheMatrixInt.clear();
+        cacheResultDouble.clear();
+        cacheResultFloat.clear();
+        cacheResultInt.clear();
+    }
+
     synchronized MatrixSet.Double getMatrixSetDouble(String adjacencyFilename, String distanceFilename, String successorFilename, boolean verbose) throws IOException,NumberFormatException{
         String key = adjacencyFilename;
         MatrixSet.Double set = cacheMatrixDouble.get(key);
