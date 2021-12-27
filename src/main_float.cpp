@@ -13,9 +13,10 @@
 
 #include <boost/graph/johnson_all_pairs_shortest.hpp> // seq algorithm, distance_map
 
+#include "inf.hpp"
 #include "util.hpp"
-#include "floyd_warshall_float.hpp"
-#include "johnson_float.hpp"
+#include "floyd_warshall.hpp"
+#include "johnson.hpp"
 #include "main_float.hpp"
 
 int do_main_float(
@@ -52,11 +53,11 @@ int do_main_float(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(float));
       in.close();
     } else {
-      float *matrix = floyd_warshall_random_init_float(n, p, seed);
+      float *matrix = floyd_warshall_random_init<float>(n, p, seed, FLT_INF);
       memcpy(solution, matrix, sizeof(float) * n * n);
       int *successorMatrix = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
-      floyd_warshall_float(solution, successorMatrix, n);
+      floyd_warshall<float>(solution, successorMatrix, n);
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n";
@@ -87,7 +88,7 @@ int do_main_float(
     if (benchmark) {
       bench_floyd_warshall_float(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_random_init_float(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init<float>(n, block_size, p, seed, FLT_INF);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -109,16 +110,16 @@ int do_main_float(
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_float(distanceMatrix, n_blocked, solution, n);
+        correctness_check<float>(distanceMatrix, n_blocked, solution, n);
 
         std::cout << "[matrix]\n";
-        print_matrix_float(matrix, n, n_blocked);
+        print_matrix<float>(matrix, n, n_blocked, FLT_INF);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_float(distanceMatrix, n, n_blocked);
+        print_matrix<float>(distanceMatrix, n, n_blocked, FLT_INF);
         std::cout << "[solution]\n";
-        print_matrix_float(solution, n, n);
+        print_matrix<float>(solution, n, n, FLT_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n_blocked);
+        print_matrix<int>(successorMatrix, n, n_blocked, INT_INF);
       }
       delete[] matrix;
       delete[] distanceMatrix;
@@ -134,29 +135,29 @@ int do_main_float(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t_float* cuda_gr = johnson_cuda_random_init_float(n, p, seed);
+      graph_cuda_t<float>* cuda_gr = johnson_cuda_random_init<float>(n, p, seed, FLT_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda_float(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda<float>(cuda_gr, distanceMatrix, successorMatrix);
       auto end = std::chrono::high_resolution_clock::now();
-      free_cuda_graph_float(cuda_gr);
+      free_cuda_graph<float>(cuda_gr);
 #else
-      graph_t_float *gr = init_random_graph_float(n, p, seed);
+      graph_t<float> *gr = init_random_graph<float>(n, p, seed, FLT_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_parallel_float(gr, distanceMatrix, successorMatrix);
+      johnson_parallel<float>(gr, distanceMatrix, successorMatrix, FLT_INF);
       auto end = std::chrono::high_resolution_clock::now();
-      free_graph_float(gr);
+      free_graph<float>(gr);
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_float(distanceMatrix, n, solution, n);
+        correctness_check<float>(distanceMatrix, n, solution, n);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_float(distanceMatrix, n, n);
+        print_matrix<float>(distanceMatrix, n, n, FLT_INF);
         std::cout << "[solution]\n";
-        print_matrix_float(solution, n, n);
+        print_matrix<float>(solution, n, n, FLT_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n);
+        print_matrix<int>(successorMatrix, n, n, INT_INF);
       }
 
       delete[] distanceMatrix;
@@ -178,7 +179,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      float *matrix = floyd_warshall_random_init_float(v, p, seed);
+      float *matrix = floyd_warshall_random_init<float>(v, p, seed, FLT_INF);
       float *solution = new float[v * v];
 
       float *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
@@ -186,7 +187,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_random_init_float(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init<float>(v, block_size, p, seed, FLT_INF);
         v_blocked = v + block_size - block_remainder;
       }
       float *distanceMatrix = new float[v_blocked * v_blocked];
@@ -201,7 +202,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
         std::memcpy(solution, matrix, v * v * sizeof(float));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_float(solution, successorMatrix, v);
+        floyd_warshall<float>(solution, successorMatrix, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -214,7 +215,7 @@ void bench_floyd_warshall_float(int iterations, unsigned long seed, int block_si
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_float(distanceMatrix, v_blocked, solution, v);
+          correct = correct || correctness_check<float>(distanceMatrix, v_blocked, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -239,15 +240,15 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_float *gr = init_random_graph_float(v, pp, seed);
-      float *matrix = floyd_warshall_random_init_float(v, pp, seed);
+      graph_t<float> *gr = init_random_graph<float>(v, pp, seed, FLT_INF);
+      float *matrix = floyd_warshall_random_init<float>(v, pp, seed, FLT_INF);
       float *distanceMatrix = new float[v * v];
       int *successorMatrix = new int[v * v];
 
       float *solution = new float[v * v];
       float **out_sol = new float *[v];
       for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
-      Graph_float G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+      Graph<float> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<float> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
 
@@ -272,11 +273,11 @@ void bench_johnson_float(int iterations, unsigned long seed, bool check_correctn
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, distanceMatrix, v, block_size);
-        johnson_parallel_float(gr, distanceMatrix, successorMatrix);
+        johnson_parallel<float>(gr, distanceMatrix, successorMatrix, FLT_INF);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_float(distanceMatrix, v, solution, v);
+          correct = correct || correctness_check<float>(distanceMatrix, v, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;

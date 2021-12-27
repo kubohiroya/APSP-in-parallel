@@ -13,9 +13,10 @@
 
 #include <boost/graph/johnson_all_pairs_shortest.hpp> // seq algorithm, distance_map
 
+#include "inf.hpp"
 #include "util.hpp"
-#include "floyd_warshall_int.hpp"
-#include "johnson_int.hpp"
+#include "floyd_warshall.hpp"
+#include "johnson.hpp"
 #include "main_int.hpp"
 
 int do_main_int(
@@ -52,11 +53,11 @@ int do_main_int(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(int));
       in.close();
     } else {
-      int *matrix = floyd_warshall_random_init_int(n, p, seed);
+      int *matrix = floyd_warshall_random_init<int>(n, p, seed, INT_INF);
       int *successorMatrix = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
       memcpy(solution, matrix, sizeof(int) * n * n);
-      floyd_warshall_int(solution, successorMatrix, n);
+      floyd_warshall<int>(solution, successorMatrix, n);
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n";
@@ -87,7 +88,7 @@ int do_main_int(
     if (benchmark) {
       bench_floyd_warshall_int(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_random_init_int(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init(n, block_size, p, seed, INT_INF);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -110,15 +111,15 @@ int do_main_int(
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_int(distanceMatrix, n_blocked, solution, n);
+        correctness_check<int>(distanceMatrix, n_blocked, solution, n);
         std::cout << "[matrix]\n";
-        print_matrix_int(matrix, n, n_blocked);
+        print_matrix<int>(matrix, n, n_blocked, INT_INF);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_int(distanceMatrix, n, n_blocked);
+        print_matrix<int>(distanceMatrix, n, n_blocked, INT_INF);
         std::cout << "[solution]\n";
-        print_matrix_int(solution, n, n);
+        print_matrix<int>(solution, n, n, INT_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n_blocked);
+        print_matrix<int>(successorMatrix, n, n_blocked, INT_INF);
       }
 
       delete[] matrix;
@@ -135,29 +136,29 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t_int* cuda_gr = johnson_cuda_random_init_int(n, p, seed);
+      graph_cuda_t<int>* cuda_gr = johnson_cuda_random_init<int>(n, p, seed);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda_int(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda<int>(cuda_gr, distanceMatrix, successorMatrix);
       auto end = std::chrono::high_resolution_clock::now();
-      free_cuda_graph_int(cuda_gr);
+      free_cuda_graph<int>(cuda_gr);
 #else
-      graph_t_int *gr = init_random_graph_int(n, p, seed);
+      graph_t<int> *gr = init_random_graph<int>(n, p, seed, INT_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_parallel_int(gr, distanceMatrix, successorMatrix);
+      johnson_parallel<int>(gr, distanceMatrix, successorMatrix, INT_INF);
       auto end = std::chrono::high_resolution_clock::now();
-      free_graph_int(gr);
+      free_graph<int>(gr);
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_int(distanceMatrix, n, solution, n);
+        correctness_check<int>(distanceMatrix, n, solution, n);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_int(distanceMatrix, n, n);
+        print_matrix<int>(distanceMatrix, n, n, INT_INF);
         std::cout << "[solution]\n";
-        print_matrix_int(solution, n, n);
+        print_matrix<int>(solution, n, n, INT_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n);
+        print_matrix<int>(successorMatrix, n, n, INT_INF);
       }
 
       delete[] distanceMatrix;
@@ -180,7 +181,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      int *matrix = floyd_warshall_random_init_int(v, p, seed);
+      int *matrix = floyd_warshall_random_init<int>(v, p, seed, INT_INF);
       int *solution = new int[v * v];
       int *successorMatrix = new int[v * v];
 
@@ -189,7 +190,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_random_init_int(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init<int>(v, block_size, p, seed, INT_INF);
         v_blocked = v + block_size - block_remainder;
       }
       int *distanceMatrix = new int[v_blocked * v_blocked];
@@ -203,7 +204,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
         std::memcpy(solution, matrix, sizeof(int) * v * v);
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_int(solution, successorMatrix, v);
+        floyd_warshall<int>(solution, successorMatrix, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -216,7 +217,7 @@ void bench_floyd_warshall_int(int iterations, unsigned long seed, int block_size
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_int(distanceMatrix, v_blocked, solution, v);
+          correct = correct || correctness_check<int>(distanceMatrix, v_blocked, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -240,15 +241,15 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_int *gr = init_random_graph_int(v, pp, seed);
-      int *matrix = floyd_warshall_random_init_int(v, pp, seed);
+      graph_t<int> *gr = init_random_graph<int>(v, pp, seed, INT_INF);
+      int *matrix = floyd_warshall_random_init<int>(v, pp, seed, INT_INF);
       int *distanceMatrix = new int[v * v];
       int *successorMatrix = new int[v * v];
 
       int *solution = new int[v * v];
       int **out_sol = new int *[v];
       for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
-      Graph_int G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+      Graph<int> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<int> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
 
@@ -273,11 +274,11 @@ void bench_johnson_int(int iterations, unsigned long seed, bool check_correctnes
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, distanceMatrix, v, block_size);
-        johnson_parallel_int(gr, distanceMatrix, successorMatrix);
+        johnson_parallel<int>(gr, distanceMatrix, successorMatrix, INT_INF);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_int(distanceMatrix, v, solution, v);
+          correct = correct || correctness_check<int>(distanceMatrix, v, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;

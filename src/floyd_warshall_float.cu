@@ -6,7 +6,7 @@
 #include <cuda_runtime.h>
 #include <driver_functions.h>
 
-#include "floyd_warshall_float.hpp"
+#include "floyd_warshall.hpp"
 
 #define BLOCK_DIM 16
 

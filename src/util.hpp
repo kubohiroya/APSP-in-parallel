@@ -8,94 +8,29 @@
 #include "inf.hpp"
 #include "equals.hpp"
 
-inline void print_int(const int value) {
-  if (value == INT_INF) {
+template<typename Number> inline void print(const Number value, const Number inf) {
+  if (value == inf) {
     std::cout << "Inf";
   } else {
     std::cout << value;
   }
 }
 
-inline void print_float(const float value) {
-  if (equals_float(value, FLT_INF)) {
-    std::cout << "Inf";
-  } else {
-    std::cout << value;
-  }
-}
-
-inline void print_double(const double value) {
-  if (equals_double(value, DBL_INF)) {
-    std::cout << "Inf";
-  } else {
-    std::cout << value;
-  }
-}
-
-inline void print_matrix_int(const int *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
+template<typename Number> inline void print_matrix(const Number *distanceMatrix, const int n_distanceMatrix, const int n_blocked, const Number inf) {
   for (int i = 0; i < n_distanceMatrix; i++) {
-    print_int(distanceMatrix[i * n_blocked]);
+    print<>(distanceMatrix[i * n_blocked], inf);
     for (int j = 1; j < n_distanceMatrix; j++) {
       std::cout << ", ";
-      print_int(distanceMatrix[i * n_blocked + j]);
+      print<>(distanceMatrix[i * n_blocked + j], inf);
     }
     std::cout << std::endl;
   }
 }
 
-inline void print_matrix_float(const float *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
-  for (int i = 0; i < n_distanceMatrix; i++) {
-    print_float(distanceMatrix[i * n_blocked]);
-    for (int j = 1; j < n_distanceMatrix; j++) {
-      std::cout << ", ";
-      print_float(distanceMatrix[i * n_blocked + j]);
-    }
-    std::cout << std::endl;
-  }
-}
-
-inline void print_matrix_double(const double *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
-  for (int i = 0; i < n_distanceMatrix; i++) {
-    print_double(distanceMatrix[i * n_blocked]);
-    for (int j = 1; j < n_distanceMatrix; j++) {
-      std::cout << ", ";
-      print_double(distanceMatrix[i * n_blocked + j]);
-    }
-    std::cout << std::endl;
-  }
-}
-
-inline bool correctness_check_int(int *distanceMatrix, int n_distanceMatrix, int *solution, int n_solution) {
+template<typename Number> inline bool correctness_check(const Number *distanceMatrix, int n_distanceMatrix, const Number *solution, int n_solution) {
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
       if (distanceMatrix[i * n_distanceMatrix + j] != solution[i * n_solution + j]) {
-        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
-                  << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-inline bool correctness_check_float(float *distanceMatrix, int n_distanceMatrix, float *solution, int n_solution) {
-  for (int i = 0; i < n_solution; i++) {
-    for (int j = 0; j < n_solution; j++) {
-      if (!equals_float(distanceMatrix[i * n_distanceMatrix + j], solution[i * n_solution + j])) {
-        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
-                  << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-inline bool correctness_check_double(double *distanceMatrix, int n_distanceMatrix, double *solution, int n_solution) {
-  for (int i = 0; i < n_solution; i++) {
-    for (int j = 0; j < n_solution; j++) {
-      if (!equals_double(distanceMatrix[i * n_distanceMatrix + j], solution[i * n_solution + j])) {
         std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;

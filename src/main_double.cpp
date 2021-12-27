@@ -12,9 +12,10 @@
 
 #include <boost/graph/johnson_all_pairs_shortest.hpp> // seq algorithm, distance_map
 
+#include "inf.hpp"
 #include "util.hpp"
-#include "floyd_warshall_double.hpp"
-#include "johnson_double.hpp"
+#include "floyd_warshall.hpp"
+#include "johnson.hpp"
 #include "main_double.hpp"
 
 int do_main_double(
@@ -51,11 +52,11 @@ int do_main_double(
       in.read(reinterpret_cast<char *>(solution), n * n * sizeof(double));
       in.close();
     } else {
-      double *matrix = floyd_warshall_random_init_double(n, p, seed);
+      double *matrix = floyd_warshall_random_init<double>(n, p, seed, DBL_INF);
       memcpy(solution, matrix, sizeof(double) * n * n);
       int *successorMatrix = new int[n * n];
       auto start = std::chrono::high_resolution_clock::now();
-      floyd_warshall_double(solution, successorMatrix, n);
+      floyd_warshall<double>(solution, successorMatrix, n);
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n";
@@ -86,7 +87,7 @@ int do_main_double(
     if (benchmark) {
       bench_floyd_warshall_double(1, seed, block_size, check_correctness);
     } else {
-      matrix = floyd_warshall_blocked_random_init_double(n, block_size, p, seed);
+      matrix = floyd_warshall_blocked_random_init<double>(n, block_size, p, seed, DBL_INF);
       int n_blocked = n;
       int block_remainder = n % block_size;
       if (block_remainder != 0) {
@@ -99,7 +100,7 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda_double(matrix, &distanceMatrix, &successorMatrix, n_blocked);
+      floyd_warshall_blocked_cuda<double>(matrix, &distanceMatrix, &successorMatrix, n_blocked);
 #else
       floyd_warshall_blocked_double(matrix, &distanceMatrix, &successorMatrix, n_blocked, block_size);
 #endif
@@ -108,15 +109,15 @@ int do_main_double(
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_double(distanceMatrix, n_blocked, solution, n);
+        correctness_check<double>(distanceMatrix, n_blocked, solution, n);
         std::cout << "[matrix]\n";
-        print_matrix_double(matrix, n, n_blocked);
+        print_matrix<double>(matrix, n, n_blocked, DBL_INF);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_double(distanceMatrix, n, n_blocked);
+        print_matrix<double>(distanceMatrix, n, n_blocked, DBL_INF);
         std::cout << "[solution]\n";
-        print_matrix_double(solution, n, n);
+        print_matrix<double>(solution, n, n, DBL_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n_blocked);
+        print_matrix<int>(successorMatrix, n, n_blocked, INT_INF);
       }
       delete[] matrix;
       delete[] distanceMatrix;
@@ -133,29 +134,29 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t_double* cuda_gr = johnson_cuda_random_init_double(n, p, seed);
+      graph_cuda_t<double> * cuda_gr = johnson_cuda_random_init<double<(n, p, seed, DBL_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda_double(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda<double>(cuda_gr, distanceMatrix, successorMatrix);
       auto end = std::chrono::high_resolution_clock::now();
-      free_cuda_graph_double(cuda_gr);
+      free_cuda_graph<double>(cuda_gr);
 #else
-      graph_t_double *gr = init_random_graph_double(n, p, seed);
+      graph_t<double> * gr = init_random_graph<double>(n, p, seed, DBL_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_parallel_double(gr, distanceMatrix, successorMatrix);
+      johnson_parallel<double>(gr, distanceMatrix, successorMatrix, DBL_INF);
       auto end = std::chrono::high_resolution_clock::now();
-      free_graph_double(gr);
+      free_graph<double>(gr);
 #endif
       std::chrono::duration<double, std::milli> start_to_end = end - start;
       std::cout << "Algorithm runtime: " << start_to_end.count() << "ms\n\n";
 
       if (check_correctness) {
-        correctness_check_double(distanceMatrix, n, solution, n);
+        correctness_check<double>(distanceMatrix, n, solution, n);
         std::cout << "[distanceMatrix]\n";
-        print_matrix_double(distanceMatrix, n, n);
+        print_matrix<double>(distanceMatrix, n, n, DBL_INF);
         std::cout << "[solution]\n";
-        print_matrix_double(solution, n, n);
+        print_matrix<double>(solution, n, n, DBL_INF);
         std::cout << "[successorMatrix]\n";
-        print_matrix_int(successorMatrix, n, n);
+        print_matrix<int>(successorMatrix, n, n, INT_INF);
       }
 
       delete[] distanceMatrix;
@@ -177,7 +178,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
   print_table_header(check_correctness);
   for (double p = 0.25; p < 1.0; p += 0.25) {
     for (int v = 64; v <= 1024; v *= 2) {
-      double *matrix = floyd_warshall_random_init_double(v, p, seed);
+      double *matrix = floyd_warshall_random_init<double>(v, p, seed, DBL_INF);
       double *solution = new double[v * v];
 
       double *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
@@ -185,7 +186,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
       int block_remainder = v % block_size;
       if (block_remainder != 0) {
         // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_random_init_double(v, block_size, p, seed);
+        matrix_blocked = floyd_warshall_blocked_random_init<double>(v, block_size, p, seed, DBL_INF);
         v_blocked = v + block_size - block_remainder;
       }
       double *distanceMatrix = new double[v_blocked * v_blocked];
@@ -200,7 +201,7 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
         std::memcpy(solution, matrix, v * v * sizeof(double));
 
         auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_double(solution, successorMatrix, v);
+        floyd_warshall<double>(solution, successorMatrix, v);
         auto seq_end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
@@ -209,11 +210,11 @@ void bench_floyd_warshall_double(int iterations, unsigned long seed, int block_s
         // clear distanceMatrix
         std::memset(distanceMatrix, 0, v_blocked * v_blocked * sizeof(double));
         auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked_double(matrix_blocked, &distanceMatrix, &successorMatrix, v_blocked, block_size);
+        floyd_warshall_blocked<double>(matrix_blocked, &distanceMatrix, &successorMatrix, v_blocked, block_size, DBL_INF);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_double(distanceMatrix, v_blocked, solution, v);
+          correct = correct || correctness_check<double>(distanceMatrix, v_blocked, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -237,15 +238,15 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
   for (double pp = 0.25; pp < 1.0; pp += 0.25) {
     for (int v = 64; v <= 2048; v *= 2) {
       // johnson init
-      graph_t_double *gr = init_random_graph_double(v, pp, seed);
-      double *matrix = floyd_warshall_random_init_double(v, pp, seed);
+      graph_t<double> *gr = init_random_graph<double>(v, pp, seed, DBL_INF);
+      double *matrix = floyd_warshall_random_init<double>(v, pp, seed, DBL_INF);
       double *distanceMatrix = new double[v * v];
       int *successorMatrix = new int[v * v];
 
       double *solution = new double[v * v];
       double **out_sol = new double *[v];
       for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
-      Graph_double G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+      Graph<double> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
       std::vector<double> d(num_vertices(G));
       std::vector<int> p(num_vertices(G));
 
@@ -270,11 +271,11 @@ void bench_johnson_double(int iterations, unsigned long seed, bool check_correct
         auto start = std::chrono::high_resolution_clock::now();
         // TODO: johnson parallel -- temporarily putting floyd_warshall here
         //floyd_warshall_blocked(matrix, distanceMatrix, v, block_size);
-        johnson_parallel_double(gr, distanceMatrix, successorMatrix);
+        johnson_parallel<double>(gr, distanceMatrix, successorMatrix, DBL_INF);
         auto end = std::chrono::high_resolution_clock::now();
 
         if (check_correctness) {
-          correct = correct || correctness_check_double(distanceMatrix, v, solution, v);
+          correct = correct || correctness_check<double>(distanceMatrix, v, solution, v);
         }
 
         std::chrono::duration<double, std::milli> start_to_end = end - start;
