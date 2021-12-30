@@ -1,5 +1,4 @@
 #include "inf.hpp"
-#include<string>
 
 int get_infinity_int(){
   return INT_INF;

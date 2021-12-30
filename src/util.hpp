@@ -6,7 +6,6 @@
 #include <chrono> // see Timer class
 
 #include "inf.hpp"
-#include "equals.hpp"
 
 template<typename Number> inline void print(const Number value, const Number inf) {
   if (value == inf) {

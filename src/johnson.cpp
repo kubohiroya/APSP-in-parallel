@@ -5,7 +5,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include "johnson.hpp"
-#include "equals.hpp"
 
 void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n){
   johnson_parallel_matrix<double>(adjacencyMatrix, distanceMatrix, successorMatrix, n, DBL_INF);
