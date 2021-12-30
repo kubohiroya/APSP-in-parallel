@@ -10,3 +10,13 @@ float get_infinity_float(){
 double get_infinity_double(){
   return DBL_INF;
 }
+
+template<> double getInf<double>(){
+  return DBL_INF;
+}
+template<> float getInf<float>(){
+  return FLT_INF;
+}
+template<> int getInf<int>(){
+  return INT_INF;
+}
