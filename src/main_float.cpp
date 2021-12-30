@@ -137,7 +137,7 @@ int do_main_float(
       std::cout << "CUDA!\n";
       graph_cuda_t<float>* cuda_gr = johnson_cuda_random_init<float>(n, p, seed, FLT_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda<float>(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda_float(cuda_gr, distanceMatrix, successorMatrix, FLT_INF);
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph<float>(cuda_gr);
 #else

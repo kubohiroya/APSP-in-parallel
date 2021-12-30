@@ -136,9 +136,9 @@ int do_main_int(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t<int>* cuda_gr = johnson_cuda_random_init<int>(n, p, seed);
+      graph_cuda_t<int>* cuda_gr = johnson_cuda_random_init<int>(n, p, seed, INT_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda<int>(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda_int(cuda_gr, distanceMatrix, successorMatrix, INT_INF);
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph<int>(cuda_gr);
 #else

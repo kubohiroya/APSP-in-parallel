@@ -1,12 +1,20 @@
-#include "johnson_double.hpp"
+#include <iostream>
+#include <algorithm>
+#include <stdio.h>
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <driver_functions.h>
+
+#include "johnson.hpp"
 
 #define THREADS_PER_BLOCK 32
 
-__constant__ graph_cuda_t_double graph_const;
-
+template<typename Number>
 __forceinline__
-__device__ int min_distance_double(double *dist, char *visited, int n) {
-  double min = DBL_INF;
+__device__
+int min_distance(Number *dist, char *visited, int n, Number inf) {
+  Number min = inf;
   int min_index = 0;
   for (int v = 0; v < n; v++) {
     if (!visited[v] && dist[v] <= min) {
@@ -17,25 +25,27 @@ __device__ int min_distance_double(double *dist, char *visited, int n) {
   return min_index;
 }
 
-__global__ void dijkstra_kernel_double(double *distanceMatrix, int *successorMatrix, char *visited_global) {
+template<typename Number>
+__global__
+void dijkstra_kernel(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, char *visited_global, Number inf) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
-  int V = graph_const.V;
+  int V = gr->V;
 
   if (s >= V) return;
 
-  int *starts = graph_const.starts;
-  double *weights = graph_const.weights;
-  edge_t_double *edge_array = graph_const.edge_array;
+  int *starts = gr->starts;
+  Number *weights = gr->weights;
+  edge_t *edge_array = gr->edge_array;
 
-  double *dist = &distanceMatrix[s * V];
+  Number *dist = &distanceMatrix[s * V];
   char *visited = &visited_global[s * V];
   for (int i = 0; i < V; i++) {
-    dist[i] = DBL_INF;
+    dist[i] = inf;
     visited[i] = 0;
   }
   dist[s] = 0;
   for (int count = 0; count < V - 1; count++) {
-    int u = min_distance_double(dist, visited, V);
+    int u = min_distance<Number>(dist, visited, V, inf);
     int u_start = starts[u];
     int u_end = starts[u + 1];
     double dist_u = dist[u];
@@ -49,47 +59,51 @@ __global__ void dijkstra_kernel_double(double *distanceMatrix, int *successorMat
   }
 }
 
-__global__ void bellman_ford_kernel_double(double *dist) {
-  int E = graph_const.E;
+template<typename Number>
+__global__
+void bellman_ford_kernel(graph_cuda_t<Number> *gr, Number *dist, const Number inf) {
+  int E = gr->E;
   int e = threadIdx.x + blockDim.x * blockIdx.x;
 
   if (e >= E) return;
-  double *weights = graph_const.weights;
-  edge_t_double *edges = graph_const.edge_array;
+  Number *weights = gr->weights;
+  edge_t *edges = gr->edge_array;
   int u = edges[e].u;
   int v = edges[e].v;
-  double new_dist = weights[e] + dist[u];
+  Number new_dist = weights[e] + dist[u];
   // Make ATOMIC
-  if (dist[u] != DBL_INF && new_dist < dist[v])
+  if (dist[u] != inf && new_dist < dist[v])
     atomicExch((unsigned long long int *) &dist[v],
                __double_as_longlong(new_dist)); // Needs to have conditional be atomic too
 }
 
-__host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, int s) {
+template<typename Number>
+__host__
+bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int s, Number inf) {
   int V = gr->V;
   int E = gr->E;
-  edge_t_double *edges = gr->edge_array;
-  double *weights = gr->weights;
+  edge_t *edges = gr->edge_array;
+  Number *weights = gr->weights;
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i = 0; i < V; i++) {
-    dist[i] = DBL_INF;
+    dist[i] = inf;
   }
   dist[s] = 0;
 
-  double *device_dist;
-  cudaMalloc(&device_dist, sizeof(double) * V);
-  cudaMemcpy(device_dist, dist, sizeof(double) * V, cudaMemcpyHostToDevice);
+  Number *device_dist;
+  cudaMalloc(&device_dist, sizeof(Number) * V);
+  cudaMemcpy(device_dist, dist, sizeof(Number) * V, cudaMemcpyHostToDevice);
 
   int blocks = (E + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   for (int i = 1; i <= V - 1; i++) {
-    bellman_ford_kernel_double<<<blocks, THREADS_PER_BLOCK>>>(device_dist);
+    bellman_ford_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(gr, device_dist, inf);
     cudaThreadSynchronize();
   }
 
-  cudaMemcpy(dist, device_dist, sizeof(double) * V, cudaMemcpyDeviceToHost);
+  cudaMemcpy(dist, device_dist, sizeof(Number) * V, cudaMemcpyDeviceToHost);
   bool no_neg_cycle = true;
 
   // use OMP to parallelize. Not worth sending to GPU
@@ -99,8 +113,8 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, in
   for (int i = 0; i < E; i++) {
     int u = edges[i].u;
     int v = edges[i].v;
-    double weight = weights[i];
-    if (dist[u] != DBL_INF && dist[u] + weight < dist[v])
+    Number weight = weights[i];
+    if (dist[u] != inf && dist[u] + weight < dist[v])
       no_neg_cycle = false;
   }
 
@@ -113,7 +127,9 @@ __host__ bool bellman_ford_cuda_double(graph_cuda_t_double *gr, double *dist, in
                         Johnson's Algorithm CUDA
 **************************************************************************/
 
-__host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *distanceMatrix, int *successorMatrix) {
+template<typename Number>
+__host__
+void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, Number inf) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
@@ -132,51 +148,52 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *distanceMatri
   }
 
   // Const Graph Initialization
+  // graph_cuda_t<Number> * gr = new graph_cuda_t<Number>;
   int V = gr->V;
   int E = gr->E;
   // Structure of the graph
-  edge_t_double *device_edge_array;
-  double *device_weights;
-  double *device_distanceMatrix;
+  edge_t *device_edge_array;
+  Number *device_weights;
+  Number *device_distanceMatrix;
   int *device_successorMatrix;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
   // Allocating memory
-  cudaMalloc(&device_edge_array, sizeof(edge_t_double) * E);
-  cudaMalloc(&device_weights, sizeof(double) * E);
-  cudaMalloc(&device_distanceMatrix, sizeof(double) * V * V);
+  cudaMalloc(&device_edge_array, sizeof(edge_t) * E);
+  cudaMalloc(&device_weights, sizeof(Number) * E);
+  cudaMalloc(&device_distanceMatrix, sizeof(Number) * V * V);
   cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
-  cudaMemcpy(device_edge_array, gr->edge_array, sizeof(edge_t_double) * E,
+  cudaMemcpy(device_edge_array, gr->edge_array, sizeof(edge_t) * E,
              cudaMemcpyHostToDevice);
   cudaMemcpy(device_weights, gr->weights, sizeof(double) * E, cudaMemcpyHostToDevice);
   cudaMemcpy(device_starts, gr->starts, sizeof(int) * (V + 1), cudaMemcpyHostToDevice);
 
-  graph_cuda_t_double graph_params;
+  graph_cuda_t<Number> graph_params;
   graph_params.V = V;
   graph_params.E = E;
   graph_params.starts = device_starts;
   graph_params.weights = device_weights;
   graph_params.edge_array = device_edge_array;
   // Constant memory parameters
-  cudaMemcpyToSymbol(graph_const, &graph_params, sizeof(graph_cuda_t_double));
+  cudaMemcpyToSymbol(gr, &graph_params, sizeof(graph_cuda_t<Number>));
   // End initialization
 
-  graph_cuda_t_double *bf_graph = new graph_cuda_t_double;
+  graph_cuda_t<Number> *bf_graph = new graph_cuda_t<Number>;
   bf_graph->V = V + 1;
   bf_graph->E = gr->E + V;
-  bf_graph->edge_array = new edge_t_double[bf_graph->E];
-  bf_graph->weights = new double[bf_graph->E];
+  bf_graph->edge_array = new edge_t[bf_graph->E];
+  bf_graph->weights = new Number[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(edge_t_double));
-  std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(double));
-  std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(double));
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(edge_t));
+  std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(Number));
+  std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(Number));
 
-  double *h = new double[bf_graph->V];
-  bool r = bellman_ford_cuda_double(bf_graph, h, V);
+  Number *h = new Number[bf_graph->V];
+  bool r = bellman_ford_cuda<Number>(bf_graph, h, V, inf);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
@@ -193,11 +210,11 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *distanceMatri
 
   int blocks = (V + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-  cudaMemcpy(device_weights, gr->weights, sizeof(double) * E, cudaMemcpyHostToDevice);
+  cudaMemcpy(device_weights, gr->weights, sizeof(Number) * E, cudaMemcpyHostToDevice);
 
-  dijkstra_kernel_double<<<blocks, THREADS_PER_BLOCK>>>(device_distanceMatrix, device_successorMatrix, device_visited);
+  dijkstra_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(gr, device_distanceMatrix, device_successorMatrix, device_visited, inf);
 
-  cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(double) * V * V, cudaMemcpyDeviceToHost);
+  cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(Number) * V * V, cudaMemcpyDeviceToHost);
 
   cudaError_t errCode = cudaPeekAtLastError();
   if (errCode != cudaSuccess) {
@@ -214,6 +231,16 @@ __host__ void johnson_cuda_double(graph_cuda_t_double *gr, double *distanceMatri
   cudaFree(device_successorMatrix);
   cudaFree(device_starts);
   cudaFree(device_visited);
+  cudaFree(gr);
 
 }
 
+__host__ void johnson_cuda_double(graph_cuda_t<double> *cuda_gr, double *distanceMatrix, int *successorMatrix, double inf) {
+  johnson_cuda<double>(cuda_gr, distanceMatrix, successorMatrix, inf);
+}
+__host__ void johnson_cuda_float(graph_cuda_t<float> *cuda_gr, float *distanceMatrix, int *successorMatrix, float inf) {
+  johnson_cuda<float>(cuda_gr, distanceMatrix, successorMatrix, inf);
+}
+__host__ void johnson_cuda_int(graph_cuda_t<int> *cuda_gr, int *distanceMatrix, int *successorMatrix, int inf) {
+  johnson_cuda<int>(cuda_gr, distanceMatrix, successorMatrix, inf);
+}

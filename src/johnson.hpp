@@ -28,19 +28,19 @@ typedef struct edge {
 
 #ifdef CUDA
 template<typename Number>
-struct graph_cuda {
+struct graph_cuda_t {
   int V;
   int E;
   int *starts;
   Number *weights;
   edge_t *edge_array;
-} graph_cuda_t<Number>;
+};
 #endif
 
 template<typename Number> size_t init_random_adjacency_matrix(Number *adjacencyMatrix, const int n, const double p, const unsigned long seed, const Number inf) {
 
   static std::uniform_real_distribution<double> flip(0, 1);
-  static std::uniform_int_distribution<Number> choose_weight(1, 100);
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -112,25 +112,25 @@ template<typename Number> graph_t<Number> * init_random_graph(const int n, const
   return gr;
 }
 
-template void set_edge(edge_t *edge, int u, int v) {
-  edge->u = u;
-  edge->v = v;
-}
-
-#ifdef CUDA
-template<typename Number> void free_graph_cuda(graph_cuda_t<Number> *g) {
+template<typename Number> void free_graph(graph_t<Number> *g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete g;
 }
 
-template<typename Number> graph_cuda_t<Number> johnson_cuda_random_init(const int n, const double p, const unsigned long seed, const Number inf) {
-  Number* adjacencyMatrix = new Number[n * n];
-  int e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed);
+#ifdef CUDA
+inline void set_edge(edge_t *edge, int u, int v) {
+  edge->u = u;
+  edge->v = v;
+}
 
-  edge_t *edge_array = new edge_t[e];
+template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const int n, const double p, const unsigned long seed, const Number inf) {
+  Number* adjacencyMatrix = new Number[n * n];
+  int e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed, inf);
+
+  edge_t* edge_array = new edge_t[e];
   int* starts = new int[n + 1];  // Starting point for each edge
-  Number weights = new Number[E];
+  Number* weights = new Number[e];
   int ei = 0;
   for (int i = 0; i < n; i++) {
     starts[i] = ei;
@@ -157,7 +157,7 @@ template<typename Number> graph_cuda_t<Number> johnson_cuda_random_init(const in
   return gr;
 }
 
-template<typename Number> graph_cuda_t<Number> init_graph_cuda(const Number *adjacencyMatrix, const int n, const int e, const Number inf) {
+template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *adjacencyMatrix, const int n, const int e, const Number inf) {
   edge_t *edge_array = new edge_t[e];
   int* starts = new int[n + 1];  // Starting point for each edge
   Number *weights = new Number[e];
@@ -179,7 +179,7 @@ template<typename Number> graph_cuda_t<Number> init_graph_cuda(const Number *adj
   }
   starts[n] = ei; // One extra
 
-  graph_cuda_t<Number> gr = new graph_cuda_t<Number>;
+  graph_cuda_t<Number> *gr = new graph_cuda_t<Number>;
   gr->V = n;
   gr->E = e;
   gr->edge_array = edge_array;
@@ -195,13 +195,13 @@ template<typename Number> void free_cuda_graph(graph_cuda_t<Number> * g) {
   delete[] g->starts;
   delete g;
 }
-#endif
 
-template<typename Number> void free_graph(graph_t<Number> * g) {
-  delete[] g->edge_array;
-  delete[] g->weights;
-  delete g;
-}
+template<typename Number> void johnson_cuda(graph_cuda_t<Number> * gr, Number *distanceMatrix, int *successorMatrix, Number inf);
+void johnson_cuda_double(graph_cuda_t<double> * gr, double *distanceMatrix, int *successorMatrix, double inf);
+void johnson_cuda_float(graph_cuda_t<float> * gr, float *distanceMatrix, int *successorMatrix, float inf);
+void johnson_cuda_int(graph_cuda_t<int> * gr, int *distanceMatrix, int *successorMatrix, int inf);
+
+#endif
 
 template<typename Number> inline bool bellman_ford(graph_t<Number> *gr, Number *dist, int src, const Number inf) {
   int v = gr->V;
@@ -330,10 +330,6 @@ template<typename Number> void free_johnson_parallel_matrix(Number **distanceMat
   free(*distanceMatrix);
   free(*successorMatrix);
 }
-
-#ifdef CUDA
-template<typename Number> void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix);
-#endif
 
 extern "C" void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n);
 extern "C" void free_johnson_parallel_matrix_double(double **distanceMatrix, int **successorMatrix);

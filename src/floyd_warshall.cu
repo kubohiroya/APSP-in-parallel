@@ -19,32 +19,35 @@ __host__ void check_cuda_error() {
   }
 }
 
+template<typename Number>
 __forceinline__
-__device__ void calc_double(double *graph, int n, int k, int i, int j) {
+__device__ void calc(Number *graph, int n, int k, int i, int j) {
   if ((i >= n) || (j >= n) || (k >= n)) return;
   const unsigned int kj = k * n + j;
   const unsigned int ij = i * n + j;
   const unsigned int ik = i * n + k;
-  double t1 = graph[ik] + graph[kj];
-  double t2 = graph[ij];
+  Number t1 = graph[ik] + graph[kj];
+  Number t2 = graph[ij];
   graph[ij] = (t1 < t2) ? t1 : t2;
 }
 
 
-__global__ void floyd_warshall_kernel_double(int n, int k, double *graph) {
+template<typename Number>
+__global__ void floyd_warshall_kernel(int n, int k, Number *graph) {
   const unsigned int i = blockIdx.y * blockDim.y + threadIdx.y;
   const unsigned int j = blockIdx.x * blockDim.x + threadIdx.x;
-  calc_double(graph, n, k, i, j);
+  calc<Number>(graph, n, k, i, j);
 }
 
 /*****************************************************************************
                          Blocked Floyd-Warshall Kernel
   ***************************************************************************/
 
+template<typename Number>
 __forceinline__
-__device__ void block_calc_double(double *C, double *A, double *B, int bj, int bi) {
+__device__ void block_calc(Number *C, Number *A, Number *B, int bj, int bi) {
   for (int k = 0; k < BLOCK_DIM; k++) {
-    double sum = A[bi * BLOCK_DIM + k] + B[k * BLOCK_DIM + bj];
+    Number sum = A[bi * BLOCK_DIM + k] + B[k * BLOCK_DIM + bj];
     if (C[bi * BLOCK_DIM + bj] > sum) {
       C[bi * BLOCK_DIM + bj] = sum;
     }
@@ -52,11 +55,12 @@ __device__ void block_calc_double(double *C, double *A, double *B, int bj, int b
   }
 }
 
-__global__ void floyd_warshall_block_kernel_phase1_double(int n, int k, double *graph) {
+template<typename Number>
+__global__ void floyd_warshall_block_kernel_phase1(int n, int k, Number *graph) {
   const unsigned int bi = threadIdx.y;
   const unsigned int bj = threadIdx.x;
 
-  __shared__ double C[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number C[BLOCK_DIM * BLOCK_DIM];
 
   __syncthreads();
 
@@ -65,7 +69,7 @@ __global__ void floyd_warshall_block_kernel_phase1_double(int n, int k, double *
 
   __syncthreads();
 
-  block_calc_double(C, C, C, bi, bj);
+  block_calc<Number>(C, C, C, bi, bj);
 
   __syncthreads();
 
@@ -74,8 +78,8 @@ __global__ void floyd_warshall_block_kernel_phase1_double(int n, int k, double *
 
 }
 
-
-__global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double *graph) {
+template<typename Number>
+__global__ void floyd_warshall_block_kernel_phase2(int n, int k, Number *graph) {
   // BlockDim is one dimensional (Straight along diagonal)
   // Blocks themselves are two dimensional
   const unsigned int i = blockIdx.x;
@@ -84,9 +88,9 @@ __global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double *
 
   if (i == k) return;
 
-  __shared__ double A[BLOCK_DIM * BLOCK_DIM];
-  __shared__ double B[BLOCK_DIM * BLOCK_DIM];
-  __shared__ double C[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number A[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number B[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number C[BLOCK_DIM * BLOCK_DIM];
 
   __syncthreads();
 
@@ -95,7 +99,7 @@ __global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double *
 
   __syncthreads();
 
-  block_calc_double(C, C, B, bi, bj);
+  block_calc<Number>(C, C, B, bi, bj);
 
   __syncthreads();
 
@@ -108,7 +112,7 @@ __global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double *
 
   __syncthreads();
 
-  block_calc_double(C, A, C, bi, bj);
+  block_calc<Number>(C, A, C, bi, bj);
 
   __syncthreads();
 
@@ -116,8 +120,8 @@ __global__ void floyd_warshall_block_kernel_phase2_double(int n, int k, double *
   graph[k * BLOCK_DIM * n + i * BLOCK_DIM + bi * n + bj] = C[bi * BLOCK_DIM + bj];
 }
 
-
-__global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *graph) {
+template<typename Number>
+__global__ void floyd_warshall_block_kernel_phase3(int n, int k, Number *graph) {
   // BlockDim is one dimensional (Straight along diagonal)
   // Blocks themselves are two dimensional
   const unsigned int j = blockIdx.x;
@@ -126,9 +130,9 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *
   const unsigned int bj = threadIdx.x;
 
   if (i == k && j == k) return;
-  __shared__ double A[BLOCK_DIM * BLOCK_DIM];
-  __shared__ double B[BLOCK_DIM * BLOCK_DIM];
-  __shared__ double C[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number A[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number B[BLOCK_DIM * BLOCK_DIM];
+  __shared__ Number C[BLOCK_DIM * BLOCK_DIM];
 
   __syncthreads();
 
@@ -138,7 +142,7 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *
 
   __syncthreads();
 
-  block_calc_double(C, A, B, bi, bj);
+  block_calc<Number>(C, A, B, bi, bj);
 
   __syncthreads();
 
@@ -148,9 +152,8 @@ __global__ void floyd_warshall_block_kernel_phase3_double(int n, int k, double *
 /************************************************************************
                     Floyd-Warshall's Algorithm CUDA
 ************************************************************************/
-
-
-__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, const int n) {
+template<typename Number>
+__host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -165,8 +168,8 @@ __host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix,
               << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
   }
 
-  double *device_graph;
-  const size_t size = sizeof(double) * n * n;
+  Number *device_graph;
+  const size_t size = sizeof(Number) * n * n;
   cudaMalloc(&device_graph, size);
   cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
@@ -176,11 +179,11 @@ __host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix,
 
   std::cout << "Launching Kernels Blocks: " << blocks << " Size " << n << "\n";
   for (int k = 0; k < blocks; k++) {
-    floyd_warshall_block_kernel_phase1_double<<<1, block_dim>>>(n, k, device_graph);
+    floyd_warshall_block_kernel_phase1<Number> <<<1, block_dim>>>(n, k, device_graph);
 
-    floyd_warshall_block_kernel_phase2_double<<<blocks, block_dim>>>(n, k, device_graph);
+    floyd_warshall_block_kernel_phase2<Number> <<<blocks, block_dim>>>(n, k, device_graph);
 
-    floyd_warshall_block_kernel_phase3_double<<<phase4_grid, block_dim>>>(n, k, device_graph);
+    floyd_warshall_block_kernel_phase3<Number> <<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
 
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
@@ -189,7 +192,8 @@ __host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix,
   cudaFree(device_graph);
 }
 
-__host__ void floyd_warshall_cuda_double(double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, int n) {
+template<typename Number>
+__host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
 
   // from assignment 1
   int deviceCount;
@@ -207,9 +211,9 @@ __host__ void floyd_warshall_cuda_double(double *adjancencyMatrix, double **dist
 
   std::cout << "Size " << n << "\n";
 
-  double *device_graph;
+  Number *device_graph;
 
-  const size_t size = sizeof(double) * n * n;
+  const size_t size = sizeof(Number) * n * n;
 
   cudaMalloc(&device_graph, size);
 
@@ -220,7 +224,7 @@ __host__ void floyd_warshall_cuda_double(double *adjancencyMatrix, double **dist
                 (n + block_dim.y - 1) / block_dim.y);
 
   for (int k = 0; k < n; k++) {
-    floyd_warshall_kernel_double<<<grid_dim, block_dim>>>(n, k, device_graph);
+    floyd_warshall_kernel<Number> <<<grid_dim, block_dim>>>(n, k, device_graph);
     cudaThreadSynchronize();
   }
 
@@ -234,4 +238,14 @@ __host__ void floyd_warshall_cuda_double(double *adjancencyMatrix, double **dist
 
   cudaFree(device_graph);
 
+}
+
+__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, const int n) {
+  floyd_warshall_blocked_cuda<double>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
+}
+__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, const int n) {
+  floyd_warshall_blocked_cuda<float>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
+}
+__host__ void floyd_warshall_blocked_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int **successorMatrix, const int n) {
+  floyd_warshall_blocked_cuda<int>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
 }

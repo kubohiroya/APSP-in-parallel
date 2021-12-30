@@ -18,3 +18,4 @@ void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **distanceMatrix
 void free_floyd_warshall_blocked_int(int **distanceMatrix, int **successorMatrix){
   free_floyd_warshall_blocked<int>(distanceMatrix, successorMatrix);
 }
+

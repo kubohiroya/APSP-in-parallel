@@ -100,7 +100,7 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
       auto start = std::chrono::high_resolution_clock::now();
 #ifdef CUDA
-      floyd_warshall_blocked_cuda<double>(matrix, &distanceMatrix, &successorMatrix, n_blocked);
+      floyd_warshall_blocked_cuda_double(matrix, &distanceMatrix, &successorMatrix, n_blocked);
 #else
       floyd_warshall_blocked_double(matrix, &distanceMatrix, &successorMatrix, n_blocked, block_size);
 #endif
@@ -134,9 +134,9 @@ int do_main_double(
                 << " with p=" << p << " and seed=" << seed << "\n";
 #ifdef CUDA
       std::cout << "CUDA!\n";
-      graph_cuda_t<double> * cuda_gr = johnson_cuda_random_init<double<(n, p, seed, DBL_INF);
+      graph_cuda_t<double> * cuda_gr = johnson_cuda_random_init<double>(n, p, seed, DBL_INF);
       auto start = std::chrono::high_resolution_clock::now();
-      johnson_cuda<double>(cuda_gr, distanceMatrix, successorMatrix);
+      johnson_cuda_double(cuda_gr, distanceMatrix, successorMatrix, DBL_INF);
       auto end = std::chrono::high_resolution_clock::now();
       free_cuda_graph<double>(cuda_gr);
 #else

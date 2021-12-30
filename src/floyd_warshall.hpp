@@ -9,29 +9,22 @@
 
 #include "inf.hpp"
 
-// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
-template<typename Number> Number * floyd_warshall_random_init(const int n, const double p, const unsigned long seed, const Number inf);
+#ifdef CUDA
+template<typename Number> void floyd_warshall_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, const int n);
+template<typename Number> void floyd_warshall_blocked_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_blocked_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_blocked_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);
+void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);
+#endif
 
-// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
-// we also need to limit the width and height but keep it a multiple of block_size
-template<typename Number> Number * floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed, const Number inf);
-
-// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
-template<typename Number> void floyd_warshall(Number *distanceMatrix, int *successorMatrix, const int n, const Number inf);
-
-// used for blocked_floyd_warshall
 #ifdef ISPC
 extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 extern "C" void floyd_warshall_in_place_int(int* C, const int* A, const int* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 
-/*template<typename Number> inline void
-floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized) {
-  // floyd_warshall_in_place_double(C, A, B, successorMatrix, db, ib, jb, b, n, n_oversized);
-  // floyd_warshall_in_place_float(C, A, B, successorMatrix, db, ib, jb, b, n, n_oversized);
-  // floyd_warshall_in_place_int(C, A, B, successorMatrix, db, ib, jb, b, n, n_oversized);
-  }
-*/
 template<typename Number> inline void
 floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 template<> inline void
@@ -69,10 +62,20 @@ floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *succes
 }
 #endif
 
+// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
+template<typename Number> Number * floyd_warshall_random_init(const int n, const double p, const unsigned long seed, const Number inf);
+
+// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
+// we also need to limit the width and height but keep it a multiple of block_size
+template<typename Number> Number * floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed, const Number inf);
+
+// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
+template<typename Number> void floyd_warshall(Number *distanceMatrix, int *successorMatrix, const int n, const Number inf);
+
 template<typename Number> Number * floyd_warshall_random_init(const int n, const double p, const unsigned long seed, Number inf) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
-  static std::uniform_real_distribution<Number> choose_weight(1, 100);
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -100,7 +103,7 @@ template<typename Number> Number *
 floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed, const Number inf) {
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
-  static std::uniform_real_distribution<Number> choose_weight(1, 100);
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
 
   std::mt19937_64 rand_engine(seed);
 
@@ -196,7 +199,7 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
   }
 
 #ifdef CUDA
-  floyd_warshall_blocked_cuda<Number>(adjacencyMatrix, distanceMatrix, successorMatrix, n);
+  floyd_warshall_blocked_cuda<Number>((Number *)adjacencyMatrix, distanceMatrix, successorMatrix, n);
   return;
 #else
   if(b == -1 || n <= b) {
@@ -267,42 +270,3 @@ extern "C" void floyd_warshall_blocked_float(const float *adjacencyMatrix, float
 extern "C" void free_floyd_warshall_blocked_float(float **distanceMatrix, int **successorMatrix);
 extern "C" void floyd_warshall_blocked_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int b, const int n);
 extern "C" void free_floyd_warshall_blocked_int(int **distanceMatrix, int **successorMatrix);
-
-#ifdef CUDA
-void floyd_warshall_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n);
-void floyd_warshall_blocked_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n);
-void floyd_warshall_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n);
-void floyd_warshall_blocked_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n);
-void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);
-void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n);
-/*
-template<typename Number> void floyd_warshall_cuda(const Number* adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, const int n){
-    // floyd_warshall_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-    // floyd_warshall_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-    // floyd_warshall_cuda_int(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<typename Number> void floyd_warshall_blocked_cuda(const Number* adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, const int n){
-    // floyd_warshall_blocked_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-    // floyd_warshall_blocked_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-    // floyd_warshall_blocked_cuda_int(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-*/
-template<> void floyd_warshall_cuda<double>(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<> void floyd_warshall_cuda<float>(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<> void floyd_warshall_cuda<int>(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_cuda_int(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<> void floyd_warshall_blockd_cuda<double>(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_blockd_cuda_double(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<> void floyd_warshall_blockd_cuda<float>(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_blockd_cuda_float(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-template<> void floyd_warshall_blockd_cuda<int>(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, const int n){
-    floyd_warshall_blockd_cuda_int(adjacencyMatrix, distanceMatrix, successorMatrix, n);
-}
-#endif
