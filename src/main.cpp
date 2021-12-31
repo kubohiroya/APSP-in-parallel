@@ -2,7 +2,6 @@
 #include <cstring> // memcpy
 #include <iostream> // cout
 
-#include "main.hpp"
 #include "util.hpp"
 
 #include <sys/stat.h> // stat
@@ -22,6 +21,132 @@
 #include "util.hpp"
 #include "floyd_warshall.hpp"
 #include "johnson.hpp"
+
+template<typename Number>
+void bench_floyd_warshall(int iterations, unsigned long seed, int block_size, bool check_correctness) {
+  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size="
+            << block_size << "\n";
+
+  print_table_header(check_correctness);
+  for (double p = 0.25; p < 1.0; p += 0.25) {
+    for (int v = 64; v <= 1024; v *= 2) {
+      Number *matrix = floyd_warshall_random_init<Number>(v, p, seed, getInf<Number>());
+      Number *solution = new Number[v * v];
+
+      Number *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
+      int v_blocked = v;
+      int block_remainder = v % block_size;
+      if (block_remainder != 0) {
+        // we may have to add some verts to fit to a multiple of block_size
+        matrix_blocked = floyd_warshall_blocked_random_init<Number>(v, block_size, p, seed, getInf<Number>());
+        v_blocked = v + block_size - block_remainder;
+      }
+      Number *distanceMatrix = new Number[v_blocked * v_blocked];
+      int *successorMatrix = new int[v_blocked * v_blocked];
+
+      bool correct = false;
+
+      double seq_total_time = 0.0;
+      double total_time = 0.0;
+      for (int b = 0; b < iterations; b++) {
+        // clear solution
+        std::memcpy(solution, matrix, v * v * sizeof(Number));
+
+        auto seq_start = std::chrono::high_resolution_clock::now();
+        floyd_warshall<Number>(solution, successorMatrix, v);
+        auto seq_end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
+        seq_total_time += seq_start_to_end.count();
+
+        // clear distanceMatrix
+        std::memset(distanceMatrix, 0, v_blocked * v_blocked * sizeof(Number));
+        auto start = std::chrono::high_resolution_clock::now();
+        floyd_warshall_blocked<Number>(matrix_blocked, &distanceMatrix, &successorMatrix, v_blocked, block_size, getInf<Number>());
+        auto end = std::chrono::high_resolution_clock::now();
+
+        if (check_correctness) {
+          correct = correct || correctness_check<Number>(distanceMatrix, v_blocked, solution, v);
+        }
+
+        std::chrono::duration<double, std::milli> start_to_end = end - start;
+        total_time += start_to_end.count();
+      }
+      delete[] matrix;
+      delete[] distanceMatrix;
+      delete[] successorMatrix;
+      delete[] solution;
+      print_table_row(p, v, seq_total_time, total_time, check_correctness, correct);
+    }
+    print_table_break(check_correctness);
+  }
+  std::cout << "\n\n";
+}
+
+template<typename Number>
+void bench_johnson(int iterations, unsigned long seed, bool check_correctness) {
+  std::cout << "\n\nJohnson's Algorithm benchmarking results for seed=" << seed << "\n";
+
+  print_table_header(check_correctness);
+  for (double pp = 0.25; pp < 1.0; pp += 0.25) {
+    for (int v = 64; v <= 2048; v *= 2) {
+      // johnson init
+      graph_t<Number> *gr = init_random_graph<Number>(v, pp, seed, getInf<Number>());
+      Number *matrix = floyd_warshall_random_init<Number>(v, pp, seed, getInf<Number>());
+      Number *distanceMatrix = new Number[v * v];
+      int *successorMatrix = new int[v * v];
+
+      Number *solution = new Number[v * v];
+      Number **out_sol = new Number *[v];
+      for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
+      Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+      std::vector<Number> d(num_vertices(G));
+      std::vector<int> p(num_vertices(G));
+
+      bool correct = false;
+
+      double seq_total_time = 0.0;
+      double total_time = 0.0;
+      for (int b = 0; b < iterations; b++) {
+        // clear solution
+        std::memset(solution, 0, v * v * sizeof(Number));
+
+        auto seq_start = std::chrono::high_resolution_clock::now();
+        johnson_all_pairs_shortest_paths(G, out_sol, distance_map(&d[0]).predecessor_map(&p[0]));
+        auto seq_end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
+        seq_total_time += seq_start_to_end.count();
+
+        // clear distanceMatrix
+        std::memset(distanceMatrix, 0, v * v * sizeof(Number));
+        std::memset(successorMatrix, 0, v * v * sizeof(int));
+        auto start = std::chrono::high_resolution_clock::now();
+        // TODO: johnson parallel -- temporarily putting floyd_warshall here
+        //floyd_warshall_blocked(matrix, distanceMatrix, v, block_size);
+        johnson_parallel<Number>(gr, distanceMatrix, successorMatrix, getInf<Number>());
+        auto end = std::chrono::high_resolution_clock::now();
+
+        if (check_correctness) {
+          correct = correct || correctness_check<Number>(distanceMatrix, v, solution, v);
+        }
+
+        std::chrono::duration<double, std::milli> start_to_end = end - start;
+        total_time += start_to_end.count();
+      }
+      delete[] solution;
+      delete[] out_sol;
+      delete[] distanceMatrix;
+      delete[] successorMatrix;
+      delete[] matrix;
+
+      print_table_row(pp, v, seq_total_time, total_time, check_correctness, correct);
+    }
+    print_table_break(check_correctness);
+  }
+  std::cout << "\n\n";
+}
+
 
 template<typename Number>
 int do_main(
@@ -176,132 +301,6 @@ int do_main(
 
   return 0;
 }
-
-template<typename Number>
-void bench_floyd_warshall(int iterations, unsigned long seed, int block_size, bool check_correctness) {
-  std::cout << "\n\nFloyd-Warshall's Algorithm benchmarking results for seed=" << seed << " and block size="
-            << block_size << "\n";
-
-  print_table_header(check_correctness);
-  for (double p = 0.25; p < 1.0; p += 0.25) {
-    for (int v = 64; v <= 1024; v *= 2) {
-      Number *matrix = floyd_warshall_random_init<Number>(v, p, seed, getInf<Number>());
-      Number *solution = new Number[v * v];
-
-      Number *matrix_blocked = matrix; // try to reuse adjacencyMatrixs
-      int v_blocked = v;
-      int block_remainder = v % block_size;
-      if (block_remainder != 0) {
-        // we may have to add some verts to fit to a multiple of block_size
-        matrix_blocked = floyd_warshall_blocked_random_init<Number>(v, block_size, p, seed, getInf<Number>());
-        v_blocked = v + block_size - block_remainder;
-      }
-      Number *distanceMatrix = new Number[v_blocked * v_blocked];
-      int *successorMatrix = new int[v_blocked * v_blocked];
-
-      bool correct = false;
-
-      double seq_total_time = 0.0;
-      double total_time = 0.0;
-      for (int b = 0; b < iterations; b++) {
-        // clear solution
-        std::memcpy(solution, matrix, v * v * sizeof(Number));
-
-        auto seq_start = std::chrono::high_resolution_clock::now();
-        floyd_warshall<Number>(solution, successorMatrix, v);
-        auto seq_end = std::chrono::high_resolution_clock::now();
-
-        std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
-        seq_total_time += seq_start_to_end.count();
-
-        // clear distanceMatrix
-        std::memset(distanceMatrix, 0, v_blocked * v_blocked * sizeof(Number));
-        auto start = std::chrono::high_resolution_clock::now();
-        floyd_warshall_blocked<Number>(matrix_blocked, &distanceMatrix, &successorMatrix, v_blocked, block_size, getInf<Number>());
-        auto end = std::chrono::high_resolution_clock::now();
-
-        if (check_correctness) {
-          correct = correct || correctness_check<Number>(distanceMatrix, v_blocked, solution, v);
-        }
-
-        std::chrono::duration<double, std::milli> start_to_end = end - start;
-        total_time += start_to_end.count();
-      }
-      delete[] matrix;
-      delete[] distanceMatrix;
-      delete[] successorMatrix;
-      delete[] solution;
-      print_table_row(p, v, seq_total_time, total_time, check_correctness, correct);
-    }
-    print_table_break(check_correctness);
-  }
-  std::cout << "\n\n";
-}
-
-template<typename Number>
-void bench_johnson(int iterations, unsigned long seed, bool check_correctness) {
-  std::cout << "\n\nJohnson's Algorithm benchmarking results for seed=" << seed << "\n";
-
-  print_table_header(check_correctness);
-  for (double pp = 0.25; pp < 1.0; pp += 0.25) {
-    for (int v = 64; v <= 2048; v *= 2) {
-      // johnson init
-      graph_t<Number> *gr = init_random_graph<Number>(v, pp, seed, getInf<Number>());
-      Number *matrix = floyd_warshall_random_init<Number>(v, pp, seed, getInf<Number>());
-      Number *distanceMatrix = new Number[v * v];
-      int *successorMatrix = new int[v * v];
-
-      Number *solution = new Number[v * v];
-      Number **out_sol = new Number *[v];
-      for (int i = 0; i < v; i++) out_sol[i] = &solution[i * v];
-      Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
-      std::vector<Number> d(num_vertices(G));
-      std::vector<int> p(num_vertices(G));
-
-      bool correct = false;
-
-      double seq_total_time = 0.0;
-      double total_time = 0.0;
-      for (int b = 0; b < iterations; b++) {
-        // clear solution
-        std::memset(solution, 0, v * v * sizeof(Number));
-
-        auto seq_start = std::chrono::high_resolution_clock::now();
-        johnson_all_pairs_shortest_paths(G, out_sol, distance_map(&d[0]).predecessor_map(&p[0]));
-        auto seq_end = std::chrono::high_resolution_clock::now();
-
-        std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
-        seq_total_time += seq_start_to_end.count();
-
-        // clear distanceMatrix
-        std::memset(distanceMatrix, 0, v * v * sizeof(Number));
-        std::memset(successorMatrix, 0, v * v * sizeof(int));
-        auto start = std::chrono::high_resolution_clock::now();
-        // TODO: johnson parallel -- temporarily putting floyd_warshall here
-        //floyd_warshall_blocked(matrix, distanceMatrix, v, block_size);
-        johnson_parallel<Number>(gr, distanceMatrix, successorMatrix, getInf<Number>());
-        auto end = std::chrono::high_resolution_clock::now();
-
-        if (check_correctness) {
-          correct = correct || correctness_check<Number>(distanceMatrix, v, solution, v);
-        }
-
-        std::chrono::duration<double, std::milli> start_to_end = end - start;
-        total_time += start_to_end.count();
-      }
-      delete[] solution;
-      delete[] out_sol;
-      delete[] distanceMatrix;
-      delete[] successorMatrix;
-      delete[] matrix;
-
-      print_table_row(pp, v, seq_total_time, total_time, check_correctness, correct);
-    }
-    print_table_break(check_correctness);
-  }
-  std::cout << "\n\n";
-}
-
 
 
 int main(int argc, char *argv[]) {
