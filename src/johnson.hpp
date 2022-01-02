@@ -196,6 +196,10 @@ template<typename Number> void free_cuda_graph(graph_cuda_t<Number> * g) {
   delete g;
 }
 
+template<typename Number> void johnson_cuda(graph_cuda_t<Number> * gr, Number *distanceMatrix, Number inf);
+void johnson_cuda_double(graph_cuda_t<double> * gr, double *distanceMatrix, double inf);
+void johnson_cuda_float(graph_cuda_t<float> * gr, float *distanceMatrix, float inf);
+void johnson_cuda_int(graph_cuda_t<int> * gr, int *distanceMatrix, int inf);
 template<typename Number> void johnson_cuda(graph_cuda_t<Number> * gr, Number *distanceMatrix, int *successorMatrix, Number inf);
 void johnson_cuda_double(graph_cuda_t<double> * gr, double *distanceMatrix, int *successorMatrix, double inf);
 void johnson_cuda_float(graph_cuda_t<float> * gr, float *distanceMatrix, int *successorMatrix, float inf);
@@ -244,6 +248,71 @@ template<typename Number> inline bool bellman_ford(graph_t<Number> *gr, Number *
   return no_neg_cycle;
 }
 
+template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix, const Number inf) {
+
+  int v = gr->V;
+
+  // Make new graph for Bellman-Ford
+  // First, a new node q is added to the graph, connected by zero-weight edges
+  // to each of the other nodes.
+  graph_t<Number> *bf_graph = new graph_t<Number>;
+  bf_graph->V = v + 1;
+  bf_graph->E = gr->E + v;
+  bf_graph->edge_array = new Edge[bf_graph->E];
+  bf_graph->weights = new Number[bf_graph->E];
+
+  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge));
+  std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(Number));
+  std::memset(&bf_graph->weights[gr->E], 0, v * sizeof(Number));
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int e = 0; e < v; e++) {
+    bf_graph->edge_array[e + gr->E] = Edge(v, e);
+  }
+
+  // Second, the Bellman–Ford algorithm is used, starting from the new vertex q,
+  // to find for each vertex v the minimum weight h(v) of a path from q to v. If
+  // this step detects a negative cycle, the algorithm is terminated.
+  // TODO Can run parallel version?
+  Number *h = new Number[bf_graph->V];
+  bool r = bellman_ford<Number>(bf_graph, h, v, inf);
+  if (!r) {
+    std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
+    exit(1);
+  }
+
+  // Next the edges of the original graph are reweighted using the values computed
+  // by the Bellman–Ford algorithm: an edge from u to v, having length
+  // w(u,v), is given the new length w(u,v) + h(u) − h(v).
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int e = 0; e < gr->E; e++) {
+    int u = std::get<0>(gr->edge_array[e]);
+    int v = std::get<1>(gr->edge_array[e]);
+    gr->weights[e] = gr->weights[e] + h[u] - h[v];
+  }
+
+  Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, v);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (int s = 0; s < v; s++) {
+    std::vector <Vertex<Number>> p(num_vertices(G));
+    std::vector<Number> d(num_vertices(G));
+    dijkstra_shortest_paths(G, s, distance_map(&d[0]).distance_inf(inf));
+    for (int vi = 0; vi < v; vi++) {
+      int i = s * v + vi;
+      distanceMatrix[i] = d[vi] + h[vi] - h[s];
+    }
+  }
+
+  delete[] h;
+  free_graph<Number>(bf_graph);
+}
 template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, const Number inf) {
 
   int v = gr->V;
@@ -311,6 +380,19 @@ template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *dis
   free_graph<Number>(bf_graph);
 }
 
+template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const Number inf) {
+  *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
+
+#ifdef CUDA
+  graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
+  johnson_cuda<Number>(cuda_gr, *distanceMatrix, inf);
+  free_cuda_graph<Number>(cuda_gr);
+#else
+  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
+  johnson_parallel<Number>(gr, *distanceMatrix, inf);
+  delete gr;
+#endif
+}
 template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const Number inf) {
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
@@ -326,14 +408,24 @@ template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMa
 #endif
 }
 
+template<typename Number> void free_johnson_parallel_matrix(Number **distanceMatrix) {
+  free(*distanceMatrix);
+}
 template<typename Number> void free_johnson_parallel_matrix(Number **distanceMatrix, int **successorMatrix) {
   free(*distanceMatrix);
   free(*successorMatrix);
 }
 
-extern "C" void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n);
-extern "C" void free_johnson_parallel_matrix_double(double **distanceMatrix, int **successorMatrix);
-extern "C" void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n);
-extern "C" void free_johnson_parallel_matrix_float(float **distanceMatrix, int **successorMatrix);
-extern "C" void johnson_parallel_matrix_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n);
-extern "C" void free_johnson_parallel_matrix_int(int **distanceMatrix, int **successorMatrix);
+extern "C" void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_double(double **distanceMatrix);
+extern "C" void johnson_parallel_matrix_float(const float *adjacencyMatrix, float **distanceMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_float(float **distanceMatrix);
+extern "C" void johnson_parallel_matrix_int(const int *adjacencyMatrix, int **distanceMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_int(int **distanceMatrix);
+
+extern "C" void johnson_parallel_matrix_successor_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_successor_double(double **distanceMatrix, int **successorMatrix);
+extern "C" void johnson_parallel_matrix_successor_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_successor_float(float **distanceMatrix, int **successorMatrix);
+extern "C" void johnson_parallel_matrix_successor_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n);
+extern "C" void free_johnson_parallel_matrix_successor_int(int **distanceMatrix, int **successorMatrix);
