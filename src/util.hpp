@@ -4,10 +4,43 @@
 #include <string> // string
 #include <sstream> // stringstream
 #include <chrono> // see Timer class
+#include <random> // mt19937_64, uniform_x_distribution
 
-#include "inf.hpp"
+#include "getInf.hpp"
 
-template<typename Number> inline void print(const Number value, const Number inf) {
+// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
+template<typename Number> Number* create_random_adjacencyMatrix(const int n, const double p, const unsigned long seed);
+
+// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
+// we also need to limit the width and height but keep it a multiple of block_size
+// template<typename Number> Number* floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed);
+
+template<typename Number> Number* create_random_adjacencyMatrix(const int n, const double p, const unsigned long seed) {
+  static const Number inf = getInf<Number>();
+  static std::uniform_real_distribution<double> flip(0, 1);
+  // TODO: create negative edges without negative cycles
+  static std::uniform_real_distribution<double> choose_weight(1, 100);
+
+  std::mt19937_64 rand_engine(seed);
+  Number *out = new Number[n * n];
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (i == j) {
+        out[i * n + j] = 0.0;
+      } else if (flip(rand_engine) < p) {
+        out[i * n + j] = choose_weight(rand_engine) * 1.0;
+      } else {
+        // "infinity" - the highest value we can still safely add two infinities
+        out[i * n + j] = inf;
+      }
+    }
+  }
+
+  return out;
+}
+
+template<typename Number> inline void print(const Number value) {
+  Number inf = getInf<Number>();
   if (value == inf) {
     std::cout << "Inf";
   } else {
@@ -15,12 +48,12 @@ template<typename Number> inline void print(const Number value, const Number inf
   }
 }
 
-template<typename Number> inline void print_matrix(const Number *distanceMatrix, const int n_distanceMatrix, const int n_blocked, const Number inf) {
+template<typename Number> inline void print_matrix(const Number *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
   for (int i = 0; i < n_distanceMatrix; i++) {
-    print<>(distanceMatrix[i * n_blocked], inf);
+    print<Number>(distanceMatrix[i * n_blocked]);
     for (int j = 1; j < n_distanceMatrix; j++) {
       std::cout << ", ";
-      print<>(distanceMatrix[i * n_blocked + j], inf);
+      print<Number>(distanceMatrix[i * n_blocked + j]);
     }
     std::cout << std::endl;
   }
@@ -56,27 +89,27 @@ inline void print_usage() {
   std::cout << "\n";
 }
 
-inline void print_table_row(double p, int v, double seq, double par, bool check_correctness, bool correct) {
-  std::printf("\n| %-3.2f | %-7d | %-12.3f | %-12.3f | %-10.3f |", p, v, seq, par, seq / par);
+inline void print_table_row(double p, int v, double seq, double par, bool correct, bool check_correctness) {
+  std::printf("\n| %-1.5f | %7d | %12.3f | %12.3f | %10.3f |", p, v, seq, par, seq / par);
   if (check_correctness) {
-    std::printf(" %-8s |", (correct ? "OK" : "NG"));
+    std::printf(" %7s |", (correct ? "OK" : "NG"));
   }
 }
 
 inline void print_table_break(bool check_correctness) {
   if (check_correctness) {
-    std::printf("\n ----------------------------------------------------------------------");
+    std::printf("\n -------------------------------------------------------------------------");
   } else {
-    std::printf("\n -----------------------------------------------------------");
+    std::printf("\n --------------------------------------------------------------");
   }
 }
 
 inline void print_table_header(bool check_correctness) {
   print_table_break(check_correctness);
-  std::printf("\n| %-4s | %-7s | %-12s | %-12s | %-10s |",
+  std::printf("\n| %-7s | %-7s | %-12s | %-12s | %-10s |",
               "p", "verts", "seq (ms)", "par (ms)", "speedup");
   if (check_correctness) {
-    std::printf(" %-8s |", "correct");
+    std::printf(" %-7s |", "correct");
   }
   print_table_break(check_correctness);
 }

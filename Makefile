@@ -3,10 +3,10 @@ UNAME = $(shell uname)
 # Override using CXX=clang++ make ...
 CXX ?= g++
 #CXXFLAGS ?= -std=c++11 -Wall -Wextra -g -fPIC -O3
-CXXFLAGS ?= -std=c++11 -fPIC -O3
+CXXFLAGS ?= -std=c++20 -fPIC -O3
  #-Wunused-parameter -W\#pragma-messages
 CXXFLAGS += $(CXXEXTRA)
-LDFLAGS ?= -L./libs
+LDFLAGS = -L./libs
 LLVM=llvm-12
 
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
@@ -15,10 +15,10 @@ JAR = apsp/target/apsp-1.0.jar
 JAVA_OPT := -Djna.library.path=./libs
 
 ISPC ?= /usr/local/bin/ispc
-ISPC_FLAGS ?= --arch=x86-64 --emit-obj -g -03
+ISPC_FLAGS ?= --arch=x86-64 --emit-obj -g -03 -xAVX2
 
 NVCC ?= /usr/local/cuda/bin/nvcc
-NVCCFLAGS ?= -std=c++11 -O3
+NVCCFLAGS ?= -std=c++17 -O3
 
 OBJ_DIR := objs
 LIBS_DIR := libs

@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "inf.hpp"
+#include "getInf.hpp"
 
 using namespace boost;
 
@@ -37,8 +38,8 @@ struct graph_cuda_t {
 };
 #endif
 
-template<typename Number> size_t init_random_adjacency_matrix(Number *adjacencyMatrix, const int n, const double p, const unsigned long seed, const Number inf) {
-
+template<typename Number> size_t init_random_adjacency_matrix(Number *adjacencyMatrix, const int n, const double p, const unsigned long seed) {
+  static const Number inf = getInf<Number>();
   static std::uniform_real_distribution<double> flip(0, 1);
   static std::uniform_real_distribution<double> choose_weight(1, 100);
 
@@ -60,7 +61,8 @@ template<typename Number> size_t init_random_adjacency_matrix(Number *adjacencyM
   return e;
 }
 
-template<typename Number> size_t count_edges(const Number *adjacencyMatrix, const int n, const Number inf) {
+template<typename Number> size_t count_edges(const Number *adjacencyMatrix, const int n) {
+  static const Number inf = getInf<Number>();
   size_t e = 0;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -77,14 +79,15 @@ template<typename Number> size_t count_edges(const Number *adjacencyMatrix, cons
   return e;
 }
 
-template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMatrix, const int n, const int e, const Number inf) {
+template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMatrix, const int n) {
+  static const Number inf = getInf<Number>();
+  size_t e = count_edges<Number>(adjacencyMatrix, n);
   Edge *edge_array = new Edge[e];
   Number *weights = new Number[e];
   int ei = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if (adjacencyMatrix[i * n + j] != 0
-          && adjacencyMatrix[i * n + j] != inf) {
+      if (adjacencyMatrix[i * n + j] != 0 && adjacencyMatrix[i * n + j] != inf) {
 #ifdef _OPENMP
 #pragma omp critical (init_graph)
 #endif
@@ -104,10 +107,11 @@ template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMa
   return gr;
 }
 
-template<typename Number> graph_t<Number> * init_random_graph(const int n, const double p, const unsigned long seed, const Number inf) {
+template<typename Number> graph_t<Number> * init_random_graph(const int n, const double p, const unsigned long seed) {
+  static const Number inf = getInf<Number>();
   Number *adjacencyMatrix = new Number[n * n];
-  size_t e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed, inf);
-  graph_t<Number> * gr = init_graph<Number>(adjacencyMatrix, n, e, inf);
+  size_t e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed);
+  graph_t<Number> * gr = init_graph<Number>(adjacencyMatrix, n, e);
   delete[] adjacencyMatrix;
   return gr;
 }
@@ -124,9 +128,10 @@ inline void set_edge(edge_t *edge, int u, int v) {
   edge->v = v;
 }
 
-template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const int n, const double p, const unsigned long seed, const Number inf) {
+template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const int n, const double p, const unsigned long seed) {
+  static const Number inf = getInf<Number>();
   Number* adjacencyMatrix = new Number[n * n];
-  int e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed, inf);
+  int e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed);
 
   edge_t* edge_array = new edge_t[e];
   int* starts = new int[n + 1];  // Starting point for each edge
@@ -157,7 +162,9 @@ template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const 
   return gr;
 }
 
-template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *adjacencyMatrix, const int n, const int e, const Number inf) {
+template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *adjacencyMatrix, const int n) {
+  static const Number inf = getInf<Number>();
+  size_t e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed);
   edge_t *edge_array = new edge_t[e];
   int* starts = new int[n + 1];  // Starting point for each edge
   Number *weights = new Number[e];
@@ -196,18 +203,19 @@ template<typename Number> void free_cuda_graph(graph_cuda_t<Number> * g) {
   delete g;
 }
 
-template<typename Number> void johnson_cuda(graph_cuda_t<Number> * gr, Number *distanceMatrix, Number inf);
-void johnson_cuda_double(graph_cuda_t<double> * gr, double *distanceMatrix, double inf);
-void johnson_cuda_float(graph_cuda_t<float> * gr, float *distanceMatrix, float inf);
-void johnson_cuda_int(graph_cuda_t<int> * gr, int *distanceMatrix, int inf);
-template<typename Number> void johnson_cuda(graph_cuda_t<Number> * gr, Number *distanceMatrix, int *successorMatrix, Number inf);
-void johnson_cuda_double(graph_cuda_t<double> * gr, double *distanceMatrix, int *successorMatrix, double inf);
-void johnson_cuda_float(graph_cuda_t<float> * gr, float *distanceMatrix, int *successorMatrix, float inf);
-void johnson_cuda_int(graph_cuda_t<int> * gr, int *distanceMatrix, int *successorMatrix, int inf);
+template<typename Number> void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix);
+void johnson_cuda_double(graph_cuda_t<double> *gr, double *distanceMatrix, double inf);
+void johnson_cuda_float(graph_cuda_t<float> *gr, float *distanceMatrix, float inf);
+void johnson_cuda_int(graph_cuda_t<int> *gr, int *distanceMatrix, int inf);
+template<typename Number> void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix);
+void johnson_cuda_double(graph_cuda_t<double> *gr, double *distanceMatrix, int *successorMatrix, double inf);
+void johnson_cuda_float(graph_cuda_t<float> *gr, float *distanceMatrix, int *successorMatrix, float inf);
+void johnson_cuda_int(graph_cuda_t<int> *gr, int *distanceMatrix, int *successorMatrix, int inf);
 
 #endif
 
-template<typename Number> inline bool bellman_ford(graph_t<Number> *gr, Number *dist, int src, const Number inf) {
+template<typename Number> inline bool bellman_ford(graph_t<Number> *gr, Number *dist, int src) {
+  static const Number inf = getInf<Number>();
   int v = gr->V;
   int e = gr->E;
   Edge *edges = gr->edge_array;
@@ -248,8 +256,8 @@ template<typename Number> inline bool bellman_ford(graph_t<Number> *gr, Number *
   return no_neg_cycle;
 }
 
-template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix, const Number inf) {
-
+template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix) {
+  static const Number inf = getInf<Number>();
   int v = gr->V;
 
   // Make new graph for Bellman-Ford
@@ -277,7 +285,7 @@ template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *dis
   // this step detects a negative cycle, the algorithm is terminated.
   // TODO Can run parallel version?
   Number *h = new Number[bf_graph->V];
-  bool r = bellman_ford<Number>(bf_graph, h, v, inf);
+  bool r = bellman_ford<Number>(bf_graph, h, v);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
@@ -313,8 +321,9 @@ template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *dis
   delete[] h;
   free_graph<Number>(bf_graph);
 }
-template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, const Number inf) {
 
+template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
+  static const Number inf = getInf<Number>();
   int v = gr->V;
 
   // Make new graph for Bellman-Ford
@@ -342,7 +351,7 @@ template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *dis
   // this step detects a negative cycle, the algorithm is terminated.
   // TODO Can run parallel version?
   Number *h = new Number[bf_graph->V];
-  bool r = bellman_ford<Number>(bf_graph, h, v, inf);
+  bool r = bellman_ford<Number>(bf_graph, h, v);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
@@ -380,30 +389,33 @@ template<typename Number> void johnson_parallel(graph_t<Number> *gr, Number *dis
   free_graph<Number>(bf_graph);
 }
 
-template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const Number inf) {
+template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, const int n) {
+  static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
 
 #ifdef CUDA
-  graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
-  johnson_cuda<Number>(cuda_gr, *distanceMatrix, inf);
+  graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
+  johnson_cuda<Number>(cuda_gr, *distanceMatrix);
   free_cuda_graph<Number>(cuda_gr);
 #else
-  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
-  johnson_parallel<Number>(gr, *distanceMatrix, inf);
+  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
+  johnson_parallel<Number>(gr, *distanceMatrix);
   delete gr;
 #endif
 }
-template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const Number inf) {
+
+template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
+  static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 
 #ifdef CUDA
-  graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
-  johnson_cuda<Number>(cuda_gr, *distanceMatrix, *successorMatrix, inf);
+  graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
+  johnson_cuda<Number>(cuda_gr, *distanceMatrix, *successorMatrix);
   free_cuda_graph<Number>(cuda_gr);
 #else
-  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n, count_edges<Number>(adjacencyMatrix, n, inf), inf);
-  johnson_parallel<Number>(gr, *distanceMatrix, *successorMatrix, inf);
+  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
+  johnson_parallel<Number>(gr, *distanceMatrix, *successorMatrix);
   delete gr;
 #endif
 }

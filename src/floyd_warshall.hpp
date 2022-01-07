@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstring> // memcpy
-#include <random> // mt19937_64, uniform_x_distribution
+#include <iostream> // cout
 
 #ifdef _OPENMP
 #include "omp.h" // omp_get_num_threads
 #endif
 
-#include "inf.hpp"
+#include "getInf.hpp"
+#include "util.hpp"
 
 #ifdef CUDA
 template<typename Number> void floyd_warshall_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, const int n);
@@ -29,73 +30,80 @@ void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceM
 #endif
 
 #ifdef ISPC
-extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
-extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
-extern "C" void floyd_warshall_in_place_int(int* C, const int* A, const int* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
-extern "C" void floyd_warshall_in_place_successor_double(double* C, const double* A, const double* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
-extern "C" void floyd_warshall_in_place_successor_float(float* C, const float* A, const float* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
-extern "C" void floyd_warshall_in_place_successor_int(int* C, const int* A, const int* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
+extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const double inf);
+extern "C" void floyd_warshall_in_place_float(float* C, const float* A, const float* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const float inf);
+extern "C" void floyd_warshall_in_place_int(int* C, const int* A, const int* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const int inf);
+extern "C" void floyd_warshall_in_place_successor_double(double* C, const double* A, const double* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const double inf);
+extern "C" void floyd_warshall_in_place_successor_float(float* C, const float* A, const float* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const float inf);
+extern "C" void floyd_warshall_in_place_successor_int(int* C, const int* A, const int* B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const int inf);
 
 template<typename Number> inline void
 floyd_warshall_in_place(Number *C, const Number *A, const Number *B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 template<> inline void
 floyd_warshall_in_place<double>(double *C, const double *A, const double *B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_double(C, A, B, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_double(C, A, B, kb, ib, jb, b, n, n_oversized, DBL_INF);
 }
 template<> inline void
 floyd_warshall_in_place<float>(float *C, const float *A, const float *B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_float(C, A, B, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_float(C, A, B, kb, ib, jb, b, n, n_oversized, FLT_INF);
 }
 template<> inline void
 floyd_warshall_in_place<int>(int *C, const int *A, const int *B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_int(C, A, B, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_int(C, A, B, kb, ib, jb, b, n, n_oversized, INT_INF);
 }
 
 template<typename Number> inline void
 floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized);
 template<> inline void
 floyd_warshall_in_place<double>(double *C, const double *A, const double *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_successor_double(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_successor_double(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized, DBL_INF);
 }
 template<> inline void
 floyd_warshall_in_place<float>(float *C, const float *A, const float *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_successor_float(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_successor_float(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized, FLT_INF);
 }
 template<> inline void
 floyd_warshall_in_place<int>(int *C, const int *A, const int *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized){
-  floyd_warshall_in_place_successor_int(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized);
+  floyd_warshall_in_place_successor_int(C, A, B, successorMatrix, kb, ib, jb, b, n, n_oversized, INT_INF);
 }
 
 #else
 template<typename Number> inline void
 floyd_warshall_in_place(Number *C, const Number *A, const Number *B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized) {
+  static const Number inf = getInf<Number>();
   for (int k = 0; k < b; k++) {
     for (int i = 0; i < b; i++) {
       int ik = i * n_oversized + k;
       for (int j = 0; j < b; j++) {
         int kj = k * n_oversized + j;
         int ij = i * n_oversized + j;
-        double sum = A[ik] + B[kj];
-        if (C[ij] > sum) {
-          C[ij] = sum;
+        if (A[ik] != inf && B[kj] != inf) {
+          double sum = A[ik] + B[kj];
+          if (C[ij] > sum) {
+            C[ij] = sum;
+          }
         }
       }
     }
   }
 }
+
 template<typename Number> inline void
 floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *successorMatrix, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized) {
+  static const Number inf = getInf<Number>();
   for (int k = 0; k < b; k++) {
     for (int i = 0; i < b; i++) {
       int ik = i * n_oversized + k;
       for (int j = 0; j < b; j++) {
         int kj = k * n_oversized + j;
         int ij = i * n_oversized + j;
-        double sum = A[ik] + B[kj];
-        if (C[ij] > sum) {
-          C[ij] = sum;
-    	  if(jb + j < n && ib + i < n && kb + k < n){
-            successorMatrix[(jb + j) * n + ib + i] = successorMatrix[(jb + j) * n + kb + k];
+        if (A[ik] != inf && B[kj] != inf) {
+          double sum = A[ik] + B[kj];
+          if (C[ij] > sum) {
+            C[ij] = sum;
+            if(jb + j < n && ib + i < n && kb + k < n){
+              successorMatrix[(jb + j) * n + ib + i] = successorMatrix[(jb + j) * n + kb + k];
+            }
           }
         }
       }
@@ -104,46 +112,10 @@ floyd_warshall_in_place(Number *C, const Number *A, const Number *B, int *succes
 }
 #endif
 
-// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
-template<typename Number> Number * floyd_warshall_random_init(const int n, const double p, const unsigned long seed, const Number inf);
-
-// we need this to initialized to 0 on the diagonal, infinity anywhere there is no edge
-// we also need to limit the width and height but keep it a multiple of block_size
-template<typename Number> Number * floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed, const Number inf);
-
-// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
-template<typename Number> void floyd_warshall(Number *distanceMatrix, const int n, const Number inf);
-template<typename Number> void floyd_warshall(Number *distanceMatrix, int *successorMatrix, const int n, const Number inf);
-
-template<typename Number> Number * floyd_warshall_random_init(const int n, const double p, const unsigned long seed, Number inf) {
-  static std::uniform_real_distribution<double> flip(0, 1);
-  // TODO: create negative edges without negative cycles
-  static std::uniform_real_distribution<double> choose_weight(1, 100);
-
-  std::mt19937_64 rand_engine(seed);
-
-  Number *out = new Number[n * n];
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      if (i == j) {
-        out[i * n + j] = 0.0;
-      } else if (flip(rand_engine) < p) {
-        out[i * n + j] = choose_weight(rand_engine) * 1.0;
-      } else {
-        // "infinity" - the highest value we can still safely add two infinities
-        out[i * n + j] = inf;
-      }
-    }
-  }
-
-  return out;
-}
-
+/*
 template<typename Number> Number *
-floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed, const Number inf) {
+floyd_warshall_blocked_random_init(const int n, const int block_size, const double p, const unsigned long seed) {
+  static const Number inf = getInf<Number>();
   static std::uniform_real_distribution<double> flip(0, 1);
   // TODO: create negative edges without negative cycles
   static std::uniform_real_distribution<double> choose_weight(1, 100);
@@ -154,9 +126,6 @@ floyd_warshall_blocked_random_init(const int n, const int block_size, const doub
   int n_oversized = (block_remainder == 0) ? n : n + block_size - block_remainder;
 
   Number *out = new Number[n_oversized * n_oversized];
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < n_oversized; i++) {
     for (int j = 0; j < n_oversized; j++) {
       if (i == j) {
@@ -169,37 +138,50 @@ floyd_warshall_blocked_random_init(const int n, const int block_size, const doub
       }
     }
   }
-
   return out;
 }
+*/
 
-template<typename Number> void floyd_warshall(Number *distanceMatrix, const int n) {
+template<typename Number> void floyd_warshall(const Number *adjacencyMatrix, Number **distanceMatrix, const int n) {
+  static const Number inf = getInf<Number>();
+  *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
+  std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
+
   for (int k = 0; k < n; k++) {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        Number sum = distanceMatrix[i * n + k] + distanceMatrix[k * n + j];
-        if (distanceMatrix[i * n + j] > sum) {
-          distanceMatrix[i * n + j] = sum;
-         }
+        if((*distanceMatrix)[i * n + k] != inf && (*distanceMatrix)[k * n + j] != inf){
+          Number sum = (*distanceMatrix)[i * n + k] + (*distanceMatrix)[k * n + j];
+          if ((*distanceMatrix)[i * n + j] > sum) {
+            (*distanceMatrix)[i * n + j] = sum;
+          }
+        }
       }
     }
   }
 }
 
-template<typename Number> void floyd_warshall(Number *distanceMatrix, int *successorMatrix, const int n) {
+template<typename Number> void floyd_warshall(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
+  static const Number inf = getInf<Number>();
+  *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
+  std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
+  *successorMatrix = (int *) malloc(sizeof(int) * n * n);
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      (*successorMatrix)[i * n + j] = j;
+    }
+  }
+
   for (int k = 0; k < n; k++) {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        Number sum = distanceMatrix[i * n + k] + distanceMatrix[k * n + j];
-        if (distanceMatrix[i * n + j] > sum) {
-          distanceMatrix[i * n + j] = sum;
-          successorMatrix[j * n + i] = successorMatrix[j * n + k];
+        if((*distanceMatrix)[i * n + k] != inf && (*distanceMatrix)[k * n + j] != inf){
+          Number sum = (*distanceMatrix)[i * n + k] + (*distanceMatrix)[k * n + j];
+          if ((*distanceMatrix)[i * n + j] > sum) {
+            (*distanceMatrix)[i * n + j] = sum;
+            (*successorMatrix)[j * n + i] = (*successorMatrix)[j * n + k];
+          }
         }
       }
     }
@@ -280,24 +262,25 @@ template<typename Number> void _floyd_warshall_blocked(Number *distanceMatrix, i
   }
 }
 
-template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int b, const int n, const Number inf) {
+template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const int b) {
+  static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
-  std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
 
 #ifdef CUDA
   floyd_warshall_blocked_cuda<Number>((Number *)adjacencyMatrix, distanceMatrix, n);
   return;
 #else
   if(b == -1 || n <= b) {
-    floyd_warshall<Number>(*distanceMatrix, n);
+    floyd_warshall<Number>(adjacencyMatrix, distanceMatrix, n);
     return;
   }
 
   int block_remainder = n % b;
   if(block_remainder == 0){
-    _floyd_warshall_blocked<Number>(*distanceMatrix, b, n, n);
-    return;
-  }
+      std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
+      _floyd_warshall_blocked<Number>(*distanceMatrix, b, n, n);
+      return;
+    }
 
   int n_oversized = n + b - block_remainder;
   Number *_distanceMatrix = new Number[n_oversized * n_oversized];
@@ -307,7 +290,7 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
+      _distanceMatrix[i * n_oversized + j] = adjacencyMatrix[i * n + j];
     }
   }
 
@@ -344,10 +327,9 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 #endif
 }
 
-
-template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int b, const int n, const Number inf) {
+template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const int b) {
+  static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
-  std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 
 #ifdef _OPENMP
@@ -364,12 +346,13 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
   return;
 #else
   if(b == -1 || n <= b) {
-    floyd_warshall<Number>(*distanceMatrix, *successorMatrix, n);
+    floyd_warshall<Number>(adjacencyMatrix, distanceMatrix, successorMatrix, n);
     return;
   }
 
   int block_remainder = n % b;
   if(block_remainder == 0){
+    std::memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
     _floyd_warshall_blocked<Number>(*distanceMatrix, *successorMatrix, b, n, n);
     return;
   }
@@ -382,7 +365,7 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 #endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      _distanceMatrix[i * n_oversized + j] = (*distanceMatrix)[i * n + j];
+      _distanceMatrix[i * n_oversized + j] = adjacencyMatrix[i * n + j];
     }
   }
 
@@ -405,7 +388,7 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
     _distanceMatrix[i * n_oversized + i] = 0;
  }
 
- _floyd_warshall_blocked<Number>(_distanceMatrix, *successorMatrix, b, n, n_oversized);
+ _floyd_warshall_blocked<Number>(_distanceMatrix, (int *)*successorMatrix, b, n, n_oversized);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -428,7 +411,6 @@ template<typename Number> void free_floyd_warshall_blocked(Number **distanceMatr
   free(*successorMatrix);
 }
 
-// expects len(adjacencyMatrix) == len(distanceMatrix) == n*n
 extern "C" void floyd_warshall_blocked_double(const double *adjacencyMatrix, double **distanceMatrix, const int b, const int n);
 extern "C" void free_floyd_warshall_blocked_double(double **distanceMatrix);
 extern "C" void floyd_warshall_blocked_float(const float *adjacencyMatrix, float **distanceMatrix, const int b, const int n);
