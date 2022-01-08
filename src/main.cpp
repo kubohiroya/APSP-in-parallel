@@ -121,19 +121,9 @@ double do_floyd_warshall(int n, int block_size, double p, unsigned long seed, bo
 
   auto start = std::chrono::high_resolution_clock::now();
   if (with_successor) {
-#ifdef CUDA
-    floyd_warshall_blocked_cuda<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n);
-#else
     floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n, block_size);
-    // floyd_warshall<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n);
-#endif
   } else {
-#ifdef CUDA
-    floyd_warshall_blocked_cuda<Number>(adjacencyMatrix, &distanceMatrix, n);
-#else
     floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);
-    // floyd_warshall<Number>(adjacencyMatrix, &distanceMatrix, n);
-#endif
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -219,7 +209,7 @@ bench_result * bench_floyd_warshall(int iterations, int v, int block_size, doubl
 }
 
 template<typename Number>
-double do_johnson(int n, double p, unsigned long seed, bool with_successor, bool check_correctness){
+double do_johnson(const int n, const double p, const unsigned long seed, const bool with_successor, const bool check_correctness){
 
   Number *solution = check_correctness ? get_solution<Number>(n, p, seed) : nullptr;
   Number *adjacencyMatrix = create_random_adjacencyMatrix<Number>(n, p, seed);
@@ -273,9 +263,9 @@ bench_result * bench_johnson(int iterations, int n, double p, unsigned long seed
     auto start = std::chrono::high_resolution_clock::now();
     graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
     if (with_successor) {
-      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n);
+      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, (const int)n);
     } else {
-      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, n);
+      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, (const int)n);
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> start_to_end = end - start;
