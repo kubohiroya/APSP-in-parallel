@@ -27,7 +27,7 @@ int min_distance(Number *dist, char *visited, int n, Number inf) {
 
 template<typename Number>
 __global__
-void dijkstra_kernel(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, char *visited_global, Number inf) {
+void dijkstra_kernel(const graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, char *visited_global, const Number inf) {
   int s = blockIdx.x * blockDim.x + threadIdx.x;
   int V = gr->V;
 
@@ -39,6 +39,7 @@ void dijkstra_kernel(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *succ
 
   Number *dist = &distanceMatrix[s * V];
   char *visited = &visited_global[s * V];
+  
   for (int i = 0; i < V; i++) {
     dist[i] = inf;
     visited[i] = 0;
@@ -52,16 +53,17 @@ void dijkstra_kernel(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *succ
     visited[u] = 1;
     for (int v_i = u_start; v_i < u_end; v_i++) {
       int v = edge_array[v_i].v;
-      if (!visited[v] && dist_u != DBL_INF && dist_u + weights[v_i] < dist[v])
+      if (!visited[v] && dist_u != inf && dist_u + weights[v_i] < dist[v]) {
         dist[v] = dist_u + weights[v_i];
-      successorMatrix[count] = 0; // FIXME
+	successorMatrix[v_i * v + s] = edge_array[v_i].u;
+      }
     }
   }
 }
 
 template<typename Number>
 __global__
-void bellman_ford_kernel(graph_cuda_t<Number> *gr, Number *dist, const Number inf) {
+void bellman_ford_kernel(const graph_cuda_t<Number> *gr, Number *dist, const Number inf) {
   int E = gr->E;
   int e = threadIdx.x + blockDim.x * blockIdx.x;
 
@@ -79,12 +81,13 @@ void bellman_ford_kernel(graph_cuda_t<Number> *gr, Number *dist, const Number in
 
 template<typename Number>
 __host__
-bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int s, Number inf) {
+bool bellman_ford_cuda(const graph_cuda_t<Number> *gr, Number *dist, int s) {
   int V = gr->V;
   int E = gr->E;
   edge_t *edges = gr->edge_array;
   Number *weights = gr->weights;
-
+  static const Number inf = getInf<Number>();
+  
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -98,6 +101,7 @@ bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int s, Number inf
   cudaMemcpy(device_dist, dist, sizeof(Number) * V, cudaMemcpyHostToDevice);
 
   int blocks = (E + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  
   for (int i = 1; i <= V - 1; i++) {
     bellman_ford_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(gr, device_dist, inf);
     cudaThreadSynchronize();
@@ -129,9 +133,16 @@ bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int s, Number inf
 
 template<typename Number>
 __host__
-void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix, Number inf) {
+void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix) {
+  johnson_successor_cuda(gr, distanceMatrix, nullptr);
+}
+
+template<typename Number>
+__host__
+void johnson_successor_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
 
   //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
+  static const Number inf = getInf<Number>();
 
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
@@ -155,7 +166,7 @@ void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *success
   edge_t *device_edge_array;
   Number *device_weights;
   Number *device_distanceMatrix;
-  int *device_successorMatrix;
+  int *device_successorMatrix = nullptr;
   int *device_starts;
   // Needed to run dijkstra
   char *device_visited;
@@ -163,7 +174,9 @@ void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *success
   cudaMalloc(&device_edge_array, sizeof(edge_t) * E);
   cudaMalloc(&device_weights, sizeof(Number) * E);
   cudaMalloc(&device_distanceMatrix, sizeof(Number) * V * V);
-  cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
+  if(successorMatrix != nullptr){
+    cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
+  }
   cudaMalloc(&device_visited, sizeof(char) * V * V);
   cudaMalloc(&device_starts, sizeof(int) * (V + 1));
 
@@ -193,7 +206,7 @@ void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *success
   std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(Number));
 
   Number *h = new Number[bf_graph->V];
-  bool r = bellman_ford_cuda<Number>(bf_graph, h, V, inf);
+  bool r = bellman_ford_cuda<Number>(bf_graph, h, V);
   if (!r) {
     std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
     exit(1);
@@ -228,19 +241,18 @@ void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *success
   cudaFree(device_edge_array);
   cudaFree(device_weights);
   cudaFree(device_distanceMatrix);
-  cudaFree(device_successorMatrix);
+  if(successorMatrix != nullptr){
+    cudaFree(device_successorMatrix);
+  }
   cudaFree(device_starts);
   cudaFree(device_visited);
-  cudaFree(gr);
-
+  // cudaFree(gr);
 }
 
-__host__ void johnson_cuda_double(graph_cuda_t<double> *cuda_gr, double *distanceMatrix, int *successorMatrix, double inf) {
-  johnson_cuda<double>(cuda_gr, distanceMatrix, successorMatrix, inf);
-}
-__host__ void johnson_cuda_float(graph_cuda_t<float> *cuda_gr, float *distanceMatrix, int *successorMatrix, float inf) {
-  johnson_cuda<float>(cuda_gr, distanceMatrix, successorMatrix, inf);
-}
-__host__ void johnson_cuda_int(graph_cuda_t<int> *cuda_gr, int *distanceMatrix, int *successorMatrix, int inf) {
-  johnson_cuda<int>(cuda_gr, distanceMatrix, successorMatrix, inf);
-}
+template __host__ void johnson_cuda<double>(graph_cuda_t<double> *gr, double *distanceMatrix);
+template __host__ void johnson_cuda<float>(graph_cuda_t<float> *gr, float *distanceMatrix);
+template __host__ void johnson_cuda<int>(graph_cuda_t<int> *gr, int *distanceMatrix);
+template __host__ void johnson_successor_cuda<double>(graph_cuda_t<double> *gr, double *distanceMatrix, int *successorMatrix);
+template __host__ void johnson_successor_cuda<float>(graph_cuda_t<float> *gr, float *distanceMatrix, int *successorMatrix);
+template __host__ void johnson_successor_cuda<int>(graph_cuda_t<int> *gr, int *distanceMatrix, int *successorMatrix);
+
