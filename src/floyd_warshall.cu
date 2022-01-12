@@ -155,19 +155,6 @@ __global__ void floyd_warshall_block_kernel_phase3(int n, int k, Number *graph) 
 template<typename Number>
 __host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, const int n) {
 
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-
-  for (int i = 0; i < deviceCount; i++) {
-    cudaDeviceProp deviceProps;
-    cudaGetDeviceProperties(&deviceProps, i);
-
-    std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-              << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
-  }
-
   Number *device_graph;
   const size_t size = sizeof(Number) * n * n;
   cudaMalloc(&device_graph, size);
@@ -177,7 +164,6 @@ __host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
   dim3 phase4_grid(blocks, blocks, 1);
 
-  std::cout << "Launching Kernels Blocks: " << blocks << " Size " << n << "\n";
   for (int k = 0; k < blocks; k++) {
     floyd_warshall_block_kernel_phase1<Number> <<<1, block_dim>>>(n, k, device_graph);
 
@@ -278,8 +264,8 @@ __host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMat
   cudaFree(device_graph);
 
 }
-template<typename Number>
-__host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
+
+__host__ void show_cuda_device_properties() {
 
   // from assignment 1
   int deviceCount;
@@ -294,8 +280,10 @@ __host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMat
               << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
               << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
   }
+}
 
-  std::cout << "Size " << n << "\n";
+template<typename Number>
+__host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
 
   Number *device_graph;
 
