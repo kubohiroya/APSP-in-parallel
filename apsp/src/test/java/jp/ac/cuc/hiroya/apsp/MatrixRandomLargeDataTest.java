@@ -140,10 +140,10 @@ public class MatrixRandomLargeDataTest {
         long max = Runtime.getRuntime().maxMemory();
         NumberFormat nfNum = NumberFormat.getNumberInstance();
 
-        System.out.println("total " + nfNum.format(total / 1024/1024) + " MB");
-        System.out.println("max   " + nfNum.format(max / 1024 /1024)+ " MB");
+        System.out.println("total " + nfNum.format(total / 1024 / 1024) + " MB");
+        System.out.println("max   " + nfNum.format(max / 1024 / 1024)+ " MB");
 
-        for(int i = 0; i < 1000; i++) {
+        for(int i = 0; i < 10; i++) {
             MatrixAssertion.assertDistancesWithSelfDataDouble(getRandomLargeMatrixDouble(i), null, null, execEnv, algorithm, -1, false);
             System.gc();
             MatrixSetManager.getInstance().clear();
@@ -154,5 +154,4 @@ public class MatrixRandomLargeDataTest {
             System.out.println("  used  => " + nfNum.format((total - free) / 1024 / 1024) + " MB");
         }
     }
-
 }
