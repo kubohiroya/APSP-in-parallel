@@ -180,19 +180,6 @@ __host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number
 template<typename Number>
 __host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
 
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-
-  for (int i = 0; i < deviceCount; i++) {
-    cudaDeviceProp deviceProps;
-    cudaGetDeviceProperties(&deviceProps, i);
-
-    std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-              << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
-  }
-
   Number *device_graph;
   const size_t size = sizeof(Number) * n * n;
   cudaMalloc(&device_graph, size);
@@ -221,20 +208,6 @@ template<typename Number>
 __host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int n) {
 
   // from assignment 1
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-
-  for (int i = 0; i < deviceCount; i++) {
-    cudaDeviceProp deviceProps;
-    cudaGetDeviceProperties(&deviceProps, i);
-
-    std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-              << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
-  }
-
-  std::cout << "Size " << n << "\n";
 
   Number *device_graph;
 
@@ -312,6 +285,23 @@ __host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMat
 
   cudaFree(device_graph);
 
+}
+
+__host__ void show_cuda_device_properties() {
+
+  // from assignment 1
+  int deviceCount;
+  cudaGetDeviceCount(&deviceCount);
+
+  for (int i = 0; i < deviceCount; i++) {
+    cudaDeviceProp deviceProps;
+    cudaGetDeviceProperties(&deviceProps, i);
+
+    std::cout << "Device " << i << ": " << deviceProps.name << "\n"
+              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
+              << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
+              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
+  }
 }
 
 __host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, const int n) {

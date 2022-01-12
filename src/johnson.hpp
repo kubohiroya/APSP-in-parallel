@@ -170,7 +170,7 @@ template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const 
   return gr;    
 }
 
-template<typename Number> void free_cuda_graph(const graph_cuda_t<Number> * g) {
+template<typename Number> void free_graph_cuda(const graph_cuda_t<Number> * g) {
   delete[] g->edge_array;
   delete[] g->weights;
   delete[] g->starts;
@@ -362,7 +362,7 @@ template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMa
 #ifdef CUDA
   graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
   johnson_cuda<Number>(cuda_gr, *distanceMatrix);
-  free_cuda_graph<Number>(cuda_gr);
+  free_graph_cuda<Number>(cuda_gr);
 #else
   const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
   johnson_parallel<Number>(gr, *distanceMatrix);
@@ -377,7 +377,8 @@ template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMa
 #ifdef CUDA
   graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
   johnson_successor_cuda<Number>(cuda_gr, *distanceMatrix, *successorMatrix);
-  free_cuda_graph<Number>(cuda_gr);
+
+  free_graph_cuda<Number>(cuda_gr);
 #else
   const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
   johnson_parallel<Number>(gr, *distanceMatrix, *successorMatrix);
