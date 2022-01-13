@@ -153,7 +153,35 @@ __global__ void floyd_warshall_block_kernel_phase3(int n, int k, Number *graph) 
                     Floyd-Warshall's Algorithm CUDA
 ************************************************************************/
 template<typename Number>
-__host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int n) {
+
+  Number *device_graph;
+  const size_t size = sizeof(Number) * n * n;
+  cudaMalloc(&device_graph, size);
+  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
+
+  //std::cout<<"floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int n)\n";
+  //print_matrix<Number>(adjancencyMatrix, n, n);
+
+  const int blocks = (n + BLOCK_DIM - 1) / BLOCK_DIM;
+  dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
+  dim3 phase4_grid(blocks, blocks, 1);
+
+  for (int k = 0; k < blocks; k++) {
+    floyd_warshall_block_kernel_phase1<Number> <<<1, block_dim>>>(n, k, device_graph);
+
+    floyd_warshall_block_kernel_phase2<Number> <<<blocks, block_dim>>>(n, k, device_graph);
+
+    floyd_warshall_block_kernel_phase3<Number> <<<phase4_grid, block_dim>>>(n, k, device_graph);
+  }
+
+  cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
+  check_cuda_error();
+  cudaFree(device_graph);
+}
+
+template<typename Number>
+__host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
 
   Number *device_graph;
   const size_t size = sizeof(Number) * n * n;
@@ -172,42 +200,36 @@ __host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number
     floyd_warshall_block_kernel_phase3<Number> <<<phase4_grid, block_dim>>>(n, k, device_graph);
   }
 
+
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
-
   cudaFree(device_graph);
 }
+
 template<typename Number>
-__host__ void floyd_warshall_blocked_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
+__host__ void floyd_warshall_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int n) {
 
   Number *device_graph;
   const size_t size = sizeof(Number) * n * n;
   cudaMalloc(&device_graph, size);
   cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
 
-  const int blocks = (n + BLOCK_DIM - 1) / BLOCK_DIM;
   dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
-  dim3 phase4_grid(blocks, blocks, 1);
+  dim3 grid_dim((n + block_dim.x - 1) / block_dim.x,
+                (n + block_dim.y - 1) / block_dim.y);
 
-  std::cout << "Launching Kernels Blocks: " << blocks << " Size " << n << "\n";
-  for (int k = 0; k < blocks; k++) {
-    floyd_warshall_block_kernel_phase1<Number> <<<1, block_dim>>>(n, k, device_graph);
-
-    floyd_warshall_block_kernel_phase2<Number> <<<blocks, block_dim>>>(n, k, device_graph);
-
-    floyd_warshall_block_kernel_phase3<Number> <<<phase4_grid, block_dim>>>(n, k, device_graph);
+  for (int k = 0; k < n; k++) {
+    floyd_warshall_kernel<Number> <<<grid_dim, block_dim>>>(n, k, device_graph);
+    cudaThreadSynchronize();
   }
 
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
   check_cuda_error();
-
   cudaFree(device_graph);
 }
 
 template<typename Number>
-__host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int n) {
-
-  // from assignment 1
+__host__ void floyd_warshall_cuda(const Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
 
   Number *device_graph;
 
@@ -227,20 +249,11 @@ __host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMat
   }
 
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
-
-  cudaError_t errCode = cudaPeekAtLastError();
-  if (errCode != cudaSuccess) {
-    std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
-              cudaGetErrorString(errCode) << "\n";
-  }
-
+  check_cuda_error();
   cudaFree(device_graph);
-
 }
 
 __host__ void show_cuda_device_properties() {
-
-  // from assignment 1
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
 
@@ -255,70 +268,40 @@ __host__ void show_cuda_device_properties() {
   }
 }
 
-template<typename Number>
-__host__ void floyd_warshall_cuda(Number *adjancencyMatrix, Number **distanceMatrix, int **successorMatrix, int n) {
-
-  Number *device_graph;
-
-  const size_t size = sizeof(Number) * n * n;
-
-  cudaMalloc(&device_graph, size);
-
-  cudaMemcpy(device_graph, adjancencyMatrix, size, cudaMemcpyHostToDevice);
-
-  dim3 block_dim(BLOCK_DIM, BLOCK_DIM, 1);
-  dim3 grid_dim((n + block_dim.x - 1) / block_dim.x,
-                (n + block_dim.y - 1) / block_dim.y);
-
-  for (int k = 0; k < n; k++) {
-    floyd_warshall_kernel<Number> <<<grid_dim, block_dim>>>(n, k, device_graph);
-    cudaThreadSynchronize();
-  }
-
-  cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
-
-  cudaError_t errCode = cudaPeekAtLastError();
-  if (errCode != cudaSuccess) {
-    std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
-              cudaGetErrorString(errCode) << "\n";
-  }
-
-  cudaFree(device_graph);
-
-}
-
-__host__ void show_cuda_device_properties() {
-
-  // from assignment 1
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-
-  for (int i = 0; i < deviceCount; i++) {
-    cudaDeviceProp deviceProps;
-    cudaGetDeviceProperties(&deviceProps, i);
-
-    std::cout << "Device " << i << ": " << deviceProps.name << "\n"
-              << "\tSMs: " << deviceProps.multiProcessorCount << "\n"
-              << "\tGlobal mem: " << static_cast<double>(deviceProps.totalGlobalMem) / (1024 * 1024 * 1024) << "GB \n"
-              << "\tCUDA Cap: " << deviceProps.major << "." << deviceProps.minor << "\n";
-  }
-}
-
-__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int n) {
   floyd_warshall_blocked_cuda<double>(adjancencyMatrix, distanceMatrix, n);
 }
-__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, int n) {
   floyd_warshall_blocked_cuda<double>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
 }
-__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int n) {
   floyd_warshall_blocked_cuda<float>(adjancencyMatrix, distanceMatrix, n);
 }
-__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, int n) {
   floyd_warshall_blocked_cuda<float>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
 }
-__host__ void floyd_warshall_blocked_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int n) {
   floyd_warshall_blocked_cuda<int>(adjancencyMatrix, distanceMatrix, n);
 }
-__host__ void floyd_warshall_blocked_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int **successorMatrix, const int n) {
+__host__ void floyd_warshall_blocked_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int **successorMatrix, int n) {
   floyd_warshall_blocked_cuda<int>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
+}
+
+__host__ void floyd_warshall_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int n) {
+  floyd_warshall_cuda<double>(adjancencyMatrix, distanceMatrix, n);
+}
+__host__ void floyd_warshall_cuda_double(const double *adjancencyMatrix, double **distanceMatrix, int **successorMatrix, int n) {
+  floyd_warshall_cuda<double>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
+}
+__host__ void floyd_warshall_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int n) {
+  floyd_warshall_cuda<float>(adjancencyMatrix, distanceMatrix, n);
+}
+__host__ void floyd_warshall_cuda_float(const float *adjancencyMatrix, float **distanceMatrix, int **successorMatrix, int n) {
+  floyd_warshall_cuda<float>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
+}
+__host__ void floyd_warshall_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int n) {
+  floyd_warshall_cuda<int>(adjancencyMatrix, distanceMatrix, n);
+}
+__host__ void floyd_warshall_cuda_int(const int *adjancencyMatrix, int **distanceMatrix, int **successorMatrix, int n) {
+  floyd_warshall_cuda<int>(adjancencyMatrix, distanceMatrix, successorMatrix, n);
 }

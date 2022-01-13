@@ -15,6 +15,7 @@
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 
 #include "inf.hpp"
+//#include "getInf.hpp"
 #include "util.hpp"
 #include "floyd_warshall.hpp"
 #include "johnson.hpp"
@@ -83,7 +84,7 @@ Number* get_solution(
     if(p > 0.1){
       floyd_warshall_blocked<Number>(adjacencyMatrix, &solution, n, 32);
     }else{
-      johnson_parallel_matrix<Number>(adjacencyMatrix, &solution, n);
+     johnson_parallel_matrix<Number>(adjacencyMatrix, &solution, n);
     }
 
     //floyd_warshall<Number>(adjacencyMatrix, &solution, n);
@@ -123,7 +124,7 @@ double do_floyd_warshall(int n, int block_size, double p, unsigned long seed, bo
   if (with_successor) {
     floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n, block_size);
   } else {
-    floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);
+    floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -248,7 +249,7 @@ bench_result * bench_johnson(int iterations, int n, double p, unsigned long seed
   Number *solution = check_correctness ? get_solution<Number>(n, p, seed) : nullptr;
   Number *adjacencyMatrix = create_random_adjacencyMatrix<Number>(n, p, seed);
 
-  const Number inf = getInf<Number>();
+  Number inf = getInf<Number>();
 
   bench_result *result = new bench_result;
   result->correct = true;
