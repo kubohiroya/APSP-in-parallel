@@ -220,7 +220,7 @@ __host__ void floyd_warshall_cuda(const Number *adjancencyMatrix, Number **dista
 
   for (int k = 0; k < n; k++) {
     floyd_warshall_kernel<Number> <<<grid_dim, block_dim>>>(n, k, device_graph);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
   }
 
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);
@@ -245,7 +245,7 @@ __host__ void floyd_warshall_cuda(const Number *adjancencyMatrix, Number **dista
 
   for (int k = 0; k < n; k++) {
     floyd_warshall_kernel<Number> <<<grid_dim, block_dim>>>(n, k, device_graph);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
   }
 
   cudaMemcpy(*distanceMatrix, device_graph, size, cudaMemcpyDeviceToHost);

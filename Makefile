@@ -3,7 +3,7 @@ UNAME = $(shell uname)
 # Override using CXX=clang++ make ...
 CXX ?= g++
 #CXXFLAGS ?= -std=c++11 -Wall -Wextra -g -fPIC -O3
-CXXFLAGS ?= -std=c++20 -fPIC -O3
+CXXFLAGS ?= -std=c++11 -fPIC -O3
  #-Wunused-parameter -W\#pragma-messages
 CXXFLAGS += $(CXXEXTRA)
 LDFLAGS = -L./libs
@@ -15,10 +15,8 @@ JAR = apsp/target/apsp-1.0.jar
 JAVA_OPT := -Djna.library.path=./libs
 
 ISPC ?= /usr/local/bin/ispc
-ISPC_FLAGS ?= --arch=x86-64 --emit-obj -g -03 -xAVX2
 
 NVCC ?= /usr/local/cuda/bin/nvcc
-NVCCFLAGS ?= -std=c++17 -O3
 
 OBJ_DIR := objs
 LIBS_DIR := libs
@@ -59,6 +57,15 @@ ISPC_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-main.o, $(ISPC_OBJECTS))
 
 PROFRAW := *.profraw
 
+#ISPC_FLAGS += 
+ISPC_FLAGS ?= --emit-obj --pic
+#--arch=x86-64--target=avx2-i32x8 
+#-03 -xAVX2 -fPIC
+
+#$(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
+#$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
+
+
 ifeq ($(UNAME), Linux)
 SEQ_LIB := $(LIBS_DIR)/libapsp-seq.so
 OMP_LIB := $(LIBS_DIR)/libapsp-omp.so
@@ -67,7 +74,7 @@ SEQ_ISPC_LIB := $(LIBS_DIR)/libapsp-seq-ispc.so
 OMP_ISPC_LIB := $(LIBS_DIR)/libapsp-omp-ispc.so
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -lomp
 # $(CUDA): NVCCFLAGS += -arch=compute_61 -code=sm_61 --compiler-options "-fPIC" -DCUDA
-$(CUDA): NVCCFLAGS += -arch=sm_80 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86 --compiler-options "-fPIC" -DCUDA --expt-relaxed-constexpr
+$(CUDA): NVCCFLAGS += -std=c++11 -O3 -arch=sm_80 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86 --compiler-options "-fPIC" -DCUDA --expt-relaxed-constexpr
 $(CUDA) $(CUDA_LIB): CXXFLAGS += -DCUDA
 $(CUDA) $(CUDA_LIB): LDFLAGS += -DCUDA -L/usr/lib/$(LLVM)/lib -L/usr/local/cuda/lib64 -lcudart -lomp
 LIBS := $(SEQ_LIB) $(OMP_LIB) $(CUDA_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
@@ -82,9 +89,6 @@ LIBS := $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
 BINARIES := $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC)
 endif
 
-$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
-$(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
-ISPCFLAGS += --target=avx2-i32x8
 
 all: bin $(JAR)
 
@@ -147,7 +151,7 @@ $(OBJ_DIR)/ispc-omp-%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
 
 $(OBJ_DIR)/ispc-%.o: $(SRC_DIR)/%.ispc | $(OBJ_DIR)
-	$(ISPC) $(ISPCFLAGS) $< -o $@
+	$(ISPC) $(ISPC_FLAGS) $< -o $@
 # we do not output a header here on purpose
 
 
@@ -171,7 +175,7 @@ benchmark-j:
 	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b serious2 -r
 
 benchmark-j-half:
-	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b half -r 
+	export LD_LIBRARY_PATH=./libs; ./benchmark.py -a j -T d -b half -r
 
 benchmark: benchmark-f benchmark-j
 
