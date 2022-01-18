@@ -73,7 +73,7 @@ template<typename Number> inline bool correctness_check(const Number *distanceMa
 }
 
 inline void print_usage() {
-  std::cout << "\nUsage: apsp [-n INT] [-p DOUBLE] [-a (f|j)] [-s LONG] [-b] [-c] [-t INT] [-T (i|f|d)]\n";
+  std::cout << "\nUsage: apsp [-n INT] [-p DOUBLE] [-a (f|j)] [-s LONG] [-b] [-c] [-t INT] [-d INT] [-T (i|f|d)]\n";
 
   std::cout << "\t-h\t\tPrint this message\n";
   std::cout << "\t-n INT\t\tGraph size, default 1024\n";
@@ -84,6 +84,7 @@ inline void print_usage() {
   std::cout << "\t-s LONG\t\tSeed for graph generation\n";
   std::cout << "\t-b\t\tRun benchmark sequential vs parallel\n";
   std::cout << "\t-t INT\t\tNumber of threads to run\n";
+  std::cout << "\t-d INT\t\tBlock size for Blocked-Floyd-Warshall\n";
   std::cout << "\t-c\t\tCheck correctness\n";
   std::cout << "\t-T CHAR\t\tweight type of edge default i\n";
   std::cout << "\n";
