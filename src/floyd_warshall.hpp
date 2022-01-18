@@ -231,13 +231,11 @@ template<typename Number> void _floyd_warshall_blocked(Number *distanceMatrix, i
     }
   }
 }
-
 /*
 template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const int b) {
   floyd_warshall_blocked<Number>(adjacencyMatrix, (Number**)nullptr, n, b);
 }
 */
-
 template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const int b) {
   static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
@@ -307,17 +305,13 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const int b) {
   static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
-  if(successorMatrix != nullptr)
-    *successorMatrix = (int *) malloc(sizeof(int) * n * n);
-
-  if(successorMatrix != nullptr){
+  *successorMatrix = (int *) malloc(sizeof(int) * n * n);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        (*successorMatrix)[i * n + j] = j;
-      }
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      (*successorMatrix)[i * n + j] = j;
     }
   }
 

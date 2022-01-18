@@ -20,7 +20,7 @@ public interface ApspResolver<T> {
         String F = "f";
         String JOHNSON = "Johnson";
         String J = "j";
-        int FLOYD_WARSHALL_BLOCK_SIZE = -1;
+        int FLOYD_WARSHALL_BLOCK_SIZE = 16;
     }
 
 }

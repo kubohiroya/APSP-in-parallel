@@ -39,7 +39,6 @@ public interface ApspNativeLibrary extends Library {
     void free_johnson_parallel_matrix_double(PointerByReference distanceMatrix);
 
 
-
     void floyd_warshall_blocked_successor_int(int[] adjacencyMatrix, PointerByReference distanceMatrix, PointerByReference successors,
                                     int b, int n);
 
