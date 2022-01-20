@@ -15,7 +15,6 @@
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 
 #include "inf.hpp"
-//#include "getInf.hpp"
 #include "util.hpp"
 #include "floyd_warshall.hpp"
 #include "johnson.hpp"
