@@ -304,13 +304,6 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 
 template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const int b) {
 
-#ifdef _OPENMP
-  if(thread_count > 1){
-    omp_set_num_threads(thread_count);
-  }
-#endif
-
-  
   static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);

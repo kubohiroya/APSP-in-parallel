@@ -63,7 +63,7 @@ ISPC_FLAGS ?= --emit-obj --pic
 #-03 -xAVX2 -fPIC
 
 #$(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
-#$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
+$(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
 
 
 ifeq ($(UNAME), Linux)
