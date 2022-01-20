@@ -220,6 +220,12 @@ template<typename Number> inline bool bellman_ford(const graph_t<Number> *gr, Nu
 }
 
 template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Number *distanceMatrix) {
+#ifdef _OPENMP
+  if(thread_count > 1){
+    omp_set_num_threads(thread_count);
+  }
+#endif
+
   static const Number inf = getInf<Number>();
   int v = gr->V;
 
@@ -286,6 +292,13 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
 }
 
 template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
+#ifdef _OPENMP
+  if(thread_count > 1){
+    omp_set_num_threads(thread_count);
+  }
+#endif
+
+
   static const Number inf = getInf<Number>();
   int v = gr->V;
 
