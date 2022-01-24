@@ -102,7 +102,7 @@ parser.add_argument('-b', '--benchmark', choices=all_benchmarks.keys(), default=
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='Print commands as they run')
 parser.add_argument('-g', '--cuda', action='store_true', help='Run CUDA version')
-parser.add_argument('-r', '--compare', action='store_true', help='Compare different parallel schemes. Recommended to be used with "-b serious"')
+parser.add_argument('-c', '--compare', action='store_true', help='Compare different parallel schemes. Recommended to be used with "-b serious"')
 parser.add_argument('-T', '--wtype', type=str, choices=['i', 'f', 'd'], default='i', help='weight type')
 
 args = parser.parse_args()

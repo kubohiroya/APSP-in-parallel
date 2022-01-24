@@ -83,10 +83,9 @@ Number* get_solution(
     if(p > 0.1){
       floyd_warshall_blocked<Number>(adjacencyMatrix, &solution, n, 32);
     }else{
-     johnson_parallel_matrix<Number>(adjacencyMatrix, &solution, n);
+      johnson_parallel_matrix<Number>(adjacencyMatrix, &solution, n);
     }
 
-    //floyd_warshall<Number>(adjacencyMatrix, &solution, n);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -121,9 +120,9 @@ double do_floyd_warshall(int n, int block_size, double p, unsigned long seed, bo
 
   auto start = std::chrono::high_resolution_clock::now();
   if (with_successor) {
-    floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n, block_size);
+    floyd_warshall_successor_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n, block_size);
   } else {
-    floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);
+    floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, n, block_size);
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> start_to_end = end - start;
@@ -182,7 +181,7 @@ bench_result * bench_floyd_warshall(int iterations, int v, int block_size, doubl
 
     auto start = std::chrono::high_resolution_clock::now();
     if (with_successor) {
-      floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, v, block_size);
+      floyd_warshall_successor_blocked<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, v, block_size);
     } else {
       floyd_warshall_blocked<Number>(adjacencyMatrix, &distanceMatrix, v, block_size);
     }
@@ -217,11 +216,13 @@ double do_johnson(const int n, const double p, const unsigned long seed, const b
   int *successorMatrix = nullptr;
 
   auto start = std::chrono::high_resolution_clock::now();
+
   if (with_successor) {
     johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, n);
   } else {
     johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, n);
   }
+
   auto end = std::chrono::high_resolution_clock::now();
 
   if (check_correctness) {
@@ -229,74 +230,77 @@ double do_johnson(const int n, const double p, const unsigned long seed, const b
     correctness_check<Number>(distanceMatrix, n, solution, n);
   }
 
-  delete[] distanceMatrix;
+  if(distanceMatrix != nullptr){
+    delete[] distanceMatrix;
+  }
   if (with_successor) {
     delete[] successorMatrix;
   }
-  delete[] adjacencyMatrix;
   if (check_correctness){
     delete[] solution;
   }
+  delete[] adjacencyMatrix;
 
   std::chrono::duration<double, std::milli> start_to_end = end - start;
   return start_to_end.count();
 }
 
 template<typename Number>
-bench_result * bench_johnson(int iterations, int n, double p, unsigned long seed, bool with_successor, bool check_correctness) {
+bench_result * bench_johnson(int iterations, int nvertex, double p, unsigned long seed, bool with_successor, bool check_correctness) {
 
-  Number *solution = check_correctness ? get_solution<Number>(n, p, seed) : nullptr;
-  Number *adjacencyMatrix = create_random_adjacencyMatrix<Number>(n, p, seed);
+  Number *solution = check_correctness ? get_solution<Number>(nvertex, p, seed) : nullptr;
+  Number *adjacencyMatrix = create_random_adjacencyMatrix<Number>(nvertex, p, seed);
 
-  Number inf = getInf<Number>();
-
+  static const Number inf = getInf<Number>();
   bench_result *result = new bench_result;
   result->correct = true;
   result->seq_total_time = 0.0;
   result->total_time = 0.0;
 
   for (int b = 0; b < iterations; b++) {
-
     Number *distanceMatrix = nullptr;
     int *successorMatrix = nullptr;
 
     auto start = std::chrono::high_resolution_clock::now();
-    graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
     if (with_successor) {
-      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, (const int)n);
+      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, &successorMatrix, nvertex);
     } else {
-      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, (const int)n);
+      johnson_parallel_matrix<Number>(adjacencyMatrix, &distanceMatrix, nvertex);
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> start_to_end = end - start;
+;
     result->total_time += start_to_end.count() / iterations;
 
+    if (solution != nullptr) {
+      result->correct = result->correct && correctness_check<Number>(distanceMatrix, nvertex, solution, nvertex);
+    }
+
+    delete[] distanceMatrix;
     if(with_successor){
       delete[] successorMatrix;
     }
 
     auto seq_start = std::chrono::high_resolution_clock::now();
-    Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, gr->V);
+    graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, nvertex);
+    Graph<Number> G(gr->edges, gr->edges + gr->E, gr->weights, gr->V);
     std::vector<Number> d(num_vertices(G));
     std::vector<int> predecessor(num_vertices(G));
-    Number **distanceArray = new Number *[n];
-    for (int i = 0; i < n; i++) distanceArray[i] = &adjacencyMatrix[i * n];
+    Number **distanceArray = new Number *[nvertex];
+
+    for (int i = 0; i < nvertex; i++) distanceArray[i] = &adjacencyMatrix[i * nvertex];
     if (with_successor) {
       johnson_all_pairs_shortest_paths(G, distanceArray, distance_map(&d[0]).predecessor_map(&predecessor[0]).distance_inf(inf));
     }else{
       johnson_all_pairs_shortest_paths(G, distanceArray, distance_map(&d[0]).distance_inf(inf));
     }
+
     auto seq_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> seq_start_to_end = seq_end - seq_start;
     result->seq_total_time += seq_start_to_end.count() / iterations;
 
-    free_graph<Number>(gr);
     delete[] distanceArray;
-
-    if (solution != nullptr) {
-      result->correct = result->correct && correctness_check<Number>(distanceMatrix, n, solution, n);
-    }
-    delete[] distanceMatrix;
+    free_graph<Number>(gr);
 
   }
 

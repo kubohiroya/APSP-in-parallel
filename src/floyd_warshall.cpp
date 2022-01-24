@@ -20,21 +20,20 @@ void free_floyd_warshall_blocked_int(int **distanceMatrix){
 }
 
 void floyd_warshall_blocked_successor_double(const double *adjacencyMatrix, double **distanceMatrix, int **successorMatrix, const int n, const int b){
-  floyd_warshall_blocked<double>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
+  floyd_warshall_successor_blocked<double>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
 }
 void free_floyd_warshall_blocked_successor_double(double **distanceMatrix, int **successorMatrix){
-  free_floyd_warshall_blocked<double>(distanceMatrix, successorMatrix);
+  free_floyd_warshall_successor_blocked<double>(distanceMatrix, successorMatrix);
 }
 void floyd_warshall_blocked_successor_float(const float *adjacencyMatrix, float **distanceMatrix, int **successorMatrix, const int n, const int b){
-  floyd_warshall_blocked<float>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
+  floyd_warshall_successor_blocked<float>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
 }
 void free_floyd_warshall_blocked_successor_float(float **distanceMatrix, int **successorMatrix){
-  free_floyd_warshall_blocked<float>(distanceMatrix, successorMatrix);
+  free_floyd_warshall_successor_blocked<float>(distanceMatrix, successorMatrix);
 }
 void floyd_warshall_blocked_successor_int(const int *adjacencyMatrix, int **distanceMatrix, int **successorMatrix, const int n, const int b){
-  floyd_warshall_blocked<int>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
+  floyd_warshall_successor_blocked<int>(adjacencyMatrix, distanceMatrix, successorMatrix, b, n);
 }
 void free_floyd_warshall_blocked_successor_int(int **distanceMatrix, int **successorMatrix){
-  free_floyd_warshall_blocked<int>(distanceMatrix, successorMatrix);
+  free_floyd_warshall_successor_blocked<int>(distanceMatrix, successorMatrix);
 }
-

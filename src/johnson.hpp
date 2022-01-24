@@ -19,9 +19,10 @@ typedef std::pair<int, int> Edge;
 
 template<typename Number>
 struct graph_t {
+
   int V;
   int E;
-  Edge *edge_array;
+  Edge *edges;
   Number *weights;
 };
 
@@ -30,7 +31,7 @@ template<typename Number>
 struct graph_cuda_t {
   int V;
   int E;
-  Edge *edge_array;
+  Edge *edges;
   Number *weights;
   int *starts;
 };
@@ -80,9 +81,12 @@ template<typename Number> size_t count_edges(const Number *adjacencyMatrix, cons
 template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMatrix, const int n) {
   static const Number inf = getInf<Number>();
   size_t e = count_edges<Number>(adjacencyMatrix, n);
-  Edge *edge_array = new Edge[e];
+  Edge *edges = new Edge[e];
   Number *weights = new Number[e];
   int ei = 0;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       if (adjacencyMatrix[i * n + j] != 0 && adjacencyMatrix[i * n + j] != inf) {
@@ -90,7 +94,7 @@ template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMa
 #pragma omp critical (init_graph)
 #endif
         {
-          edge_array[ei] = Edge(i, j);
+          edges[ei] = Edge(i, j);
           weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
@@ -100,13 +104,13 @@ template<typename Number> graph_t<Number> * init_graph(const Number *adjacencyMa
   graph_t<Number> *gr = new graph_t<Number>;
   gr->V = n;
   gr->E = e;
-  gr->edge_array = edge_array;
+  gr->edges = edges;
   gr->weights = weights;
   return gr;
 }
 
 template<typename Number> graph_t<Number> * init_random_graph(const int n, const double p, const unsigned long seed) {
-  static const Number inf = getInf<Number>();
+  const Number inf = getInf<Number>();
   Number *adjacencyMatrix = new Number[n * n];
   size_t e = init_random_adjacency_matrix<Number>(adjacencyMatrix, n, p, seed);
   graph_t<Number> * gr = init_graph<Number>(adjacencyMatrix, n, e);
@@ -115,7 +119,7 @@ template<typename Number> graph_t<Number> * init_random_graph(const int n, const
 }
 
 template<typename Number> void free_graph(const graph_t<Number> *g) {
-  delete[] g->edge_array;
+  delete[] g->edges;
   delete[] g->weights;
   delete g;
 }
@@ -123,12 +127,16 @@ template<typename Number> void free_graph(const graph_t<Number> *g) {
 #ifdef CUDA
 
 template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *adjacencyMatrix, const int n) {
-  static const Number inf = getInf<Number>();
+  const Number inf = getInf<Number>();
   size_t e = count_edges<Number>(adjacencyMatrix, n);
-  Edge *edge_array = new Edge[e];
+  Edge *edges = new Edge[e];
   Number *weights = new Number[e];
   int* starts = new int[n + 1];  // Starting point for each edge
   int ei = 0;
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < n; i++) {
     starts[i] = ei;
     for (int j = 0; j < n; j++) {
@@ -137,7 +145,7 @@ template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *a
 #pragma omp critical (init_graph_cuda)
 #endif
         {
-          edge_array[ei] = Edge(i, j);
+          edges[ei] = Edge(i, j);
           weights[ei] = adjacencyMatrix[i * n + j];
           ei++;
         }
@@ -150,7 +158,7 @@ template<typename Number> graph_cuda_t<Number> * init_graph_cuda(const Number *a
   graph_cuda_t<Number> *gr = new graph_cuda_t<Number>;
   gr->V = n;
   gr->E = e;
-  gr->edge_array = edge_array;
+  gr->edges = edges;
   gr->weights = weights;
   gr->starts = starts;
   return gr;
@@ -166,7 +174,7 @@ template<typename Number> graph_cuda_t<Number> * johnson_cuda_random_init(const 
 }
 
 template<typename Number> void free_graph_cuda(const graph_cuda_t<Number> * g) {
-  delete[] g->edge_array;
+  delete[] g->edges;
   delete[] g->weights;
   delete[] g->starts;
   delete g;
@@ -181,7 +189,7 @@ template<typename Number> inline bool bellman_ford(const graph_t<Number> *gr, Nu
   static const Number inf = getInf<Number>();
   int v = gr->V;
   int e = gr->E;
-  Edge *edges = gr->edge_array;
+  Edge *edges = gr->edges;
   Number *weights = gr->weights;
 
 #ifdef _OPENMP
@@ -213,8 +221,9 @@ template<typename Number> inline bool bellman_ford(const graph_t<Number> *gr, Nu
     int u = std::get<0>(edges[i]);
     int v = std::get<1>(edges[i]);
     Number weight = weights[i];
-    if (dist[u] != inf && dist[u] + weight < dist[v])
+    if (dist[u] != inf && dist[u] + weight < dist[v]) {
       no_neg_cycle = false;
+    }
   }
   return no_neg_cycle;
 }
@@ -230,18 +239,18 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
   graph_t<Number> *bf_graph = new graph_t<Number>;
   bf_graph->V = v + 1;
   bf_graph->E = gr->E + v;
-  bf_graph->edge_array = new Edge[bf_graph->E];
+  bf_graph->edges = new Edge[bf_graph->E];
   bf_graph->weights = new Number[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge));
-  std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(Number));
-  std::memset(&bf_graph->weights[gr->E], 0, v * sizeof(Number));
+  std::memcpy(bf_graph->edges, gr->edges, sizeof(Edge) * gr->E);
+  std::memcpy(bf_graph->weights, gr->weights, sizeof(Number) * gr->E);
+  std::memset(&bf_graph->weights[gr->E], 0, sizeof(Number) * v);
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int e = 0; e < v; e++) {
-    bf_graph->edge_array[e + gr->E] = Edge(v, e);
+    bf_graph->edges[e + gr->E] = Edge(v, e);
   }
 
   // Second, the Bellman–Ford algorithm is used, starting from the new vertex q,
@@ -262,12 +271,12 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
 #pragma omp parallel for
 #endif
   for (int e = 0; e < gr->E; e++) {
-    int u = std::get<0>(gr->edge_array[e]);
-    int v = std::get<1>(gr->edge_array[e]);
+    int u = std::get<0>(gr->edges[e]);
+    int v = std::get<1>(gr->edges[e]);
     gr->weights[e] = gr->weights[e] + h[u] - h[v];
   }
 
-  Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, v);
+  Graph<Number> G(gr->edges, gr->edges + gr->E, gr->weights, v);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -297,10 +306,10 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
   graph_t<Number> *bf_graph = new graph_t<Number>;
   bf_graph->V = v + 1;
   bf_graph->E = gr->E + v;
-  bf_graph->edge_array = new Edge[bf_graph->E];
+  bf_graph->edges = new Edge[bf_graph->E];
   bf_graph->weights = new Number[bf_graph->E];
 
-  std::memcpy(bf_graph->edge_array, gr->edge_array, gr->E * sizeof(Edge));
+  std::memcpy(bf_graph->edges, gr->edges, gr->E * sizeof(Edge));
   std::memcpy(bf_graph->weights, gr->weights, gr->E * sizeof(Number));
   std::memset(&bf_graph->weights[gr->E], 0, v * sizeof(Number));
 
@@ -308,7 +317,7 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
 #pragma omp parallel for
 #endif
   for (int e = 0; e < v; e++) {
-    bf_graph->edge_array[e + gr->E] = Edge(v, e);
+    bf_graph->edges[e + gr->E] = Edge(v, e);
   }
 
   // Second, the Bellman–Ford algorithm is used, starting from the new vertex q,
@@ -329,12 +338,12 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
 #pragma omp parallel for
 #endif
   for (int e = 0; e < gr->E; e++) {
-    int u = std::get<0>(gr->edge_array[e]);
-    int v = std::get<1>(gr->edge_array[e]);
+    int u = std::get<0>(gr->edges[e]);
+    int v = std::get<1>(gr->edges[e]);
     gr->weights[e] = gr->weights[e] + h[u] - h[v];
   }
 
-  Graph<Number> G(gr->edge_array, gr->edge_array + gr->E, gr->weights, v);
+  Graph<Number> G(gr->edges, gr->edges + gr->E, gr->weights, v);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -356,40 +365,42 @@ template<typename Number> void johnson_parallel(const graph_t<Number> *gr, Numbe
 
 template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, const int n) {
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
-  memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
 #ifdef CUDA
   graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
   johnson_cuda<Number>(cuda_gr, *distanceMatrix);
   free_graph_cuda<Number>(cuda_gr);
+  return;
 #else
-  const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
+  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
   johnson_parallel<Number>(gr, *distanceMatrix);
-  delete gr;
+  free_graph<Number>(gr);
+  return;
 #endif
 }
 
 template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n) {
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
-  memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
-  memset(*successorMatrix, 0, sizeof(int) * n * n);
 #ifdef CUDA
   graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
   johnson_successor_cuda<Number>(cuda_gr, *distanceMatrix, *successorMatrix);
   free_graph_cuda<Number>(cuda_gr);
+  return;
 #else
-  const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
+  memset(*successorMatrix, 0, sizeof(int) * n * n);
+  graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
   johnson_parallel<Number>(gr, *distanceMatrix, *successorMatrix);
-  delete gr;
+  free_graph<Number>(gr);
+  return;
 #endif
 }
 
 template<typename Number> void free_johnson_parallel_matrix(Number **distanceMatrix) {
-  free(*distanceMatrix);
+  delete[] *distanceMatrix;
 }
 template<typename Number> void free_johnson_parallel_matrix(Number **distanceMatrix, int **successorMatrix) {
-  free(*distanceMatrix);
-  free(*successorMatrix);
+  delete[] *distanceMatrix;
+  delete[] *successorMatrix;
 }
 
 extern "C" void johnson_parallel_matrix_double(const double *adjacencyMatrix, double **distanceMatrix, const int n);

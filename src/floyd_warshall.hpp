@@ -9,25 +9,7 @@
 
 #include "util.hpp"
 #include "getInf.hpp"
-
-#ifdef CUDA
-template<typename Number> void floyd_warshall_blocked_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int n);
-void floyd_warshall_blocked_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int n);
-void floyd_warshall_blocked_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int n);
-void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int n);
-template<typename Number> void floyd_warshall_blocked_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_blocked_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_blocked_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_blocked_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, int n);
-template<typename Number> void floyd_warshall_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int n);
-void floyd_warshall_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int n);
-void floyd_warshall_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int n);
-void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int n);
-template<typename Number> void floyd_warshall_cuda(const Number *adjacencyMatrix, Number** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_cuda_double(const double* adjacencyMatrix, double** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_cuda_float(const float* adjacencyMatrix, float** distanceMatrix, int **successorMatrix, int n);
-void floyd_warshall_cuda_int(const int* adjacencyMatrix, int** distanceMatrix, int **successorMatrix, int n);
-#endif
+#include "floyd_warshall.cuh"
 
 #ifdef ISPC
 extern "C" void floyd_warshall_in_place_double(double* C, const double* A, const double* B, const int kb, const int ib, const int jb, const int b, const int n, const int n_oversized, const double inf);
@@ -153,6 +135,7 @@ template<typename Number> void floyd_warshall(const Number *adjacencyMatrix, Num
             (*successorMatrix)[j * n + i] = (*successorMatrix)[j * n + k];
           }
         }
+
       }
     }
   }
@@ -231,20 +214,17 @@ template<typename Number> void _floyd_warshall_blocked(Number *distanceMatrix, i
     }
   }
 }
-/*
+
 template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const int b) {
-  floyd_warshall_blocked<Number>(adjacencyMatrix, (Number**)nullptr, n, b);
-}
-*/
-template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, const int n, const int b) {
+
+#ifdef CUDA
+  floyd_warshall_blocked_cuda<Number>(adjacencyMatrix, distanceMatrix, n);
+  return;
+#else
+
   static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
 
-#ifdef CUDA
-  floyd_warshall_cuda<Number>(adjacencyMatrix, distanceMatrix, n);
-  // floyd_warshall_blocked_cuda<Number>(adjacencyMatrix, distanceMatrix, n);
-  return;
-#else
   if(b == -1 || n <= b) {
     floyd_warshall<Number>(adjacencyMatrix, distanceMatrix, n);
     return;
@@ -302,7 +282,12 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
 #endif
 }
 
-template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, const int n, const int b) {
+template<typename Number> void floyd_warshall_successor_blocked(const Number *adjacencyMatrix, Number **distanceMatrix, int **successorMatrix, int n, int b) {
+
+#ifdef CUDA
+  floyd_warshall_blocked_successor_cuda<Number>(adjacencyMatrix, distanceMatrix, successorMatrix, n);
+  return;
+#else
 
   static const Number inf = getInf<Number>();
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
@@ -316,11 +301,6 @@ template<typename Number> void floyd_warshall_blocked(const Number *adjacencyMat
     }
   }
 
-#ifdef CUDA
-  floyd_warshall_cuda<Number>((Number *)adjacencyMatrix, distanceMatrix, successorMatrix, n);
-  // floyd_warshall_blocked_cuda<Number>((const Number*)adjacencyMatrix, distanceMatrix, successorMatrix, n);
-  return;
-#else
   if(b == -1 || n <= b) {
     floyd_warshall<Number>(adjacencyMatrix, distanceMatrix, successorMatrix, n);
     return;
@@ -382,7 +362,7 @@ template<typename Number> void free_floyd_warshall_blocked(Number **distanceMatr
   free(*distanceMatrix);
 }
 
-template<typename Number> void free_floyd_warshall_blocked(Number **distanceMatrix, int **successorMatrix) {
+template<typename Number> void free_floyd_warshall_successor_blocked(Number **distanceMatrix, int **successorMatrix) {
   free(*distanceMatrix);
   free(*successorMatrix);
 }
