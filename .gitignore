@@ -6,6 +6,12 @@ apsp/*.log
 
 .vscode/*
 .idea/*
+apsp/zip.sh
+apsp/apsp.iml
+apsp/src/main/java/org
+*.zip
+idegsm/*
+src/.idea
 
 solution_cache/*
 apsp-*
