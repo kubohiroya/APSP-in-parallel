@@ -25,7 +25,7 @@ public class MatrixRandomLargeDataTest {
 
     interface largeRandomMatrixInt{
         long seed = 10;
-        int n = 10000;
+        int n = 1000;
         double p = 0.001;
         int min = 1;
         int max = 100;

@@ -47,33 +47,33 @@ public class MatrixAssertion {
         }
     }
 
-    static void assertSymmetricMatrix(double[] matrix, int v, boolean verbose){
+    static void assertSymmetricMatrix(double[] matrix, int v, boolean verbose, double delta){
         try{
             for(int i = 0; i < v; i++) {
                 for(int j = i; j < v; j++) {
-                    if(Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0.0001){
-                        System.err.println("対称行列ERROR:("+i+","+j+") != ("+j+","+i+")\tactual:"+matrix[i * v + j]+"\texpected:"+matrix[j * v + i]);
-                        assertEquals(matrix[i * v + j], matrix[j * v + i], 0.0001);
+                    if(Math.abs(matrix[i * v + j] - matrix[j * v + i]) > delta){
+                        if(verbose) System.err.println("対称行列ERROR:("+i+","+j+") != ("+j+","+i+")\tactual:"+matrix[i * v + j]+"\texpected:"+matrix[j * v + i]);
+                        assertEquals(matrix[i * v + j], matrix[j * v + i], delta);
                     }
                 }
             }
         }catch(Error err){
             if(verbose)
-                CSVOutput.print(matrix, (i, j, value) -> Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0.0001, _red, v);
+                CSVOutput.print(matrix, (i, j, value) -> Math.abs(matrix[i * v + j] - matrix[j * v + i]) > delta, _red, v);
             throw err;
         }
     }
 
     static void assertSymmetricMatrix(int[] matrix, int v, boolean verbose){
         if(verbose){
-            CSVOutput.print(matrix, (i, j, value) -> Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0.0001, _red, v);
+            CSVOutput.print(matrix, (i, j, value) -> Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0, _red, v);
         }
         try{
             for(int i = 0; i < v; i++) {
                 for(int j = i; j < v; j++) {
-                    if(Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0.0001){
-                        if(verbose) System.err.println("対称行列:("+i+","+j+") != ("+j+","+i+")\tactual:"+matrix[i * v + j]+"\texpected:"+matrix[j * v + i]);
-                        assertEquals(matrix[i * v + j], matrix[j * v + i], 0.0001);
+                    if(Math.abs(matrix[i * v + j] - matrix[j * v + i]) > 0){
+                        if(verbose) System.err.println("対称行列ERROR:("+i+","+j+") != ("+j+","+i+")\tactual:"+matrix[i * v + j]+"\texpected:"+matrix[j * v + i]);
+                        assertEquals(matrix[i * v + j], matrix[j * v + i], 0);
                     }
                 }
             }
@@ -96,14 +96,14 @@ public class MatrixAssertion {
         int v = set.getNumVertex();
         System.out.println(grey+DateTimeUtil.getYYMMDDHHMM()+" step B-1: adj matrix"+end);
         assertDiagonalElementsAllZero(set.getAdjacencyMatrix(), v, verbose);
-        assertSymmetricMatrix(set.getAdjacencyMatrix(), v, verbose);
+        assertSymmetricMatrix(set.getAdjacencyMatrix(), v, verbose, 1);
         System.out.println(grey+DateTimeUtil.getYYMMDDHHMM()+" step B-2: distance matrix"+end);
         assertDiagonalElementsAllZero(set.getDistanceMatrix(), v, verbose);
-        assertSymmetricMatrix(set.getDistanceMatrix(), v, verbose);
+        // assertSymmetricMatrix(set.getDistanceMatrix(), v, verbose, 100);
         System.out.println(grey+DateTimeUtil.getYYMMDDHHMM()+" step B-3: calculated distance matrix"+end);
         double[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.adjacencyMatrix, set.successorMatrix, verbose);
         assertDiagonalElementsAllZero(calculatedDistances, v, verbose);
-        assertSymmetricMatrix(calculatedDistances, v, verbose);
+        assertSymmetricMatrix(calculatedDistances, v, verbose, 1.0);
         assertThat(calculatedDistances, is(set.getDistanceMatrix()));
     }
 
@@ -116,7 +116,7 @@ public class MatrixAssertion {
         MatrixSet.Double set = MatrixSetManager.getInstance().getMatrixSetDouble(adjacencyFilename, distanceFilename, successorFilename, verbose);
 
         assertDiagonalElementsAllZero(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
-        assertSymmetricMatrix(set.getAdjacencyMatrix(), set.getNumVertex(), verbose);
+        assertSymmetricMatrix(set.getAdjacencyMatrix(), set.getNumVertex(), verbose, 0.001);
 
         ApspResult<double[]> result = MatrixSetManager.getInstance().getApspResultDouble(adjacencyFilename, execEnv, algorithm, blocks, verbose);
         if(verbose) {
@@ -136,13 +136,13 @@ public class MatrixAssertion {
         }
         if(verbose) System.out.println(yellow+"check distances:"+end);
         assertDiagonalElementsAllZero(distances, v, verbose);
-        assertSymmetricMatrix(distances, v, verbose);
+        assertSymmetricMatrix(distances, v, verbose, 0.001);
         if(verbose) System.out.println(yellow+"check successors:"+end);
         assertDiagonalElementsSequential(successors, v, verbose);
         if(verbose) System.out.println(yellow+"check calculated distances:"+end);
         double[] calculatedDistances = MatrixUtil.calculateDistanceMatrix(set.getAdjacencyMatrix(), successors, verbose);
         assertDiagonalElementsAllZero(calculatedDistances, v, verbose);
-        assertSymmetricMatrix(calculatedDistances, v, verbose);
+        assertSymmetricMatrix(calculatedDistances, v, verbose, 0.001);
         if (verbose) {
             for (int i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
@@ -243,7 +243,7 @@ public class MatrixAssertion {
             for (int count = 0, i = 0; i < v; i++) {
                 for (int j = 0; j < v; j++) {
                     int index = i * v + j;
-                    if (Math.abs(distances[index] - set.getDistanceMatrix()[index]) > 0.00001) {
+                    if (Math.abs(distances[index] - set.getDistanceMatrix()[index]) > 0.01) {
                         System.err.println("*** "+i + "," + j + " actual:" + distances[index] + " expected:" + set.getDistanceMatrix()[index]);
                         assertThat(distances[index], is(set.getDistanceMatrix()[index]));
                         count++;
@@ -258,7 +258,7 @@ public class MatrixAssertion {
                 }
             }
         }else{
-            assertArrayEquals(distances, set.getDistanceMatrix(), 0.0001);
+            assertArrayEquals(distances, set.getDistanceMatrix(), 0.01);
         }
     }
 
