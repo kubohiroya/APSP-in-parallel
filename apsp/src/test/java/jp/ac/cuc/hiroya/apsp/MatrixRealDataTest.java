@@ -17,7 +17,7 @@ public class MatrixRealDataTest {
     public void 本番データのFloydWarshall法での処理結果を外部ファイルで検証() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "f";
-        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, -1, false);
+        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, 32, false);
     }
 
     @Test
@@ -31,7 +31,7 @@ public class MatrixRealDataTest {
     public void 本番データのJohnson法での処理結果を外部ファイルで検証() throws Exception {
         String execEnv = "omp-ispc";
         String algorithm = "j";
-        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, -1, false);
+        MatrixAssertion.assertDistancesWithProvidedData(adjFilename, distanceFilename, successorFilename, execEnv, algorithm, 32, false);
     }
 
 }
