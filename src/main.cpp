@@ -15,7 +15,6 @@
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 
 #include "inf.hpp"
-//#include "getInf.hpp"
 #include "util.hpp"
 #include "floyd_warshall.hpp"
 #include "johnson.hpp"
@@ -272,7 +271,6 @@ bench_result * bench_johnson(int iterations, int n, double p, unsigned long seed
     std::chrono::duration<double, std::milli> start_to_end = end - start;
     result->total_time += start_to_end.count() / iterations;
 
-    delete[] distanceMatrix;
     if(with_successor){
       delete[] successorMatrix;
     }
@@ -298,6 +296,8 @@ bench_result * bench_johnson(int iterations, int n, double p, unsigned long seed
     if (solution != nullptr) {
       result->correct = result->correct && correctness_check<Number>(distanceMatrix, n, solution, n);
     }
+    delete[] distanceMatrix;
+
   }
 
   if (check_correctness) {

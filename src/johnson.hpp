@@ -372,12 +372,13 @@ template<typename Number> void johnson_parallel_matrix(const Number *adjacencyMa
   *distanceMatrix = (Number *) malloc(sizeof(Number) * n * n);
   *successorMatrix = (int *) malloc(sizeof(int) * n * n);
   memcpy(*distanceMatrix, adjacencyMatrix, sizeof(Number) * n * n);
+  memset(*successorMatrix, 0, sizeof(int) * n * n);
 #ifdef CUDA
   graph_cuda_t<Number> *cuda_gr = init_graph_cuda<Number>(adjacencyMatrix, n);
   johnson_successor_cuda<Number>(cuda_gr, *distanceMatrix, *successorMatrix);
   free_graph_cuda<Number>(cuda_gr);
 #else
-    const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
+  const graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, n);
   johnson_parallel<Number>(gr, *distanceMatrix, *successorMatrix);
   delete gr;
 #endif

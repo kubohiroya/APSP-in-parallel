@@ -63,7 +63,7 @@ template<typename Number> inline bool correctness_check(const Number *distanceMa
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
       if (distanceMatrix[i * n_distanceMatrix + j] != solution[i * n_solution + j]) {
-        std::cerr << "\nAdjacencyMatrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
+        std::cerr << "\ndistance matrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
       }

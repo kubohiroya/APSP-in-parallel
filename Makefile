@@ -57,12 +57,9 @@ ISPC_LIB_OBJECTS := $(filter-out $(OBJ_DIR)/ispc-main.o, $(ISPC_OBJECTS))
 
 PROFRAW := *.profraw
 
-#ISPC_FLAGS += 
-ISPC_FLAGS ?= --emit-obj --pic
-#--arch=x86-64--target=avx2-i32x8 
-#-03 -xAVX2 -fPIC
+ISPC_FLAGS ?= --emit-obj --pic --arch=x86-64 --target=avx2-i32x8
 
-#$(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
+$(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
 
 

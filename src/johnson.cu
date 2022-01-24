@@ -99,7 +99,7 @@ void bellman_ford_kernel(graph_cuda_t<Number> *graph_const, Number *dist, const 
   int u = std::get<0>(edges[e]);
   int v = std::get<1>(edges[e]);
   Number new_dist = weights[e];
-  _atomicAdd(&new_dist, dist[u]);
+  _atomicAdd<Number>(&new_dist, dist[u]);
   // Make ATOMIC
   if (dist[u] != inf && new_dist < dist[v])
     _atomicExch<Number>(&dist[v], new_dist); // Needs to have conditional be atomic too
