@@ -7,13 +7,22 @@
 #include <driver_functions.h>
 
 #include "johnson.hpp"
+#include "util.hpp"
 
 #define THREADS_PER_BLOCK 32
+
+#define HANDLE_ERROR(error) { \
+    if (error != cudaSuccess) { \
+        fprintf(stderr, "%s in %s at line %d\n", \
+                cudaGetErrorString(error), __FILE__, __LINE__); \
+        exit(EXIT_FAILURE); \
+    } \
+} \
 
 template<typename Number>
 __forceinline__
 __device__
-int min_distance(Number *dist, char *visited, int n, Number inf) {
+int min_distance(Number *dist, int *visited, int n, Number inf) {
   Number min = inf;
   int min_index = 0;
   for (int v = 0; v < n; v++) {
@@ -24,42 +33,6 @@ int min_distance(Number *dist, char *visited, int n, Number inf) {
   }
   return min_index;
 }
-
-template<typename Number>
-__global__
-void dijkstra_kernel(graph_cuda_t<Number> *graph_const, Number *distanceMatrix, int *successorMatrix, char *visited_global, const Number inf) {
-  int s = blockIdx.x * blockDim.x + threadIdx.x;
-  int V = graph_const->V;
-  if (s >= graph_const->V) return;
-
-  Number *dist = &distanceMatrix[s * V];
-  char *visited = &visited_global[s * V];
-  int *starts = graph_const->starts;
-  Number *weights = graph_const->weights;
-  Edge* edge_array = graph_const->edge_array;
-
-  for (int i = 0; i < V; i++) {
-    dist[i] = inf;
-    visited[i] = 0;
-  }
-  dist[s] = 0;
-  for (int count = 0; count < V - 1; count++) {
-    int u = min_distance<Number>(dist, visited, V, inf);
-    int u_start = starts[u];
-    int u_end = starts[u + 1];
-    Number dist_u = dist[u];
-    visited[u] = 1;
-    for (int v_i = u_start; v_i < u_end; v_i++) {
-      int v = std::get<1>(edge_array[v_i]);
-      if (!visited[v] && dist_u != inf && dist_u + weights[v_i] < dist[v]) {
-        dist[v] = dist_u + weights[v_i];
-        int u = std::get<0>(edge_array[v_i]);
-	successorMatrix[v_i * v + s] = u;
-      }
-    }
-  }
-}
-
 
 template<typename Number>
 __device__ void _atomicAdd(Number *oldvalue, Number newValue);
@@ -89,75 +62,135 @@ template<> __device__ void _atomicExch<double>(double *oldValue, double newValue
 
 template<typename Number>
 __global__
-void bellman_ford_kernel(graph_cuda_t<Number> *graph_const, Number *dist, const Number inf) {
-  int E = graph_const->E;
+void bellman_ford_kernel(int E, Edge *edges, Number *weights, Number *distances, const Number inf) {
   int e = threadIdx.x + blockDim.x * blockIdx.x;
-
   if (e >= E) return;
-  Number *weights = graph_const->weights;
-  Edge *edges = graph_const->edge_array;
   int u = std::get<0>(edges[e]);
   int v = std::get<1>(edges[e]);
-  Number new_dist = weights[e];
-  _atomicAdd<Number>(&new_dist, dist[u]);
+  Number new_distances = weights[e] + distances[u];
   // Make ATOMIC
-  if (dist[u] != inf && new_dist < dist[v])
-    _atomicExch<Number>(&dist[v], new_dist); // Needs to have conditional be atomic too
+  if (distances[u] != inf && new_distances < distances[v]) {
+    _atomicExch<Number>(&distances[v], new_distances);
+  }
 }
 
 template<typename Number>
+__global__
+void reweighting_kernel(int E, Edge *edges, Number *weights, Number *distances) {
+  int e = threadIdx.x + blockDim.x * blockIdx.x;
+  if (e >= E) return;
+  int u = std::get<0>(edges[e]);
+  int v = std::get<1>(edges[e]);
+  // Make ATOMIC?
+  _atomicExch<Number>(&weights[e], weights[e] + distances[u] - distances[v]);
+}
+
+template<typename Number>
+__global__
+void check_negative_cycle_kernel(int E, Edge *edges, Number *weights, Number *distances, Number inf, int *neg_cycle) {
+  int e = threadIdx.x + blockDim.x * blockIdx.x;
+  if (e >= E) return;
+  int u = std::get<0>(edges[e]);
+  int v = std::get<1>(edges[e]);
+  // Make ATOMIC?
+  if (distances[u] != inf && distances[u] + weights[e] < distances[v]){
+    _atomicExch<int>(neg_cycle, 1);
+  }
+}
+
+template<typename Number>
+__global__
+void dijkstra_kernel(int V, int *starts, Number *weights, Edge *edges, Number *distanceMatrix, int *successorMatrix, int *visited_global, const Number inf) {
+  int s = blockIdx.x * blockDim.x + threadIdx.x;
+  if (s >= V) return;
+
+  Number *distance = &distanceMatrix[s * V];
+  int *visited = &visited_global[s * V];
+
+  for (int i = 0; i < V; i++) {
+    distance[i] = inf;
+    visited[i] = 0;
+  }
+  distance[s] = 0;
+
+  for(int count = 0; count < V; count++){
+    int u = min_distance<Number>(distance, visited, V, inf);
+    int u_start = starts[u];
+    int u_end = starts[u + 1];
+    Number distance_u = distance[u];
+    _atomicExch<int>(&visited[u], 1);
+    for (int v_i = u_start; v_i < u_end; v_i++) {
+      int v = std::get<1>(edges[v_i]);
+      if (!visited[v] && distance_u != inf && weights[v_i] != inf && distance_u + weights[v_i] < distance[v]) {
+	_atomicExch<Number>(&distance[v], distance_u + weights[v_i]);
+	int u = std::get<0>(edges[v_i]);
+	successorMatrix[v_i * v + s] = u;
+      }
+    }
+  }
+
+}
+
+
+/*
+template<typename Number>
 __host__
-bool bellman_ford_cuda(graph_cuda_t<Number> *graph_const, graph_cuda_t<Number> *gr, Number *dist, int s) {
-  int V = gr->V;
-  int E = gr->E;
-  // Edge *edges = gr->edge_array;
-  Number *weights = gr->weights;
+bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int src) {
   static const Number inf = getInf<Number>();
+  Edge *edges = gr->edges;
+  Number *weights = gr->weights;
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i = 0; i < V; i++) {
+  for (int i = 0; i < gr->V; i++) {
     dist[i] = inf;
   }
-  dist[s] = 0;
+  dist[src] = 0;
 
   Number *device_dist;
-  cudaMalloc(&device_dist, sizeof(Number) * V);
-  cudaMemcpy(device_dist, dist, sizeof(Number) * V, cudaMemcpyHostToDevice);
+  cudaMalloc(&device_dist, sizeof(Number) * gr->V);
+  cudaMemcpy(device_dist, dist, sizeof(Number) * gr->V , cudaMemcpyHostToDevice);
+
+  Number *device_weights;
+  cudaMalloc(&device_weights, sizeof(Number) * gr->E);
+  cudaMemcpy(device_weights, weights, sizeof(Number) * gr->E, cudaMemcpyHostToDevice);
 
   Edge *device_edges;
-  cudaMalloc(&device_edges, sizeof(Edge) * V);
-  cudaMemcpy(device_edges, gr->edge_array, sizeof(Edge) * V, cudaMemcpyHostToDevice);
+  cudaMalloc(&device_edges, sizeof(Edge) * gr->E);
+  cudaMemcpy(device_edges, edges, sizeof(Edge) * gr->E, cudaMemcpyHostToDevice);
 
-  int blocks = (E + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  int blocks = (gr->E + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-  for (int i = 1; i <= V - 1; i++) {
-    bellman_ford_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(graph_const, device_dist, inf);
+  for (int i = 1; i <= gr->V - 1; i++) {
+    bellman_ford_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(E, device_edges, device_weights, device_dist, inf);
     cudaThreadSynchronize();
   }
 
-  cudaMemcpy(dist, device_dist, sizeof(Number) * V, cudaMemcpyDeviceToHost);
-  bool no_neg_cycle = true;
+  cudaMemcpy(dist, device_dist, sizeof(Number) * gr->V , cudaMemcpyDeviceToHost);
+  cudaMemcpy(weights, device_weights, sizeof(Number) * gr->E, cudaMemcpyDeviceToHost);
+  cudaMemcpy(edges, device_edges, sizeof(Edge) * gr->E, cudaMemcpyDeviceToHost);
 
- // use OMP to parallelize. Not worth sending to GPU
+  cudaFree(device_dist);
+  cudaFree(device_weights);
+  cudaFree(device_edges);
+
+  bool no_neg_cycle = true;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i = 0; i < E; i++) {
-    int u = std::get<0>(gr->edge_array[i]);
-    int v = std::get<1>(gr->edge_array[i]);
+    int u = std::get<0>(edges[i]);
+    int v = std::get<1>(edges[i]);
     Number weight = weights[i];
     if (dist[u] != inf && dist[u] + weight < dist[v]){
       no_neg_cycle = false;
     }
   }
 
-  cudaFree(device_dist);
-  cudaFree(device_edges);
-
   return no_neg_cycle;
 }
+*/
 
 /**************************************************************************
                         Johnson's Algorithm CUDA
@@ -166,108 +199,91 @@ bool bellman_ford_cuda(graph_cuda_t<Number> *graph_const, graph_cuda_t<Number> *
 template<typename Number>
 __host__
 void johnson_successor_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
-  //cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
-  static Number inf = getInf<Number>();
+  // cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
-  // Const Graph Initialization
-  int V = gr->V;
-  int E = gr->E;
-  // Structure of the graph
-  Edge *device_edge_array;
-  Number *device_weights;
-  Number *device_distanceMatrix;
-  int *device_successorMatrix = nullptr;
-  int *device_starts;
-  // Needed to run dijkstra
-  char *device_visited;
+  Number inf = getInf<Number>();
+  Number *distances = new Number[gr->V + 1];
+  Edge *edges = new Edge[gr->V + gr->E];
 
-  // Allocating memory
-  cudaMalloc(&device_edge_array, sizeof(Edge) * E);
-  cudaMalloc(&device_weights, sizeof(Number) * E);
-  cudaMalloc(&device_distanceMatrix, sizeof(Number) * V * V);
-  if(successorMatrix != nullptr){
-    cudaMalloc(&device_successorMatrix, sizeof(int) * V * V);
-  }
-  cudaMalloc(&device_visited, sizeof(char) * V * V);
-  cudaMalloc(&device_starts, sizeof(int) * (V + 1));
-
-  cudaMemcpy(device_edge_array, gr->edge_array, sizeof(Edge) * E, cudaMemcpyHostToDevice);
-  cudaMemcpy(device_weights, gr->weights, sizeof(Number) * E, cudaMemcpyHostToDevice);
-  cudaMemcpy(device_starts, gr->starts, sizeof(int) * (V + 1), cudaMemcpyHostToDevice);
-
-  graph_cuda_t<Number> graph_params;
-  graph_params.V = V;
-  graph_params.E = E;
-  graph_params.starts = device_starts;
-  graph_params.weights = device_weights;
-  graph_params.edge_array = device_edge_array;
-  // Constant memory parameters
-
-  graph_cuda_t<Number> graph_const;
-  cudaMemcpy(&graph_const, &graph_params, sizeof(graph_cuda_t<Number>), cudaMemcpyHostToDevice);
-
-  // Constant memory parameters
-  graph_cuda_t<Number> *bf_graph = new graph_cuda_t<Number>;
-  bf_graph->V = V + 1;
-  bf_graph->E = gr->E + V;
-  bf_graph->edge_array = new Edge[bf_graph->E];
-  bf_graph->weights = new Number[bf_graph->E];
-
-  std::memcpy(bf_graph->edge_array, gr->edge_array, sizeof(Edge) * gr->E);
-  std::memcpy(bf_graph->weights, gr->weights, sizeof(Number) * gr->E);
-  std::memset(&bf_graph->weights[gr->E], 0, V * sizeof(Number));
-
-  Number *h = new Number[bf_graph->V];
-  bool r = bellman_ford_cuda<Number>(&graph_const, bf_graph, h, V);
-  if (!r) {
-    std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
-    exit(1);
-  }
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int e = 0; e < E; e++) {
-    int u = std::get<0>(gr->edge_array[e]);
-    int v = std::get<1>(gr->edge_array[e]);
-    gr->weights[e] = gr->weights[e] + h[u] - h[v];
+  for (int v = 0; v < gr->V + 1; v++) {
+    distances[v] = inf;
+  }
+  distances[gr->V] = 0;
+
+  Number *device_distances;
+  HANDLE_ERROR(cudaMalloc(&device_distances, sizeof(Number) * (gr->V + 1)));
+  HANDLE_ERROR(cudaMemcpy(device_distances, distances, sizeof(Number) * (gr->V + 1), cudaMemcpyHostToDevice));
+  delete[] distances;
+
+  Edge *device_edges;
+  HANDLE_ERROR(cudaMalloc(&device_edges, sizeof(Edge) * (gr->E + gr->V)));
+  std::memcpy(edges, gr->edges, sizeof(Edge) * gr->E);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (int e = 0; e < gr->V; e++){
+    edges[e + gr->E] = Edge(gr->V, e);
+  }
+  HANDLE_ERROR(cudaMemcpy(device_edges, edges, sizeof(Edge) * (gr->E + gr->V), cudaMemcpyHostToDevice));
+
+  Number *device_weights;
+  HANDLE_ERROR(cudaMalloc(&device_weights, sizeof(Number) * gr->E));
+  HANDLE_ERROR(cudaMemcpy(device_weights, gr->weights, sizeof(Number) * gr->E, cudaMemcpyHostToDevice));
+
+  int bf_blocks = (gr->E + gr->V + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+  for(int i=0; i <= gr->V; i++){
+    bellman_ford_kernel<Number> <<<bf_blocks, THREADS_PER_BLOCK>>>(gr->E + gr->V + 1, device_edges, device_weights, device_distances, inf);
+    cudaThreadSynchronize();
   }
 
-  int blocks = (V + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+  int neg_cycle = 0;
+  int *device_neg_cycle;
+  HANDLE_ERROR(cudaMalloc(&device_neg_cycle, sizeof(int)));
+  HANDLE_ERROR(cudaMemcpy(device_neg_cycle, &neg_cycle, sizeof(int), cudaMemcpyHostToDevice));
 
-  cudaMemcpy(device_weights, gr->weights, sizeof(Number) * E, cudaMemcpyHostToDevice);
-  if(successorMatrix != nullptr){
-    cudaMemcpy(device_successorMatrix, successorMatrix, sizeof(int) * V * V, cudaMemcpyHostToDevice);
+  check_negative_cycle_kernel<Number> <<<bf_blocks, THREADS_PER_BLOCK>>>(gr->E + gr->V, device_edges, device_weights, device_distances, inf, device_neg_cycle);
+
+  HANDLE_ERROR(cudaMemcpy(&neg_cycle, device_neg_cycle, sizeof(int), cudaMemcpyDeviceToHost));
+  cudaFree(device_neg_cycle);
+  if (neg_cycle != 0) {
+    std::cerr << "\nNegative Cycles Detected! Terminating Early\n";
+    exit(1);
   }
 
-  int *starts = gr->starts;
-  Number *weights = gr->weights;
-  Edge *edge_array = gr->edge_array;
+  reweighting_kernel<Number> <<<bf_blocks, THREADS_PER_BLOCK>>>(gr->E + gr->V, device_edges, device_weights, device_distances);
 
-  dijkstra_kernel<Number> <<<blocks, THREADS_PER_BLOCK>>>(gr, device_distanceMatrix, device_successorMatrix, device_visited, inf);
+  int *device_starts;
+  HANDLE_ERROR(cudaMalloc(&device_starts, sizeof(int) * (gr->V + 1)));
+  HANDLE_ERROR(cudaMemcpy(device_starts, gr->starts, sizeof(int) * (gr->V + 1), cudaMemcpyHostToDevice));
 
-  cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(Number) * V * V, cudaMemcpyDeviceToHost);
-  if(successorMatrix != nullptr){
-    cudaMemcpy(successorMatrix, device_successorMatrix, sizeof(int) * V * V, cudaMemcpyDeviceToHost);
-  }
+  int *device_visited;
+  HANDLE_ERROR(cudaMalloc(&device_visited, sizeof(int) * gr->V * gr->V));
 
-  cudaError_t errCode = cudaPeekAtLastError();
-  if (errCode != cudaSuccess) {
-    std::cerr << "WARNING: A CUDA error occured: code=" << errCode << "," <<
-              cudaGetErrorString(errCode) << "\n";
-  }
+  Number *device_distanceMatrix;
+  HANDLE_ERROR(cudaMalloc(&device_distanceMatrix, sizeof(Number) * gr->V * gr->V));
 
-  // Remember to reweight edges back -- for every s reweight every v
-  // Could do in a kernel launch or with OMP
+  int *device_successorMatrix;
+  HANDLE_ERROR(cudaMalloc(&device_successorMatrix, sizeof(int) * gr->V * gr->V));
 
-  cudaFree(device_edge_array);
-  cudaFree(device_weights);
-  cudaFree(device_distanceMatrix);
-  if(successorMatrix != nullptr){
-    cudaFree(device_successorMatrix);
-  }
-  cudaFree(device_visited);
-  cudaFree(device_starts);
+  int dij_blocks = (gr->V + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+  dijkstra_kernel<Number> <<<dij_blocks, THREADS_PER_BLOCK>>>(gr->V, device_starts, device_weights, device_edges, device_distanceMatrix, device_successorMatrix, device_visited, inf);
+
+  HANDLE_ERROR(cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(Number) * gr->V * gr->V, cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(successorMatrix, device_successorMatrix, sizeof(int) * gr->V * gr->V, cudaMemcpyDeviceToHost));
+
+  HANDLE_ERROR(cudaFree(device_distances));
+  HANDLE_ERROR(cudaFree(device_edges));
+  HANDLE_ERROR(cudaFree(device_weights));
+  HANDLE_ERROR(cudaFree(device_starts));
+  HANDLE_ERROR(cudaFree(device_visited));
+  HANDLE_ERROR(cudaFree(device_distanceMatrix));
+  HANDLE_ERROR(cudaFree(device_successorMatrix));
 }
 
 template<typename Number>
@@ -275,9 +291,8 @@ __host__
 void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix) {
   int *successorMatrix = new int[gr->V * gr->V];
   johnson_successor_cuda<Number>(gr, distanceMatrix, successorMatrix);
-  free(successorMatrix);
+  delete[] successorMatrix;
 }
-
 
 template __host__ void johnson_cuda<double>(graph_cuda_t<double> *gr, double *distanceMatrix);
 template __host__ void johnson_cuda<float>(graph_cuda_t<float> *gr, float *distanceMatrix);

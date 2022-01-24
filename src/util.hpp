@@ -48,10 +48,10 @@ template<typename Number> inline void print(const Number value) {
   }
 }
 
-template<typename Number> inline void print_matrix(const Number *distanceMatrix, const int n_distanceMatrix, const int n_blocked) {
-  for (int i = 0; i < n_distanceMatrix; i++) {
+template<typename Number> inline void print_matrix(const Number *distanceMatrix, const int n, const int n_blocked) {
+  for (int i = 0; i < n; i++) {
     print<Number>(distanceMatrix[i * n_blocked]);
-    for (int j = 1; j < n_distanceMatrix; j++) {
+    for (int j = 1; j < n; j++) {
       std::cout << ", ";
       print<Number>(distanceMatrix[i * n_blocked + j]);
     }
@@ -60,9 +60,16 @@ template<typename Number> inline void print_matrix(const Number *distanceMatrix,
 }
 
 template<typename Number> inline bool correctness_check(const Number *distanceMatrix, int n_distanceMatrix, const Number *solution, int n_solution) {
+  if(distanceMatrix == nullptr || solution == nullptr){
+    return false;
+  }
+  static Number threshold = 1;
   for (int i = 0; i < n_solution; i++) {
     for (int j = 0; j < n_solution; j++) {
-      if (distanceMatrix[i * n_distanceMatrix + j] != solution[i * n_solution + j]) {
+      Number actual = distanceMatrix[i * n_distanceMatrix + j];
+      Number expected = solution[i * n_solution + j];
+      Number diff = actual - expected;
+      if (diff < -1 * threshold || threshold < diff) {
         std::cerr << "\ndistance matrix did not match at [" << i << "][" << j << "]: " << distanceMatrix[i * n_distanceMatrix + j]
                   << " vs solution's " << solution[i * n_solution + j] << "!" << std::endl;
         return false;
