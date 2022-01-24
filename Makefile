@@ -62,8 +62,8 @@ $(SEQ_ISPC) $(OMP_ISPC): CXXFLAGS += -DISPC
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): CXXFLAGS += -Xpreprocessor -fopenmp
 $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -lomp
 
-LIBS := $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
-BINARIES := $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC)
+LIBS = $(SEQ_LIB) $(OMP_LIB) $(SEQ_ISPC_LIB) $(OMP_ISPC_LIB)
+BINARIES = $(SEQ) $(OMP) $(SEQ_ISPC) $(OMP_ISPC)
 
 ifeq ($(UNAME), Linux)
  SEQ_LIB := $(LIBS_DIR)/libapsp-seq.so
