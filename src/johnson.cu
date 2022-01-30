@@ -124,7 +124,7 @@ void dijkstra_kernel(int V, int *starts, Number *weights, Edge *edges, Number *d
       if (!visited[v] && distance_u != inf && weights[v_i] != inf && distance_u + weights[v_i] < distance[v]) {
 	_atomicExch<Number>(&distance[v], distance_u + weights[v_i]);
 	int u = std::get<0>(edges[v_i]);
-	successorMatrix[v_i * v + s] = u;
+	_atomicExch<int>(&successorMatrix[v_i * v + s], u);
       }
     }
   }
@@ -274,14 +274,13 @@ void johnson_successor_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, in
 
   dijkstra_kernel<Number> <<<dij_blocks, THREADS_PER_BLOCK>>>(gr->V, device_starts, device_weights, device_edges, device_distanceMatrix, device_successorMatrix, device_visited, inf);
 
-  HANDLE_ERROR(cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(Number) * gr->V * gr->V, cudaMemcpyDeviceToHost));
-  HANDLE_ERROR(cudaMemcpy(successorMatrix, device_successorMatrix, sizeof(int) * gr->V * gr->V, cudaMemcpyDeviceToHost));
-
   HANDLE_ERROR(cudaFree(device_distances));
   HANDLE_ERROR(cudaFree(device_edges));
   HANDLE_ERROR(cudaFree(device_weights));
   HANDLE_ERROR(cudaFree(device_starts));
   HANDLE_ERROR(cudaFree(device_visited));
+  HANDLE_ERROR(cudaMemcpy(distanceMatrix, device_distanceMatrix, sizeof(Number) * gr->V * gr->V, cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(successorMatrix, device_successorMatrix, sizeof(int) * gr->V * gr->V, cudaMemcpyDeviceToHost));
   HANDLE_ERROR(cudaFree(device_distanceMatrix));
   HANDLE_ERROR(cudaFree(device_successorMatrix));
 }
