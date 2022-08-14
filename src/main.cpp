@@ -246,7 +246,7 @@ double do_johnson(const int n, const double p, const unsigned long seed, const b
 }
 
 template<typename Number>
-bench_result * bench_johnson(int iterations, int nvertex, double p, unsigned long seed, bool with_successor, bool check_correctness) {
+bench_result * bench_johnson(int iterations, const int nvertex, double p, unsigned long seed, bool with_successor, bool check_correctness) {
 
   Number *solution = check_correctness ? get_solution<Number>(nvertex, p, seed) : nullptr;
   Number *adjacencyMatrix = create_random_adjacencyMatrix<Number>(nvertex, p, seed);
@@ -282,7 +282,7 @@ bench_result * bench_johnson(int iterations, int nvertex, double p, unsigned lon
     }
 
     auto seq_start = std::chrono::high_resolution_clock::now();
-    graph_t<Number> *gr = init_graph<Number>(adjacencyMatrix, nvertex);
+    graph_t<Number> *gr = init_graph_matrix<Number>(adjacencyMatrix, nvertex);
     Graph<Number> G(gr->edges, gr->edges + gr->E, gr->weights, gr->V);
     std::vector<Number> d(num_vertices(G));
     std::vector<int> predecessor(num_vertices(G));

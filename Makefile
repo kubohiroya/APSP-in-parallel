@@ -1,22 +1,25 @@
 UNAME = $(shell uname)
-
+TARGETDIR = /opt/homebrew
 # Override using CXX=clang++ make ...
 CXX ?= g++
-CXXFLAGS ?= -std=c++11 -fPIC -O3
+CXXFLAGS ?= -std=c++11 -fPIC -O3 -I$(TARGETDIR)/include
 
 CXXFLAGS += $(CXXEXTRA)
-LDFLAGS = -L./libs
+LDFLAGS = -L./libs -L$(TARGETDIR)/lib
 LLVM=llvm-12
 
+PREFIX=/opt/homebrew
+#PRfEFIX=/usr/
 SHAREDFLAGS ?= -shared -fPIC -dynamiclib
 
 JAR = apsp/target/apsp-1.0.jar
 JAVA_OPT := -Djna.library.path=./libs
 
-ISPC ?= /usr/local/bin/ispc
-ISPC_FLAGS ?= --emit-obj --pic --arch=x86-64 --target=avx2-i32x8
+ISPC ?= $(PREFIX)/bin/ispc
+#ISPC_FLAGS ?= --emit-obj --pic --arch=x86-64 --target=avx2-i32x8
+ISPC_FLAGS ?= --emit-obj --pic --arch=aarch64
 
-NVCC ?= /usr/local/cuda/bin/nvcc
+NVCC ?= $(PREFIX)/cuda/bin/nvcc
 NVCCFLAGS := -std=c++11 -O2 --compiler-options "-fPIC" -DCUDA --expt-relaxed-constexpr
 
 OBJ_DIR := objs
@@ -74,7 +77,7 @@ ifeq ($(UNAME), Linux)
  $(OMP) $(OMP_ISPC) $(OMP_LIB) $(OMP_ISPC_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib
  $(CUDA): CXXFLAGS += -DCUDA
  $(CUDA): NVCCFLAGS += -arch=sm_80 -gencode=arch=compute_80,code=sm_80 -gencode=arch=compute_86,code=sm_86 -gencode=arch=compute_86,code=compute_86
- $(CUDA) $(CUDA_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -L/usr/local/cuda/lib64 -lcudart -lomp
+ $(CUDA) $(CUDA_LIB): LDFLAGS += -L/usr/lib/$(LLVM)/lib -L$(PREFIX)/cuda/lib64 -lcudart -lomp
  LIBS += $(CUDA_LIB)
  BINARIES += $(CUDA)
 else

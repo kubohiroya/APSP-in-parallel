@@ -10,6 +10,11 @@ public class ApspResolvers {
             return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, -1);
         }
 
+        public ApspResult<int[]> resolveAdjacencyListWithJohnson(String execEnv, int v, int e,
+                                                                 int[] edges, int[] distances){
+            return resolve(execEnv, v, e, edges, distances);
+        }
+
         public ApspResult<int[]> resolveWithFloydWarshall(String execEnv, int[] adjacencyMatrix){
             return resolve(execEnv, ALGORITHM.FLOYD_WARSHALL, adjacencyMatrix, ALGORITHM.FLOYD_WARSHALL_BLOCK_SIZE);
         }
@@ -56,6 +61,24 @@ public class ApspResolvers {
             return new ApspResult<int[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
         }
 
+        public ApspResult<int[]> resolve(String execEnv, int v, int e,
+                                         int[] edges,
+                                         int[] distances) {
+            long timeStart = System.currentTimeMillis();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            if(e != distances.length || e * 2 != edges.length){
+                throw new RuntimeException("Invalid adjacency list");
+            }
+            impl.johnson_parallel_list_successor_int(v, e, edges, distances, distanceMatrix, successorMatrix);
+            int[] distanceMatrixResult = distanceMatrix.getValue().getIntArray(0, v * v);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, v * v);
+            impl.free_johnson_parallel_list_successor_int(distanceMatrix, successorMatrix);
+            long timeEnd = System.currentTimeMillis();
+            return new ApspResult<int[]>(distanceMatrixResult, successorMatrixResult, v, timeEnd - timeStart);
+        }
+
         public int[] getInfinity(String execEnv){
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
             return new int[]{impl.get_infinity_int()};
@@ -66,6 +89,11 @@ public class ApspResolvers {
 
         public ApspResult<float[]> resolveWithJohnson(String execEnv, float[] adjacencyMatrix){
             return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix,-1);
+        }
+
+        public ApspResult<float[]> resolveAdjacencyListWithJohnson(String execEnv, int v, int e,
+                                                                 int[] edges, float[] distances){
+            return resolve(execEnv, v, e, edges, distances);
         }
 
         public ApspResult<float[]> resolveWithFloydWarshall(String execEnv, float[] adjacencyMatrix){
@@ -113,6 +141,24 @@ public class ApspResolvers {
             return new ApspResult<float[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
         }
 
+        public ApspResult<float[]> resolve(String execEnv, int v, int e,
+                                           int[] edges,
+                                           float[] distances) {
+            long timeStart = System.currentTimeMillis();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            if(e != distances.length || e * 2 != edges.length){
+                throw new RuntimeException("Invalid adjacency list");
+            }
+            impl.johnson_parallel_list_successor_float(v, e, edges, distances, distanceMatrix, successorMatrix);
+            float[] distanceMatrixResult = distanceMatrix.getValue().getFloatArray(0, v * v);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, v * v);
+            impl.free_johnson_parallel_list_successor_float(distanceMatrix, successorMatrix);
+            long timeEnd = System.currentTimeMillis();
+            return new ApspResult<float[]>(distanceMatrixResult, successorMatrixResult, v, timeEnd - timeStart);
+        }
+
         public float[] getInfinity(String execEnv){
             ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
             return new float[]{impl.get_infinity_float()};
@@ -123,6 +169,11 @@ public class ApspResolvers {
 
         public ApspResult<double[]> resolveWithJohnson(String execEnv, double[] adjacencyMatrix){
             return resolve(execEnv, ALGORITHM.JOHNSON, adjacencyMatrix, -1);
+        }
+        public ApspResult<double[]> resolveAdjacencyListWithJohnson(String execEnv, int v, int e,
+                                                                   int[] edges,
+                                                                   double[] distances){
+            return resolve(execEnv, v, e, edges, distances);
         }
 
         public ApspResult<double[]> resolveWithFloydWarshall(String execEnv, double[] adjacencyMatrix){
@@ -168,6 +219,24 @@ public class ApspResolvers {
             }
             long timeEnd = System.currentTimeMillis();
             return new ApspResult<double[]>(distanceMatrixResult, successorMatrixResult, numVertex, timeEnd - timeStart);
+        }
+
+        public ApspResult<double[]> resolve(String execEnv, int v, int e,
+                                           int[] edges,
+                                           double[] distances) {
+            long timeStart = System.currentTimeMillis();
+            PointerByReference distanceMatrix = new PointerByReference();
+            PointerByReference successorMatrix = new PointerByReference();
+            ApspNativeLibrary impl = ApspNativeLibraries.getImplementation(execEnv);
+            if(e != distances.length || e * 2 != edges.length){
+                throw new RuntimeException("Invalid adjacency list");
+            }
+            impl.johnson_parallel_list_successor_double(v, e, edges, distances, distanceMatrix, successorMatrix);
+            double[] distanceMatrixResult = distanceMatrix.getValue().getDoubleArray(0, v * v);
+            int[] successorMatrixResult = successorMatrix.getValue().getIntArray(0, v * v);
+            impl.free_johnson_parallel_list_successor_double(distanceMatrix, successorMatrix);
+            long timeEnd = System.currentTimeMillis();
+            return new ApspResult<double[]>(distanceMatrixResult, successorMatrixResult, v, timeEnd - timeStart);
         }
 
         public double[] getInfinity(String execEnv){

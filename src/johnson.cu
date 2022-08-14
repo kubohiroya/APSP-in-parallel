@@ -198,7 +198,7 @@ bool bellman_ford_cuda(graph_cuda_t<Number> *gr, Number *dist, int src) {
 
 template<typename Number>
 __host__
-void johnson_successor_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
+void johnson_successor_cuda(graph_t<Number> *gr, Number *distanceMatrix, int *successorMatrix) {
   // cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
 
   Number inf = getInf<Number>();
@@ -288,16 +288,16 @@ void johnson_successor_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix, in
 
 template<typename Number>
 __host__
-void johnson_cuda(graph_cuda_t<Number> *gr, Number *distanceMatrix) {
+void johnson_cuda(graph_t<Number> *gr, Number *distanceMatrix) {
   int *successorMatrix = new int[gr->V * gr->V];
   johnson_successor_cuda<Number>(gr, distanceMatrix, successorMatrix);
   delete[] successorMatrix;
 }
 
-template __host__ void johnson_cuda<double>(graph_cuda_t<double> *gr, double *distanceMatrix);
-template __host__ void johnson_cuda<float>(graph_cuda_t<float> *gr, float *distanceMatrix);
-template __host__ void johnson_cuda<int>(graph_cuda_t<int> *gr, int *distanceMatrix);
-template __host__ void johnson_successor_cuda<double>(graph_cuda_t<double> *gr, double *distanceMatrix, int *successorMatrix);
-template __host__ void johnson_successor_cuda<float>(graph_cuda_t<float> *gr, float *distanceMatrix, int *successorMatrix);
-template __host__ void johnson_successor_cuda<int>(graph_cuda_t<int> *gr, int *distanceMatrix, int *successorMatrix);
+template __host__ void johnson_cuda<double>(graph_t<double> *gr, double *distanceMatrix);
+template __host__ void johnson_cuda<float>(graph_t<float> *gr, float *distanceMatrix);
+template __host__ void johnson_cuda<int>(graph_t<int> *gr, int *distanceMatrix);
+template __host__ void johnson_successor_cuda<double>(graph_t<double> *gr, double *distanceMatrix, int *successorMatrix);
+template __host__ void johnson_successor_cuda<float>(graph_t<float> *gr, float *distanceMatrix, int *successorMatrix);
+template __host__ void johnson_successor_cuda<int>(graph_t<int> *gr, int *distanceMatrix, int *successorMatrix);
 

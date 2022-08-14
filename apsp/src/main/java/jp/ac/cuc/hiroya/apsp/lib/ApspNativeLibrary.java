@@ -68,4 +68,52 @@ public interface ApspNativeLibrary extends Library {
                                         PointerByReference successors, int n);
 
     void free_johnson_parallel_matrix_successor_double(PointerByReference distanceMatrix, PointerByReference successors);
+    
+    void johnson_parallel_list_successor_double(int v, int e,
+                                                int[] edges,
+                                                double[] distances,
+                                                PointerByReference distanceMatrix,
+                                                PointerByReference successors);
+
+    void free_johnson_parallel_list_successor_double(PointerByReference distanceMatrix,
+                                                     PointerByReference successors);
+
+    void johnson_parallel_list_successor_float(int v, int e,
+                                               int[] edges,
+                                               float[] distances,
+                                               PointerByReference distanceMatrix,
+                                               PointerByReference successors);
+
+    void free_johnson_parallel_list_successor_float(PointerByReference distanceMatrix,
+                                                    PointerByReference successors);
+
+    void johnson_parallel_list_successor_int(int v, int e,
+                                             int[] edges,
+                                             int[] distances,
+                                             PointerByReference distanceMatrix,
+                                             PointerByReference successors);
+
+    void free_johnson_parallel_list_successor_int(PointerByReference distanceMatrix,
+                                                  PointerByReference successors);
+
+    void johnson_parallel_list_double(int v, int e,
+                                                int[] edges,
+                                                double[] distances,
+                                                PointerByReference distanceMatrix);
+
+    void free_johnson_parallel_list_double(PointerByReference distanceMatrix);
+
+    void johnson_parallel_list_float(int v, int e,
+                                               int[] edges,
+                                               float[] distances,
+                                               PointerByReference distanceMatrix);
+
+    void free_johnson_parallel_list_float(PointerByReference distanceMatrix);
+
+    void johnson_parallel_list_int(int v, int e,
+                                             int[] edges,
+                                             int[] distances,
+                                             PointerByReference distanceMatrix);
+
+    void free_johnson_parallel_list_int(PointerByReference distanceMatrix);
 }
