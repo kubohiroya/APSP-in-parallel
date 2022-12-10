@@ -7,7 +7,9 @@ import java.io.IOException;
 
 import static jp.ac.cuc.hiroya.apsp.util.ColorSeq.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 public class MatrixAssertion {
 

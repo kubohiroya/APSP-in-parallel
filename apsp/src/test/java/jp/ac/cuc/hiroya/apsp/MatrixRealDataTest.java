@@ -1,7 +1,6 @@
 package jp.ac.cuc.hiroya.apsp;
 
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 public class MatrixRealDataTest {
 
     static String adjFilename = MatrixRealFilenames.adjFilename;

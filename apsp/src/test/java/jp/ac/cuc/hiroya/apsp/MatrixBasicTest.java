@@ -4,10 +4,9 @@ import jp.ac.cuc.hiroya.apsp.lib.ApspResolvers;
 import jp.ac.cuc.hiroya.apsp.lib.Infinity;
 import jp.ac.cuc.hiroya.apsp.util.CSVParser;
 import jp.ac.cuc.hiroya.apsp.util.InfinityConverter;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MatrixBasicTest {
     @Test

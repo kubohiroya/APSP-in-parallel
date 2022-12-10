@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+task wrapper(type: Wrapper){
+    gradleVersion = '7.5'
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://repo.maven.apache.org/maven2/')
+    }
+}
+
+dependencies {
+    testImplementation 'org.hamcrest:hamcrest:2.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'org.jboss.logging:jboss-logging:3.5.0.Final'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'net.java.dev.jna:jna:5.12.1'
+    implementation 'net.java.dev.jna:jna-platform:5.12.1'
+}
+
+group = 'jp.ac.cuc.hiroya'
+version = '1.1'
+description = 'APSP-in-parallel'
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
+
+test {
+    useJUnitPlatform()
+    maxHeapSize = '32G'
+    jvmArgs "-Djna.library.path=${project.rootDir}/libs"
+}

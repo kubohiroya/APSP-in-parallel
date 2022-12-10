@@ -1,0 +1,2 @@
+rootProject.name = 'APSP-in-parallel'
+include 'apsp'

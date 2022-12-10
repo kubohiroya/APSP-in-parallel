@@ -1,0 +1,37 @@
+task build {
+    ext.srcDir = file('src')
+    inputs.dir srcDir
+    doLast {
+        exec {
+            workingDir '.'
+            commandLine '/usr/bin/make',
+                    'all',
+                    srcDir.absolutePath
+        }
+    }
+}
+
+task test {
+    ext.srcDir = file('.')
+    inputs.dir srcDir
+    doLast {
+        exec {
+            workingDir '.'
+            commandLine '/usr/bin/make',
+                    'test',
+                    srcDir.absolutePath
+        }
+    }
+}
+
+task clean{
+  doLast{
+    exec {
+            workingDir '.'
+            commandLine '/usr/bin/make',
+	    'clean'
+    }
+  }
+}
+
+//defaultTasks 'build'

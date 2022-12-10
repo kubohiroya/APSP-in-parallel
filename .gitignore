@@ -27,3 +27,5 @@ apsp/.idea
 
 
 apsp/.run/名前未設定.run.xml
+apsp/build/
+.gradle
